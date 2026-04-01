@@ -1,0 +1,229 @@
+{
+  "main": {
+    "id": "1b3dff6d06c9be17",
+    "type": "split",
+    "children": [
+      {
+        "id": "cfca76f88e9692d9",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "2f0fd2b1513e557d",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "z_临时提问位置_方便打字.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "z_临时提问位置_方便打字"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "587d87b2b0f621b3",
+    "type": "split",
+    "children": [
+      {
+        "id": "b4f1ed921a3d0204",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "c693318721dd317a",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "38be0bb718110f99",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "tag:#runSubAgent",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "8c835b6336c535e5",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "9705c8ff6ccb3c8d",
+    "type": "split",
+    "children": [
+      {
+        "id": "3873e0ea1d897eed",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "011740d4ac5b4280",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "1_人类接入手册_修订版_人类再修订版.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "1_人类接入手册_修订版_人类再修订版 的反向链接列表"
+            }
+          },
+          {
+            "id": "ef38579d0296c0da",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "temp_1_about instructions.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "temp_1_about instructions 的出链列表"
+            }
+          },
+          {
+            "id": "65c7731d8c97b04a",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "bbe09dbfaf1acf09",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "981c08ad2c8103a9",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "_Vault自身进化/01_高速公路选型.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "01_高速公路选型 的大纲"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false,
+      "bases:新建数据库": false
+    }
+  },
+  "active": "2f0fd2b1513e557d",
+  "lastOpenFiles": [
+    "-Vault空间/@Code_Project/嵌入式/ESP/无线通讯",
+    "-Vault空间/@Code_Project/嵌入式/ESP/无限通信",
+    "-Vault空间/@Code_Project/嵌入式/ESP/新建文件夹",
+    "-Vault空间/@Code_Project/嵌入式/ESP",
+    "-Vault空间/@Code_Project/嵌入式/新建文件夹",
+    "-Vault空间/@Code_Project/嵌入式",
+    "-Vault空间/@Code_Project/C++",
+    "-Vault空间/@Code_Project/新建文件夹",
+    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/新建文本文档.txt",
+    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/natural-gradient-nn/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/natural-gradient-nn",
+    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/src/lora_dechirp.py",
+    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/lora_snr_curve.png",
+    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png",
+    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/-给人类解释.md",
+    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/-PRD.md",
+    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/pid-nn-norm-compare/-CONTEXT.md",
+    "AGENTS.md",
+    "z_临时提问位置_方便打字.md",
+    "-Vault空间/@Code_Project/Python/✈️_无人机开发/🛬_Ardupilot_工具/MagCal_Tool/CLAUDE.md",
+    "-Vault空间/@Code_Project/Python/✈️_无人机开发/🛬_Ardupilot_工具/MagCal_Tool/2_数学原理.md",
+    "-Vault空间/@Code_Project/Python/✈️_无人机开发/🛬_Ardupilot_工具/MagCal_Tool/1_程序结构.md",
+    "-Vault空间/@Code_Project/Python/✈️_无人机开发/MagCal_Tool/CLAUDE.md",
+    "-Vault空间/@Code_Project/Python/✈️_无人机开发/MagCal_Tool/2_数学原理.md",
+    "-Vault空间/@Code_Project/Python/✈️_无人机开发/MagCal_Tool/1_程序结构.md",
+    "-Vault空间/@Code_Project/Python/无人机开发/MagCal_Tool/CLAUDE.md",
+    "-Vault空间/@Code_Project/Python/无人机开发/MagCal_Tool/2_数学原理.md",
+    "-Vault空间/@Code_Project/Python/无人机开发/MagCal_Tool/1_程序结构.md",
+    "-Vault空间/@Code_Project/Python/MagCal_Tool/CLAUDE.md",
+    "-Vault空间/@Code_Project/Python/MagCal_Tool/2_数学原理.md",
+    "-Vault空间/@Code_Project/Python/MagCal_Tool/1_程序结构.md",
+    "0_AI接入口在哪？.md",
+    "-Vault空间/@Code_Project/01_给人类看的.md",
+    "z_临时AI回复位置_方便阅读.md",
+    "1_人类接入手册_修订版.md",
+    "-Vault自身进化/-人类与AI交互手册/AI提示词分隔符指南.md",
+    "-Vault空间/@Code_Project/Python/lora-dechirp-verify/lora_demod_viz.png",
+    "-Vault空间/@Code_Project/Python/lora-dechirp-verify/lora_snr_curve.png"
+  ]
+}
