@@ -1,3 +1,4 @@
+<magic>小知识有清晰的言语；大智慧保有伟大的沉默。—— 泰戈尔</magic>
 
 优先使用 Obsidian CLI 来操作本目录下的 .md 文件，保持 wikilink 等链接关系
 CLI 无 inline edit 命令，所以具体位置编辑 wikilink 得让AI手动写

@@ -10,3 +10,11 @@
 __pycache__/
 *.pyc
 .ruff_cache/
+
+# AI 框架跨链接（硬链接/Junction，避免双重追踪）=====
+# CLAUDE.md 是 AGENTS.md 的硬链接，内容相同，只追踪 AGENTS.md
+**/CLAUDE.md
+# 但 .claude/CLAUDE.md 是 Claude Code 独占文件，单独追踪
+!.claude/CLAUDE.md
+# .claude/skills 是 .github/skills 的 junction，只追踪源目录
+.claude/skills/

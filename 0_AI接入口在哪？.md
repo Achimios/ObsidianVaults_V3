@@ -4,10 +4,10 @@
 
 
 Copilot跑Sonnet/Opus执行重型代码任务、架构重组、高风险操作
-OpenClaw跑DeepSeek/Kimi作为实时操作员
+OpenClaw跑DeepSeek/Kimi(有视觉)作为实时操作员
 ClaudeCode/Codex跑 ? 执行自动化代码任务
 
-目前Copilot是按次计费，每月10美元300次，且每月1日重置额度，而非从开通日开始算每30天重置。因此搭配PARDON弹窗机制，额度根本用不完
+目前Copilot是按次计费，每月10美元300次，且每月1日重置额度，因此搭配PARDON弹窗机制，额度根本用不完
 Copilot也有CLI版本
 即使同样模型如 Kimi，ClaudeCode思考时间可能达1~4 min，而OpenClaw则是秒回复
 

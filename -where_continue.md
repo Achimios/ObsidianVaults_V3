@@ -4,9 +4,9 @@
 
 ## 📍 最近编辑（按时间倒序）
 
-1. **根目录** — `./-CONTEXT.md`  
-   → 已完成：.gitignore 建立 + magic 验证机制全套（个性化/顶部/不泄露他人）  
-   → 下一步：测试根目录AGENTS.md是否被注入，或新 session 研究 Skills 机制. 
+1. **根目录 + .github/ + -人类思维笔记** — `./-CONTEXT.md`  
+   → 已完成：magic XML + CLAUDE.md硬链接×4 + Skills junction + `-project-continue` + `-yiti-tts` + Skills研究报告 + Claude Code 独占层 + 全局Skill引用修正(4处)  
+   → 下一步：OpenClaw 机制研究，然后声线宏 VOICE_COPILOT vs VOICE_VICTOR 清查
 
 2. *(下次完成后追加)*
 

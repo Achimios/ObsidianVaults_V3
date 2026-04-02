@@ -13,15 +13,44 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "z_临时提问位置_方便打字.md",
+                "file": "-人类思维笔记/Y_从他人的AI工作流学习/ai_Copilot_SKILL/研究报告_Agent_Skills机制.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "z_临时提问位置_方便打字"
+              "title": "研究报告_Agent_Skills机制"
+            }
+          },
+          {
+            "id": "2984777b48558f16",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "-人类思维笔记/Y_从他人的AI工作流学习/ai_ClaudeCode/z_ClaudeCode机制研究.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "z_ClaudeCode机制研究"
+            }
+          },
+          {
+            "id": "512b88029256a514",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "-CONTEXT_old备份.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "-CONTEXT_old备份"
             }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -183,47 +212,53 @@
       "bases:新建数据库": false
     }
   },
-  "active": "2f0fd2b1513e557d",
+  "active": "512b88029256a514",
   "lastOpenFiles": [
-    "-Vault空间/@Code_Project/嵌入式/ESP/无线通讯",
-    "-Vault空间/@Code_Project/嵌入式/ESP/无限通信",
-    "-Vault空间/@Code_Project/嵌入式/ESP/新建文件夹",
-    "-Vault空间/@Code_Project/嵌入式/ESP",
-    "-Vault空间/@Code_Project/嵌入式/新建文件夹",
-    "-Vault空间/@Code_Project/嵌入式",
-    "-Vault空间/@Code_Project/C++",
-    "-Vault空间/@Code_Project/新建文件夹",
-    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/新建文本文档.txt",
-    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/natural-gradient-nn/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/natural-gradient-nn",
-    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/src/lora_dechirp.py",
+    "z_临时提问位置_方便打字.md",
+    "-CONTEXT_old备份.md",
+    "0_AI接入口在哪？.md",
+    "-人类思维笔记/Y_从他人的AI工作流学习/ai_Copilot_SKILL/研究报告_Agent_Skills机制.md",
+    "-Vault自身进化/-软件操作手册/VSCode-Copilot 指令机制参考.md",
+    "-Vault自身进化/-软件操作手册/VSCode-Copilot SKILL机制.md",
+    "-Vault自身进化/-软件操作手册/VSCode-Copilot SubAgent机制.md",
+    "-人类思维笔记/Y_从他人的AI工作流学习/ai_ClaudeCode/z_ClaudeCode研究后可执行操作.md",
+    "-人类思维笔记/Y_从他人的AI工作流学习/ai_Copilot_SKILL",
+    "1_人类接入手册_修订版.md",
+    "-人类思维笔记/CLAUDE.md",
+    "-Vault空间/@Code_Project/Python/CLAUDE.md",
+    "-Vault空间/@Code_Project/-架构方法演示/-局部指令表&注释码表系统_演示/CLAUDE.md",
+    "CLAUDE.md",
+    "-人类思维笔记/Y_从他人的AI工作流学习/ai_ClaudeCode/z_ClaudeCode机制研究.md",
+    "make_claude_symlinks.bat",
+    "-人类思维笔记/Y_从他人的AI工作流学习/github_mlflow/z_mlflow 研究报告.md",
+    "-人类思维笔记/Y_从他人的AI工作流学习/github_mlflow/z_mlflow 阅后可执行方案.md",
+    "-人类思维笔记/Y_从他人的AI工作流学习/ai_ClaudeCode",
+    "z_临时AI回复位置_方便阅读.md",
+    "AGENTS.md",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/src/lora_dechirp.py",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/pid-nn-norm-compare/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/natural-gradient-nn/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/src",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/lora_snr_curve.png",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/-给人类解释.md",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/-PRD.md",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/pid-nn-norm-compare",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/natural-gradient-nn",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms",
+    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/lora-dechirp-verify/src/lora_dechirp.py",
+    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/pid-nn-norm-compare/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/natural-gradient-nn/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png",
+    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/lora-dechirp-verify/lora_snr_curve.png",
+    "-Vault空间/@Code_Project/Embeded/🚁_DroneTools/无线透传-5模-3芯片/ESP32_5Modes/笔记草稿/各种传输手段处理手法.png",
+    "-Vault空间/@Code_Project/嵌入式/无线透传-5模-3芯片/ESP32_Transmission_5Modes_V3/笔记草稿/各种传输手段处理手法.png",
+    "-Vault空间/@Code_Project/嵌入式/ESP/无线透传-5模-3芯片/ESP32_Transmission_5Modes_V3/笔记草稿/各种传输手段处理手法.png",
     "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/lora_snr_curve.png",
     "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png",
-    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/-给人类解释.md",
-    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/-PRD.md",
-    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/pid-nn-norm-compare/-CONTEXT.md",
-    "AGENTS.md",
-    "z_临时提问位置_方便打字.md",
-    "-Vault空间/@Code_Project/Python/✈️_无人机开发/🛬_Ardupilot_工具/MagCal_Tool/CLAUDE.md",
-    "-Vault空间/@Code_Project/Python/✈️_无人机开发/🛬_Ardupilot_工具/MagCal_Tool/2_数学原理.md",
-    "-Vault空间/@Code_Project/Python/✈️_无人机开发/🛬_Ardupilot_工具/MagCal_Tool/1_程序结构.md",
-    "-Vault空间/@Code_Project/Python/✈️_无人机开发/MagCal_Tool/CLAUDE.md",
-    "-Vault空间/@Code_Project/Python/✈️_无人机开发/MagCal_Tool/2_数学原理.md",
-    "-Vault空间/@Code_Project/Python/✈️_无人机开发/MagCal_Tool/1_程序结构.md",
-    "-Vault空间/@Code_Project/Python/无人机开发/MagCal_Tool/CLAUDE.md",
-    "-Vault空间/@Code_Project/Python/无人机开发/MagCal_Tool/2_数学原理.md",
-    "-Vault空间/@Code_Project/Python/无人机开发/MagCal_Tool/1_程序结构.md",
-    "-Vault空间/@Code_Project/Python/MagCal_Tool/CLAUDE.md",
-    "-Vault空间/@Code_Project/Python/MagCal_Tool/2_数学原理.md",
-    "-Vault空间/@Code_Project/Python/MagCal_Tool/1_程序结构.md",
-    "0_AI接入口在哪？.md",
-    "-Vault空间/@Code_Project/01_给人类看的.md",
-    "z_临时AI回复位置_方便阅读.md",
-    "1_人类接入手册_修订版.md",
-    "-Vault自身进化/-人类与AI交互手册/AI提示词分隔符指南.md",
-    "-Vault空间/@Code_Project/Python/lora-dechirp-verify/lora_demod_viz.png",
-    "-Vault空间/@Code_Project/Python/lora-dechirp-verify/lora_snr_curve.png"
+    "-Vault空间/@Code_Project/Python/lora-dechirp-verify/lora_demod_viz.png"
   ]
 }
