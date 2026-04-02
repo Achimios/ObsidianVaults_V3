@@ -41,12 +41,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "-CONTEXT_old备份.md",
+                "file": "CLAUDE.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "-CONTEXT_old备份"
+              "title": "CLAUDE"
             }
           }
         ],
@@ -214,8 +214,9 @@
   },
   "active": "512b88029256a514",
   "lastOpenFiles": [
-    "z_临时提问位置_方便打字.md",
+    "1_人类接入手册_修订版.md",
     "-CONTEXT_old备份.md",
+    "z_临时提问位置_方便打字.md",
     "0_AI接入口在哪？.md",
     "-人类思维笔记/Y_从他人的AI工作流学习/ai_Copilot_SKILL/研究报告_Agent_Skills机制.md",
     "-Vault自身进化/-软件操作手册/VSCode-Copilot 指令机制参考.md",
@@ -223,7 +224,6 @@
     "-Vault自身进化/-软件操作手册/VSCode-Copilot SubAgent机制.md",
     "-人类思维笔记/Y_从他人的AI工作流学习/ai_ClaudeCode/z_ClaudeCode研究后可执行操作.md",
     "-人类思维笔记/Y_从他人的AI工作流学习/ai_Copilot_SKILL",
-    "1_人类接入手册_修订版.md",
     "-人类思维笔记/CLAUDE.md",
     "-Vault空间/@Code_Project/Python/CLAUDE.md",
     "-Vault空间/@Code_Project/-架构方法演示/-局部指令表&注释码表系统_演示/CLAUDE.md",
