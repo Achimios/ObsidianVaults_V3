@@ -14,13 +14,16 @@ from dsp import (
 class DrawMixin:
 
         def _compute_sine_total(self):
-            """Sum all sine injection signals (half-Hann window + local noise). Cached by param key."""
+            """Sum all sine injection signals (half-Hann window + local noise). Cached by param key.
+            Supports single-freq, chirp (f_start≠f_end), and FM (f_mod>0)."""
             items = getattr(self, '_sine_items', [])
             if not items:
                 self._sine_cache_key = None
                 return np.zeros(N_SIG)
             key = tuple(
-                (it['freq'].value(), it['amp'].value(), it['trans'].value(),
+                (it['freq'].value(), it.get('freq_end', it['freq']).value(),
+                 it.get('f_mod', it['freq']).value() if hasattr(it.get('f_mod', None), 'value') else 0,
+                 it['amp'].value(), it['trans'].value(),
                  it['t0'].value(), it['t1'].value(),
                  it['w_rms'].value(), it['p_rms'].value(), it['p_oct'].value(),
                  it.get('chk_en') is None or it['chk_en'].isChecked())
@@ -33,9 +36,11 @@ class DrawMixin:
             for item in items:
                 if item.get('chk_en') is not None and not item['chk_en'].isChecked():
                     continue
-                freq  = item['freq'].value();  amp   = item['amp'].value()
-                trans = item['trans'].value(); t0    = item['t0'].value()
-                t1    = item['t1'].value()
+                f_start = item['freq'].value()
+                f_end   = item['freq_end'].value() if 'freq_end' in item else f_start
+                f_mod_v = item['f_mod'].value()    if 'f_mod'   in item else 0.0
+                amp   = item['amp'].value()
+                trans = item['trans'].value(); t0 = item['t0'].value(); t1 = item['t1'].value()
                 w_rms = item['w_rms'].value(); p_rms = item['p_rms'].value()
                 p_oct = int(item['p_oct'].value())
                 dur   = t1 - t0
@@ -52,9 +57,20 @@ class DrawMixin:
                     window[mx_mid] = 1.0
                 else:
                     window[(t_full >= t0) & (t_full <= t1)] = 1.0
-                total += amp * np.sin(2 * np.pi * freq * t_full) * window
+                # Phase synthesis: chirp + optional FM modulation
+                if abs(f_end - f_start) > 0.5:  # chirp
+                    k = (f_end - f_start) / dur
+                    t_loc = np.clip(t_full - t0, 0, dur)
+                    phase = 2 * np.pi * (f_start * t_loc + 0.5 * k * t_loc**2)
+                else:
+                    phase = 2 * np.pi * f_start * t_full
+                if f_mod_v > 0:
+                    seed_fm = int(f_start * 73 + f_end * 37 + t0 * 11) % (2**31)
+                    lfo = perlin_noise_1d(N_SIG, octaves=3, seed=seed_fm)  # slow modulator
+                    phase += 2 * np.pi * f_mod_v * np.cumsum(lfo) / FS
+                total += amp * np.sin(phase) * window
                 if w_rms > 0 or p_rms > 0:
-                    seed = int(freq * 100 + amp + t0 * 10) % (2**31)
+                    seed = int(f_start * 100 + amp + t0 * 10) % (2**31)
                     rng  = np.random.default_rng(seed)
                     loc  = np.zeros(N_SIG)
                     if w_rms > 0: loc += rng.standard_normal(N_SIG) * w_rms
@@ -97,9 +113,12 @@ class DrawMixin:
                 ax5.set_xlim(xlim); ax5.set_ylim(ylim)
                 self.canvas.draw_idle()
                 return
-            s_stick = self._compute_stick_signal()
+            _use_stick = getattr(self, 'chk_stick_en', None)
+            _draw_stick = (_use_stick is None or _use_stick.isChecked())
+            s_stick = self._compute_stick_signal() if _draw_stick else np.zeros(N_SIG)
             dec = 10; t = np.arange(N_SIG)[::dec] / FS
-            ax5.plot(t, s_stick[::dec], color=T['stick'], lw=0.85, alpha=0.85)
+            if _draw_stick:
+                ax5.plot(t, s_stick[::dec], color=T['stick'], lw=0.85, alpha=0.85)
             ax5.scatter([0.0, float(N_SECONDS)],
                         [self._anchor_y[0], self._anchor_y[1]],
                         color=T['dot'], s=38, marker='s', zorder=7)
@@ -208,7 +227,8 @@ class DrawMixin:
             signal = _wp + self._noise_res
 
             # ── 打杆信号 + 正弦注入（贯穿全程）──
-            s_stick      = self._compute_stick_signal()
+            _use_stick   = getattr(self, 'chk_stick_en', None)
+            s_stick      = self._compute_stick_signal() if (_use_stick is None or _use_stick.isChecked()) else np.zeros(N_SIG)
             s_sine_total = self._compute_sine_total()
             signal_ws = signal + s_stick + s_sine_total   # combined input to filters
 

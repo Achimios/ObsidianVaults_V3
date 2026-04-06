@@ -115,10 +115,21 @@ class UIMixin:
             lw_tc = QLabel("t中:"); lw_tc.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_tc.setFixedWidth(28)
             tc_row.addWidget(lw_tc); tc_row.addWidget(tc_spin)
             lay.addLayout(tc_row)
-            freq  = self._spin(1, 500, 20, 0, "Hz", 5)
+            freq  = self._spin(1, 9999, 20, 0, "Hz", 5)
+            freq_end = self._spin(1, 9999, 20, 0, "Hz", 5)
+            freq_end.setToolTip("起止频率相同时=单频，不同时=Chirp扫频")
             amp   = self._spin(1, 1000, 100, 0, "dps", 10)
+            f_mod = self._spin(0, 500, 0, 0, "Hz", 1)
+            f_mod.setToolTip("频率调制（FM）的最大频偏幅度，0=关闭")
             trans = self._spin(0, 0.5, 0.1, 2, "", 0.05)
-            for lbl, w in [("频率:", freq), ("幅度:", amp), ("过渡区:", trans)]:
+            # f起/f止 side-by-side row
+            fq_row = QHBoxLayout()
+            lw_f0 = QLabel("f起:"); lw_f0.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_f0.setFixedWidth(28)
+            lw_f1 = QLabel("f止:"); lw_f1.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_f1.setFixedWidth(28)
+            fq_row.addWidget(lw_f0); fq_row.addWidget(freq)
+            fq_row.addWidget(lw_f1); fq_row.addWidget(freq_end)
+            lay.addLayout(fq_row)
+            for lbl, w in [("幅度:", amp), ("FM频偏:", f_mod), ("过渡区:", trans)]:
                 row = QHBoxLayout()
                 lw = QLabel(lbl); lw.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw.setFixedWidth(50)
                 row.addWidget(lw); row.addWidget(w); lay.addLayout(row)
@@ -132,7 +143,8 @@ class UIMixin:
             chk_en = QCheckBox("启用"); chk_en.setChecked(True)
             chk_en.stateChanged.connect(lambda _: self._schedule())
             lay.addWidget(chk_en)
-            item = {'box': box, 'freq': freq, 'amp': amp, 'trans': trans,
+            item = {'box': box, 'freq': freq, 'freq_end': freq_end, 'f_mod': f_mod,
+                    'amp': amp, 'trans': trans,
                     't0': t0_spin, 't1': t1_spin, 'tctr': tc_spin, 'chk_en': chk_en,
                     'w_rms': w_rms, 'p_rms': p_rms, 'p_oct': p_oct, 'btn_rng': btn_rng}
             btn_del.clicked.connect(lambda: self._remove_sine_item(item))
@@ -185,6 +197,8 @@ class UIMixin:
             """Duplicate a sine injection entry with identical parameters."""
             item = self._build_sine_item(len(self._sine_items) + 1)
             item['freq'].setValue(src['freq'].value())
+            item['freq_end'].setValue(src['freq_end'].value())
+            item['f_mod'].setValue(src['f_mod'].value())
             item['amp'].setValue(src['amp'].value())
             item['trans'].setValue(src['trans'].value())
             item['t0'].setValue(src['t0'].value())
@@ -405,6 +419,9 @@ class UIMixin:
                 btn.clicked.connect(lambda _, mode=m: self._set_stick_mode(mode))
             self.btn_stick_clr.clicked.connect(self._clear_sticks)
             sb_layout.addLayout(mode_row)
+            self.chk_stick_en = QCheckBox("启用"); self.chk_stick_en.setChecked(True)
+            self.chk_stick_en.stateChanged.connect(lambda _: self._schedule())
+            sb_layout.addWidget(self.chk_stick_en)
             inj_lay.addWidget(stick_box)
             # 注入正弦
             self._sine_items = []
@@ -416,6 +433,26 @@ class UIMixin:
             self._sine_layout.addWidget(btn_add_sine)
             inj_lay.addWidget(sine_box)
             pl.addWidget(inject_box)
+
+            # ── 自定义传递函数 H(s) (UI skeleton, 后端 pending) ──
+            from PyQt5.QtWidgets import QLineEdit
+            hs_box = QGroupBox("自定义滤波器 H(s)")
+            hs_lay = QVBoxLayout(hs_box); hs_lay.setContentsMargins(5, 8, 5, 5); hs_lay.setSpacing(3)
+            self.chk_hs_en = QCheckBox("启用"); self.chk_hs_en.setChecked(False)
+            self.chk_hs_en.setToolTip("后端 pending — UI 骨架")
+            hs_lay.addWidget(self.chk_hs_en)
+            for lbl_txt, attr in [("分子 b:", "hs_num"), ("分母 a:", "hs_den")]:
+                row = QHBoxLayout()
+                lw  = QLabel(lbl_txt); lw.setFixedWidth(46)
+                lw.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                le  = QLineEdit(); le.setPlaceholderText("系数, 以逗号分隔")
+                le.setEnabled(False)   # backend not ready
+                setattr(self, attr, le)
+                row.addWidget(lw); row.addWidget(le); hs_lay.addLayout(row)
+            hs_status = QLabel("<small style='color:#778'>后端 pending</small>"); hs_status.setWordWrap(True)
+            hs_lay.addWidget(hs_status)
+            self.hs_status_label = hs_status
+            pl.addWidget(hs_box)
 
             note = QLabel(
                 "<small>"
