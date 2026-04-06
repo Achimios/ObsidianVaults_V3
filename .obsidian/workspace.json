@@ -13,15 +13,30 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "z_临时提问位置_方便打字.md",
+                "file": "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "z_临时提问位置_方便打字"
+              "title": "0.0_Doubao"
+            }
+          },
+          {
+            "id": "dd0d5e32ca772244",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "0.0_Doubao"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -156,13 +171,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "z_临时提问位置_方便打字.md",
+                "file": "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "z_临时提问位置_方便打字 的大纲"
+              "title": "0.0_Doubao 的大纲"
             }
           }
         ],
@@ -170,8 +185,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 289.5,
-    "collapsed": true
+    "width": 289.5
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -184,9 +198,20 @@
       "bases:新建数据库": false
     }
   },
-  "active": "2f0fd2b1513e557d",
+  "active": "dd0d5e32ca772244",
   "lastOpenFiles": [
+    "-人类思维笔记/z_范数空间/0.0_Doubao_范数空间.md",
+    "-人类思维笔记/-CONTEXT.md",
+    "-人类思维笔记/z_文本格式的讨论/0.1_Copilot_Gemini方案审阅与V3实践.md",
+    "-人类思维笔记/z_文本格式的讨论/0.0_Gemini_二进制码表注入&高熵断句符.md",
+    "-人类思维笔记/z_非线性Chirp解调/00_Gemini_.md",
+    "-人类思维笔记/z_范数空间/0.1_Copilot_Thinking.md",
     "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
+    "-人类思维笔记/z_范数空间/0.2_Copilot_可执行操作.md",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/4_L3旋转.py",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/4_.py",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/新建文本文档.txt",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/新建文件夹",
     "z_临时提问位置_方便打字.md",
     "-人类思维笔记/B_一些思考/关于宇宙和数学本质",
     "-人类思维笔记/B_一些思考",
@@ -194,12 +219,8 @@
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__trash/1.1_豆包_.py",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__pycache__/2_Copilot_交互式分析仪_PT1vsLKF.cpython-310.pyc",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__trash",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__pycache__",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/AGENTS.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/2_Copilot_交互式分析仪_PT1vsLKF.py",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF",
-    "_compile_check.txt",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-🛒PRD.md",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-🌲项目架构.md",
@@ -217,13 +238,6 @@
     "-人类思维笔记/L_数学学习/S_范数/0_AI解释示例.md",
     "-人类思维笔记/-Base演示_希尔伯特/-subWikis/线性代数基础.md",
     "-人类思维笔记/-Base演示_希尔伯特/希尔伯特空间.md",
-    "1_人类接入手册_修订版.md",
-    "-Vault自身进化/-软件操作手册/VSCode-Copilot SubAgent机制.md",
-    "-Vault自身进化/-软件操作手册/VSCode-Copilot SKILL机制.md",
-    "-Vault自身进化/-软件操作手册/VSCode-Copilot 指令机制参考.md",
-    "软件操作手册/VSCode-Copilot指令机制参考.md",
-    "VSCode-Copilot指令机制参考.md",
-    "-Vault自身进化/-人类与AI交互手册/AI提示词分隔符指南.md",
     "-人类思维笔记/L_AkiDynamic/未命名.canvas",
     "-人类思维笔记/__trash/ai_Copilot_SKILL/__attatch/Pasted image 20260404032510.png",
     "_attatch/Pasted image 20260404025406.png",

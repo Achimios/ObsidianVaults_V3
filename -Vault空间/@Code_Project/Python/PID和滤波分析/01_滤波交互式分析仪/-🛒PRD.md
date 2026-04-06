@@ -20,20 +20,25 @@
 | PT1 + 2-state LKF 滤波器 + Bode 图 | ✅ |
 | Notch A/B 陷波器 | ✅ |
 | 机架共振 A/B 模拟（单峰 + 分布模式）| ✅ |
-| Perlin 噪声 + 白噪声合成陀螺信号 | ✅ |
-| 打杆曲线 CubicSpline + 锚点 | ✅ |
+| Perlin 噪声 + 白噪声合成陀螺信号（白噪声/Perlin min=0，倍频程最大8）| ✅ |
+| 打杆曲线 CubicSpline + 锚点 + 启用复选框 | ✅ |
 | 群延迟可视化 | ✅ |
 | PSD（功率谱密度）| ✅ |
 | 图层独立显示/隐藏 | ✅ |
 | zoom/pan 跨帧保留（_saved_views）| ✅ |
 | Mirror's Edge 双主题 | ✅ |
 | 多模块架构（Mixin 模式）| ✅ |
+| 正弦注入（周期波_N：t起/t中/t止、f起/f止/幅度/过渡区/局部Perlin&白噪声、复制/删除/启用）| ✅ |
+| Chirp 注入（f起 ≠ f止 时自动切换线性调频，向下兼容单频）| ✅ |
+| FM 调频注入（Perlin LFO 积分相位调制，f_mod=0 时关闭）| ✅ |
+| ⇄ 范围画布拖拽（3区：左=t起/中=平移/右=t止，ax5 蓝色可视化）| ✅ |
+| 自定义传递函数 H(s) UI 骨架（num/den 输入框，后端 pending）| 🔄 |
 
 ## 下一步特性（Backlog）
 | 优先级 | 特性 |
 |---|---|
-| P1 | 注入正弦（动态追加 "周期波_N" GroupBox，half-Hann 加窗）|
-| P2 | 加载真实 Blackbox 日志（.csv 陀螺通道）|
+| P1 | H(s) 后端：scipy.signal.bilinear 解析 num/den，接入频响 + 时域 |
+| P2 | 加载真实 Blackbox 日志（.csv 陀螺通道，黑匣子模式）|
 | P3 | 更多滤波器类型（Butterworth / BiQuad 参数化）|
 | P4 | 导出分析报告 PDF / 截图 |
 | P5 | 拆为 AkiLabs 通用动力学分析工具的子模块 |
