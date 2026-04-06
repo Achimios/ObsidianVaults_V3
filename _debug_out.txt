@@ -1,0 +1,24 @@
+[DBG] _set_stick_mode('adj')  nmt.mode=<_Mode.NONE: ''>  .value=''
+  chk action[4] text='Pan' checked=False
+  chk action[5] text='Zoom' checked=False
+[DBG] _set_stick_mode('add')  nmt.mode=<_Mode.PAN: 'pan/zoom'>  .value='pan/zoom'
+  chk action[4] text='Pan' checked=True
+  chk action[5] text='Zoom' checked=False
+[DBG] _set_stick_mode('adj')  nmt.mode=<_Mode.ZOOM: 'zoom rect'>  .value='zoom rect'
+  chk action[4] text='Pan' checked=False
+  chk action[5] text='Zoom' checked=True
+[DBG] _set_stick_mode('del')  nmt.mode=<_Mode.NONE: ''>  .value=''
+  chk action[4] text='Pan' checked=False
+  chk action[5] text='Zoom' checked=False
+[DBG] _set_stick_mode('adj')  nmt.mode=<_Mode.NONE: ''>  .value=''
+  chk action[4] text='Pan' checked=False
+  chk action[5] text='Zoom' checked=False
+[DBG] _set_stick_mode('add')  nmt.mode=<_Mode.PAN: 'pan/zoom'>  .value='pan/zoom'
+  chk action[4] text='Pan' checked=True
+  chk action[5] text='Zoom' checked=False
+[DBG] _set_stick_mode('adj')  nmt.mode=<_Mode.ZOOM: 'zoom rect'>  .value='zoom rect'
+  chk action[4] text='Pan' checked=False
+  chk action[5] text='Zoom' checked=True
+[DBG] _set_stick_mode('add')  nmt.mode=<_Mode.ZOOM: 'zoom rect'>  .value='zoom rect'
+  chk action[4] text='Pan' checked=False
+  chk action[5] text='Zoom' checked=True

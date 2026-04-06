@@ -180,15 +180,16 @@ class FilterAnalyzer(QMainWindow):
         self._noise_wp    = None
         self._noise_res   = None
         self._noise_key   = None
-        self._last_ax5    = None
+        self._last_axes   = [None] * 5
+        self._saved_views = [None] * 5
+        self._saved_views[4] = ([0.0, float(N_SECONDS)], [-400.0, 400.0])
+        self._views_reset = False  # skip save on next tick after home
         self._stick_pts   = []      # [(t, y)] user control points (not anchors)
         self._anchor_y    = [0.0, 0.0]   # y at t=0 and t=N_SECONDS
         self._stick_mode  = 'add'   # 'add' | 'del' | 'adj'
         self._drag_idx    = None    # index into _build_all_pts() during adj drag
         self._drag_is_anchor = False
         self._drag_anchor_idx = None
-        self._ax5_xlim    = [0.0, float(N_SECONDS)]
-        self._ax5_ylim    = [-400.0, 400.0]
         self._td_cache    = None    # (signal, b_pt1, a_pt1, b_lkf, a_lkf,
                                     #  use_n1, b_n1, a_n1, use_n2, b_n2, a_n2)
         self._dark_mode   = True    # Mirror's Edge dark by default
@@ -198,6 +199,22 @@ class FilterAnalyzer(QMainWindow):
         self._stick_timer = QTimer(); self._stick_timer.setSingleShot(True)
         self._stick_timer.setInterval(80); self._stick_timer.timeout.connect(self._do_update)
         self._build_ui()
+        # Home button: reconnect QAction signal (instance attr won't intercept Qt signal)
+        def _new_home(*_a, **_kw):
+            self._saved_views = [None] * 5
+            self._saved_views[4] = ([0.0, float(N_SECONDS)], [-400.0, 400.0])
+            self._views_reset = True  # skip save on next tick
+            self._schedule()
+        for _act in self.nav_toolbar.actions():
+            if _act.text() == 'Home':
+                _act.triggered.disconnect()
+                _act.triggered.connect(_new_home)
+                break
+        # Store original toolbar icons (created for dark bg = light icons)
+        self._toolbar_icons_orig = {}
+        for _act in self.nav_toolbar.actions():
+            if not _act.icon().isNull():
+                self._toolbar_icons_orig[id(_act)] = (_act, _act.icon())
         self.canvas.mpl_connect('button_press_event',   self._on_canvas_click)
         self.canvas.mpl_connect('motion_notify_event',  self._on_canvas_drag)
         self.canvas.mpl_connect('button_release_event', self._on_canvas_release)
@@ -253,11 +270,18 @@ class FilterAnalyzer(QMainWindow):
         btn_row.addWidget(self.btn_x); btn_row.addWidget(self.btn_y)
         pl.addLayout(btn_row)
 
-        # 放大独显
-        self.solo_combo = QComboBox()
-        self.solo_combo.addItems(["全部显示", "① 幅频", "② 相频", "③ 群延迟", "④ PSD", "⑤ 时域"])
-        self.solo_combo.currentIndexChanged.connect(lambda _: self._schedule())
-        pl.addWidget(self.solo_combo)
+        # 图层显示
+        show_grp = QGroupBox('图层显示'); show_lay = QGridLayout(show_grp)
+        show_lay.setSpacing(2)
+        _show_names = ["① 幅频", "② 相频", "③ 群延迟", "④ PSD", "⑤ 时域"]
+        self.chk_show = []
+        for _i, _nm in enumerate(_show_names):
+            _chk = QCheckBox(_nm)
+            _chk.setChecked(True)
+            _chk.stateChanged.connect(lambda _: self._schedule())
+            self.chk_show.append(_chk)
+            show_lay.addWidget(_chk, _i // 2, _i % 2)
+        pl.addWidget(show_grp)
 
         # 主题切换
         self.btn_theme = QPushButton("☀ 亮色主题")
@@ -471,7 +495,7 @@ class FilterAnalyzer(QMainWindow):
             return
         if self._stick_mode != 'adj' or self._drag_idx is None:
             return
-        ax5 = self._last_ax5
+        ax5 = self._last_axes[4]
         if ax5 is None: return
         x, y = event.xdata, event.ydata
         if x is None or y is None: return
@@ -497,7 +521,7 @@ class FilterAnalyzer(QMainWindow):
         """Stick interaction: left click per mode; right click removes in range."""
         if self.nav_toolbar.mode:   # zoom/pan active — skip
             return
-        ax5 = self._last_ax5
+        ax5 = self._last_axes[4]
         if ax5 is None or not ax5.in_axes(event): return
         x, y = event.xdata, event.ydata
         if x is None or y is None: return
@@ -548,11 +572,14 @@ class FilterAnalyzer(QMainWindow):
     # ── 绘图核心 ─────────────────────────────────────────────────
     def _do_update(self):
         # 保存时域轴缩放状态
-        if self._last_ax5 is not None:
-            try:
-                self._ax5_xlim = list(self._last_ax5.get_xlim())
-                self._ax5_ylim = list(self._last_ax5.get_ylim())
-            except Exception: pass
+        if not self._views_reset:
+            for _i, _la in enumerate(self._last_axes):
+                if _la is not None:
+                    try:
+                        self._saved_views[_i] = (list(_la.get_xlim()), list(_la.get_ylim()))
+                    except Exception:
+                        pass
+        self._views_reset = False
 
         fs = FS
 
@@ -668,28 +695,35 @@ class FilterAnalyzer(QMainWindow):
         # ══════════════════════════════════════════════
         #  绘图
         # ══════════════════════════════════════════════
-        solo = self.solo_combo.currentIndex()
+        en = [chk.isChecked() for chk in self.chk_show]
+        n_en = sum(en)
         self.fig.clear()
         T = self._DARK if self._dark_mode else self._LIGHT
         self.fig.set_facecolor(T['fig'])
-        if solo == 0:
-            gs = GridSpec(5, 1, figure=self.fig,
-                          height_ratios=[3.0, 2.0, 1.4, 2.8, 1.4],
+        if n_en == 0:
+            self.canvas.draw_idle()
+            return
+        _all_hr = [3.0, 2.0, 1.4, 2.8, 1.4]
+        _en_hr  = [_all_hr[i] for i, e in enumerate(en) if e]
+        if n_en > 1:
+            gs = GridSpec(n_en, 1, figure=self.fig,
+                          height_ratios=_en_hr,
                           hspace=0.42,
                           left=0.065, right=0.975, top=0.965, bottom=0.045)
-            ax1 = self.fig.add_subplot(gs[0])
-            ax2 = self.fig.add_subplot(gs[1])
-            ax3 = self.fig.add_subplot(gs[2])
-            ax4 = self.fig.add_subplot(gs[3])
-            ax5 = self.fig.add_subplot(gs[4])
         else:
-            _ax = self.fig.add_subplot(1, 1, 1)
+            gs = None
             self.fig.subplots_adjust(left=0.07, right=0.975, top=0.955, bottom=0.085)
-            ax1 = _ax if solo == 1 else None
-            ax2 = _ax if solo == 2 else None
-            ax3 = _ax if solo == 3 else None
-            ax4 = _ax if solo == 4 else None
-            ax5 = _ax if solo == 5 else None
+        _axes = []; _gi = 0
+        for _ei in en:
+            if _ei:
+                if gs is not None:
+                    _axes.append(self.fig.add_subplot(gs[_gi]))
+                else:
+                    _axes.append(self.fig.add_subplot(1, 1, 1))
+                _gi += 1
+            else:
+                _axes.append(None)
+        ax1, ax2, ax3, ax4, ax5 = _axes
 
         C_PT1 = T['pt1']; C_LKF = T['lkf']; C_GRID = T['grid']
 
@@ -795,7 +829,8 @@ class FilterAnalyzer(QMainWindow):
                                 color=T['dot'], s=22, zorder=6)
             # 删除模式：1/200 视图宽度区域（含锚点保护不显示）
             if self._stick_mode == 'del' and self._stick_pts:
-                zone = (self._ax5_xlim[1] - self._ax5_xlim[0]) / 200.0
+                _sv4 = self._saved_views[4] or ([0.0, float(N_SECONDS)], None)
+                zone = (_sv4[0][1] - _sv4[0][0]) / 200.0
                 for pt in self._stick_pts:
                     ax5.axvspan(pt[0] - zone/2, pt[0] + zone/2,
                                 alpha=0.15, color=T['dot'], zorder=2)
@@ -810,17 +845,34 @@ class FilterAnalyzer(QMainWindow):
             ax5.set_ylabel("dps",     color=T['label'], fontsize=8)
             ax5.legend(fontsize=7.5, facecolor=T['legend_bg'], labelcolor=T['legend_txt'],
                        framealpha=0.85, loc="upper right", ncol=4)
-            ax5.set_xlim(self._ax5_xlim)
-            ax5.set_ylim(self._ax5_ylim)
-            self._last_ax5 = ax5
+        # Restore saved views for all axes (zoom/pan preserved across ticks)
+        for _i, _ax in enumerate([ax1, ax2, ax3, ax4, ax5]):
+            if _ax is not None and self._saved_views[_i] is not None:
+                _ax.set_xlim(self._saved_views[_i][0])
+                _ax.set_ylim(self._saved_views[_i][1])
+        self._last_axes = [ax1, ax2, ax3, ax4, ax5]
 
         self.canvas.draw()
+
+    def _update_toolbar_icons(self):
+        """Invert toolbar icon RGB for light mode so they are visible on light bg."""
+        from PyQt5.QtGui import QImage, QIcon, QPixmap
+        for _id, (_act, _orig_ico) in self._toolbar_icons_orig.items():
+            if self._dark_mode:
+                _act.setIcon(_orig_ico)
+            else:
+                _px = _orig_ico.pixmap(32, 32)
+                _img = _px.toImage()
+                _img.invertPixels(QImage.InvertRgb)
+                _act.setIcon(QIcon(QPixmap.fromImage(_img)))
+        self.nav_toolbar.update()
 
     def _toggle_theme(self, checked):
         """Switch between dark (Mirror's Edge) and light themes."""
         self._dark_mode = not checked
         T = self._DARK if self._dark_mode else self._LIGHT
         self.nav_toolbar.setStyleSheet(T['tbar'])
+        self._update_toolbar_icons()
         self.btn_theme.setText("☀ 亮色主题" if self._dark_mode else "🌙 深色主题")
         from PyQt5.QtGui import QPalette, QColor
         pal = QPalette()
