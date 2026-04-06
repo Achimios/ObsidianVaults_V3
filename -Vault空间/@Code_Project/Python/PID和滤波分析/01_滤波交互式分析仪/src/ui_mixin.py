@@ -135,7 +135,7 @@ class UIMixin:
                 row.addWidget(lw); row.addWidget(w); lay.addLayout(row)
             w_rms = self._spin(0, 500, 0, 0, "dps", 5)
             p_rms = self._spin(0, 200, 0, 0, "dps", 2)
-            p_oct = self._ispin(1, 9999, 4)
+            p_oct = self._ispin(1, 8, 4)
             for lbl, w in [("白噪音:", w_rms), ("Perlin:", p_rms), ("倍频程:", p_oct)]:
                 row = QHBoxLayout()
                 lw = QLabel(lbl); lw.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw.setFixedWidth(50)
@@ -389,7 +389,7 @@ class UIMixin:
             self.chk_noise_en.stateChanged.connect(lambda _: self._schedule())
             self.white_rms  = self._spin(0, 2000,  20, 0, "dps", 5)
             self.perlin_rms = self._spin(0,  500,   8, 0, "dps", 2)
-            self.perlin_oct = self._ispin(1, 9999, 4)
+            self.perlin_oct = self._ispin(1, 8, 4)
             pl.addWidget(self._group("全局噪声参数", [
                 ("白噪声:", self.white_rms),
                 ("Perlin:", self.perlin_rms),
