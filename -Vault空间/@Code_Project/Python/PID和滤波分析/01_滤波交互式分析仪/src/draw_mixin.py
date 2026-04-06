@@ -13,6 +13,43 @@ from dsp import (
 
 class DrawMixin:
 
+        def _compute_sine_total(self):
+            """Sum all sine injection signals (stick + windowed sine + local noise)."""
+            if not getattr(self, '_sine_items', []):
+                return np.zeros(N_SIG)
+            t_full = np.arange(N_SIG) / FS
+            total  = np.zeros(N_SIG)
+            for item in self._sine_items:
+                freq  = item['freq'].value();  amp   = item['amp'].value()
+                trans = item['trans'].value(); t0    = item['t0'].value()
+                t1    = item['t1'].value()
+                w_rms = item['w_rms'].value(); p_rms = item['p_rms'].value()
+                p_oct = int(item['p_oct'].value())
+                dur   = t1 - t0
+                if dur <= 0:
+                    continue
+                window = np.zeros(N_SIG)
+                fade   = max(0.0, trans) * dur
+                if fade > 0:
+                    mx_in  = (t_full >= t0) & (t_full < t0 + fade)
+                    mx_out = (t_full > t1 - fade) & (t_full <= t1)
+                    mx_mid = (t_full >= t0 + fade) & (t_full <= t1 - fade)
+                    window[mx_in]  = 0.5 * (1 - np.cos(np.pi*(t_full[mx_in]  - t0) / fade))
+                    window[mx_out] = 0.5 * (1 - np.cos(np.pi*(t1 - t_full[mx_out]) / fade))
+                    window[mx_mid] = 1.0
+                else:
+                    window[(t_full >= t0) & (t_full <= t1)] = 1.0
+                total += amp * np.sin(2 * np.pi * freq * t_full) * window
+                if w_rms > 0 or p_rms > 0:
+                    seed = int(freq * 100 + amp + t0 * 10) % (2**31)
+                    rng  = np.random.default_rng(seed)
+                    loc  = np.zeros(N_SIG)
+                    if w_rms > 0: loc += rng.standard_normal(N_SIG) * w_rms
+                    if p_rms > 0: loc += perlin_noise_1d(N_SIG, octaves=p_oct, seed=seed+1) * p_rms
+                    total += loc * window
+            return total
+
+
         def _do_update_drag(self):
             """拖拽中轻量更新 — 仅重绘打杆曲线+控制点，跳过噪声/滤波/PSD/频响。"""
             ax5 = self._last_axes[4]
@@ -95,6 +132,8 @@ class DrawMixin:
             b_n2, a_n2 = notch_coeffs(self.f_n2.value(), self.q_n2.value(), fs)
             use_n1 = self.n1_en.isChecked()
             use_n2 = self.n2_en.isChecked()
+            use_pt1 = self.chk_pt1_en.isChecked()
+            use_lkf = self.chk_lkf_en.isChecked()
 
             # ── 噪声生成（缓存）──
             nk = (self.chk_noise_en.isChecked(),
@@ -133,9 +172,10 @@ class DrawMixin:
             _wp = self._noise_wp if self.chk_noise_en.isChecked() else np.zeros(N_SIG)
             signal = _wp + self._noise_res
 
-            # ── 打杆信号（贯穿全程）──
-            s_stick   = self._compute_stick_signal()
-            signal_ws = signal + s_stick   # combined input to filters
+            # ── 打杆信号 + 正弦注入（贯穿全程）──
+            s_stick      = self._compute_stick_signal()
+            s_sine_total = self._compute_sine_total()
+            signal_ws = signal + s_stick + s_sine_total   # combined input to filters
 
             # ── 缓存 filter coeffs（供快速局部更新用）──
             self._td_cache = (signal, b_pt1, a_pt1, b_lkf, a_lkf,
@@ -191,8 +231,9 @@ class DrawMixin:
             # ── 时域（抽取显示）──
             dec = 10
             t   = np.arange(N_SIG)[::dec] / fs
-            sp  = signal_ws[::dec]          # 输入（噪声+打杆）
+            sp  = signal_ws[::dec]          # 输入（噪声+打杆+注入）
             sk  = s_stick[::dec]            # 纯打杆
+            si  = s_sine_total[::dec]       # 正弦注入
             pp  = out_pt1_n_td[::dec]       # PT1 响应
             lp  = out_lkf_n_td[::dec]       # LKF 响应
 
@@ -255,11 +296,11 @@ class DrawMixin:
                     mg = np.abs
                     ax1.set_ylim(-0.05, 1.15); ax1.axhline(1.0, color=T['href'], lw=0.7, ls=":")
                     ylabel_mag = "Gain (×)"
-                ax1.plot(f_ax, mg(H_pt1),   color=C_PT1, lw=0.6, ls="--", alpha=0.55,
-                         label=f"PT1 {self.fc_pt1.value():.0f}Hz")
-                ax1.plot(f_ax, mg(H_lkf),   color=C_LKF, lw=0.6, ls="--", alpha=0.55, label="LKF")
-                ax1.plot(f_ax, mg(H_pt1_n), color=C_PT1, lw=1.3, label="PT1+Notch")
-                ax1.plot(f_ax, mg(H_lkf_n), color=C_LKF, lw=1.3, label="LKF+Notch")
+                if use_pt1: ax1.plot(f_ax, mg(H_pt1),   color=C_PT1, lw=0.6, ls="--", alpha=0.55,
+                                     label=f"PT1 {self.fc_pt1.value():.0f}Hz")
+                if use_lkf: ax1.plot(f_ax, mg(H_lkf),   color=C_LKF, lw=0.6, ls="--", alpha=0.55, label="LKF")
+                if use_pt1: ax1.plot(f_ax, mg(H_pt1_n), color=C_PT1, lw=1.3, label="PT1+Notch")
+                if use_lkf: ax1.plot(f_ax, mg(H_lkf_n), color=C_LKF, lw=1.3, label="LKF+Notch")
                 bands(ax1); ax1.set_xscale(xsc); ax1.set_xlim(*xlim)
                 ax1.set_ylabel(ylabel_mag, color=T['label'], fontsize=8)
                 ax1.set_title("陀螺滤波器分析仪  PT1 vs 2-state LKF (+Notch)  |  fs=2kHz",
@@ -269,10 +310,10 @@ class DrawMixin:
 
             # ── 2. 相频 ──────────────────────────────────
             if ax2 is not None:
-                ax2.plot(f_ax, np.angle(H_pt1,  deg=True), color=C_PT1, lw=0.6, ls="--", alpha=0.55)
-                ax2.plot(f_ax, np.angle(H_lkf,  deg=True), color=C_LKF, lw=0.6, ls="--", alpha=0.55)
-                ax2.plot(f_ax, np.angle(H_pt1_n, deg=True), color=C_PT1, lw=1.2, label="PT1+N")
-                ax2.plot(f_ax, np.angle(H_lkf_n, deg=True), color=C_LKF, lw=1.2, label="LKF+N")
+                if use_pt1: ax2.plot(f_ax, np.angle(H_pt1,  deg=True), color=C_PT1, lw=0.6, ls="--", alpha=0.55)
+                if use_lkf: ax2.plot(f_ax, np.angle(H_lkf,  deg=True), color=C_LKF, lw=0.6, ls="--", alpha=0.55)
+                if use_pt1: ax2.plot(f_ax, np.angle(H_pt1_n, deg=True), color=C_PT1, lw=1.2, label="PT1+N")
+                if use_lkf: ax2.plot(f_ax, np.angle(H_lkf_n, deg=True), color=C_LKF, lw=1.2, label="LKF+N")
                 bands(ax2); ax2.axhline(0, color=T['href'], lw=0.7)
                 for deg in (-90, -180): ax2.axhline(deg, color=T['href2'], lw=0.5, ls=":")
                 ax2.set_xscale(xsc); ax2.set_xlim(*xlim)
@@ -284,10 +325,10 @@ class DrawMixin:
             # ── 3. 群延迟 ────────────────────────────────
             if ax3 is not None:
                 clip = 15.0
-                ax3.plot(f_ax, np.clip(gd_pt1,  -clip, clip), color=C_PT1, lw=0.75, ls="--", alpha=0.55)
-                ax3.plot(f_ax, np.clip(gd_lkf,  -clip, clip), color=C_LKF, lw=0.75, ls="--", alpha=0.55)
-                ax3.plot(f_ax, np.clip(gd_pt1n, -clip, clip), color=C_PT1, lw=0.6, label="PT1+N")
-                ax3.plot(f_ax, np.clip(gd_lkfn, -clip, clip), color=C_LKF, lw=0.6, label="LKF+N")
+                if use_pt1: ax3.plot(f_ax, np.clip(gd_pt1,  -clip, clip), color=C_PT1, lw=0.75, ls="--", alpha=0.55)
+                if use_lkf: ax3.plot(f_ax, np.clip(gd_lkf,  -clip, clip), color=C_LKF, lw=0.75, ls="--", alpha=0.55)
+                if use_pt1: ax3.plot(f_ax, np.clip(gd_pt1n, -clip, clip), color=C_PT1, lw=0.6, label="PT1+N")
+                if use_lkf: ax3.plot(f_ax, np.clip(gd_lkfn, -clip, clip), color=C_LKF, lw=0.6, label="LKF+N")
                 bands(ax3); ax3.axhline(0, color=T['href'], lw=0.7)
                 ax3.set_xscale(xsc); ax3.set_xlim(*xlim)
                 ax3.set_ylabel("Grp Dly (ms)", color=T['label'], fontsize=8)
@@ -298,10 +339,10 @@ class DrawMixin:
             if ax4 is not None:
                 psd_plot = ax4.semilogy if self._log_yaxis else ax4.plot
                 psd_plot(f_w[mask], P_in[mask],     color=T['noise_psd'], lw=0.6,  label="输入+打杆")
-                psd_plot(f_w[mask], P_pt1_ref[mask], color=C_PT1, lw=0.5, ls="--", alpha=0.35)
-                psd_plot(f_w[mask], P_pt1n[mask],   color=C_PT1, lw=1.2,  label="PT1+N")
-                psd_plot(f_w[mask], P_lkf_ref[mask], color=C_LKF, lw=0.5, ls="--", alpha=0.35)
-                psd_plot(f_w[mask], P_lkfn[mask],   color=C_LKF, lw=1.2,  label="LKF+N")
+                if use_pt1: psd_plot(f_w[mask], P_pt1_ref[mask], color=C_PT1, lw=0.5, ls="--", alpha=0.35)
+                if use_pt1: psd_plot(f_w[mask], P_pt1n[mask],   color=C_PT1, lw=1.2,  label="PT1+N")
+                if use_lkf: psd_plot(f_w[mask], P_lkf_ref[mask], color=C_LKF, lw=0.5, ls="--", alpha=0.35)
+                if use_lkf: psd_plot(f_w[mask], P_lkfn[mask],   color=C_LKF, lw=1.2,  label="LKF+N")
                 for fr, col in [(self.fr1.value(), T['lkf']), (self.fr2.value(), T['pt1'])]:  # fr1=lkf color, fr2=pt1 color
                     ax4.axvline(fr, color=col, lw=0.65, ls=":", alpha=0.8)
                 ax4.axvspan(0, 30, alpha=0.09, color=T['band'], zorder=0)
@@ -330,8 +371,10 @@ class DrawMixin:
                              if 0.05 < t_ < N_SECONDS - 0.05]
                     if inner:
                         ax5.scatter([p[0] for p in inner], [p[1] for p in inner],
-                                    color=T['dot'], s=22, zorder=6)
-                # 删除模式：1/200 视图宽度区域（含锚点保护不显示）
+                                    color=T['dot'], s=22, zorder=6)                # 正弦注入曲线
+                has_sine = np.any(np.abs(si) > 1e-9)
+                if has_sine:
+                    ax5.plot(t, si, color=T['sine'], lw=0.75, alpha=0.80, label="正弦注入")                # 删除模式：1/200 视图宽度区域（含锚点保护不显示）
                 if self._stick_mode == 'del' and self._stick_pts:
                     _sv4 = self._saved_views[4] or ([0.0, float(N_SECONDS)], None)
                     zone = (_sv4[0][1] - _sv4[0][0]) / 200.0
@@ -339,8 +382,8 @@ class DrawMixin:
                         ax5.axvspan(pt[0] - zone/2, pt[0] + zone/2,
                                     alpha=0.15, color=T['dot'], zorder=2)
                 # 滤波输出
-                ax5.plot(t, pp, color=C_PT1, lw=0.65, label="PT1+N")
-                ax5.plot(t, lp, color=C_LKF, lw=0.65, label="LKF+N")
+                if use_pt1: ax5.plot(t, pp, color=C_PT1, lw=0.65, label="PT1+N")
+                if use_lkf: ax5.plot(t, lp, color=C_LKF, lw=0.65, label="LKF+N")
                 # 模式提示
                 _hint = {"add": "✚ 新增", "del": "✖ 删除(1/200)", "adj": "⇄ 调整"}
                 ax5.set_title(f"时域  [{_hint.get(self._stick_mode, '')}]  Y轴手动缩放",

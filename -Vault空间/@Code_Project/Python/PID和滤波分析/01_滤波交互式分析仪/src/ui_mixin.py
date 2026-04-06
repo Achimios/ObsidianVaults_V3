@@ -90,7 +90,7 @@ class UIMixin:
             self._schedule()
 
 
-        def _build_sine_item(self, n):
+        def _build_sine_item(self, n, t0=10.0, t1=20.0):
             """Create UI for one sine injection entry. Returns item dict."""
             box = QGroupBox(f"周期波_{n}")
             lay = QVBoxLayout(box)
@@ -101,6 +101,15 @@ class UIMixin:
             btn_del = QPushButton("✖ 删除"); btn_del.setFixedHeight(20)
             btn_row.addWidget(btn_dup); btn_row.addWidget(btn_rng); btn_row.addWidget(btn_del)
             lay.addLayout(btn_row)
+            # t0/t1 side-by-side row
+            t_row = QHBoxLayout()
+            lw_t0 = QLabel("t起:"); lw_t0.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_t0.setFixedWidth(28)
+            lw_t1 = QLabel("t止:"); lw_t1.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_t1.setFixedWidth(28)
+            t0_spin = self._spin(0, N_SECONDS, round(t0, 1), 1, "s", 0.5)
+            t1_spin = self._spin(0, N_SECONDS, round(t1, 1), 1, "s", 0.5)
+            t_row.addWidget(lw_t0); t_row.addWidget(t0_spin)
+            t_row.addWidget(lw_t1); t_row.addWidget(t1_spin)
+            lay.addLayout(t_row)
             freq  = self._spin(1, 500, 20, 0, "Hz", 5)
             amp   = self._spin(1, 1000, 100, 0, "dps", 10)
             trans = self._spin(0, 0.5, 0.1, 2, "", 0.05)
@@ -116,6 +125,7 @@ class UIMixin:
                 lw = QLabel(lbl); lw.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw.setFixedWidth(50)
                 row.addWidget(lw); row.addWidget(w); lay.addLayout(row)
             item = {'box': box, 'freq': freq, 'amp': amp, 'trans': trans,
+                    't0': t0_spin, 't1': t1_spin,
                     'w_rms': w_rms, 'p_rms': p_rms, 'p_oct': p_oct, 'btn_rng': btn_rng}
             btn_del.clicked.connect(lambda: self._remove_sine_item(item))
             btn_dup.clicked.connect(lambda: self._duplicate_sine_item(item))
@@ -125,7 +135,14 @@ class UIMixin:
 
         def _add_sine_injection(self):
             """Append a new sine injection entry to the panel."""
-            item = self._build_sine_item(len(self._sine_items) + 1)
+            ax5 = getattr(self, '_last_axes', [None]*5)[4]
+            if ax5 is not None:
+                xlim = ax5.get_xlim(); span = xlim[1] - xlim[0]
+                t0 = round(xlim[0] + span / 3, 1)
+                t1 = round(xlim[0] + 2 * span / 3, 1)
+            else:
+                t0, t1 = 10.0, 20.0
+            item = self._build_sine_item(len(self._sine_items) + 1, t0=t0, t1=t1)
             self._sine_items.append(item)
             self._sine_layout.addWidget(item['box'])
             QTimer.singleShot(0, self._left_pane.adjustSize)
@@ -150,6 +167,8 @@ class UIMixin:
             item['freq'].setValue(src['freq'].value())
             item['amp'].setValue(src['amp'].value())
             item['trans'].setValue(src['trans'].value())
+            item['t0'].setValue(src['t0'].value())
+            item['t1'].setValue(src['t1'].value())
             item['w_rms'].setValue(src['w_rms'].value())
             item['p_rms'].setValue(src['p_rms'].value())
             item['p_oct'].setValue(src['p_oct'].value())
@@ -250,10 +269,15 @@ class UIMixin:
             pl.addLayout(tb_row)
 
             # PT1
+            self.chk_pt1_en = QCheckBox("启用 PT1"); self.chk_pt1_en.setChecked(True)
+            self.chk_pt1_en.stateChanged.connect(lambda _: self._schedule())
             self.fc_pt1 = self._spin(10, 900, 100, 0, "Hz", 10)
-            pl.addWidget(self._group("PT1 Filter", [("截止 fc:", self.fc_pt1)]))
+            pl.addWidget(self._group("PT1 Filter", [("截止 fc:", self.fc_pt1)],
+                                     extras=[self.chk_pt1_en]))
 
             # LKF
+            self.chk_lkf_en = QCheckBox("启用 LKF"); self.chk_lkf_en.setChecked(True)
+            self.chk_lkf_en.stateChanged.connect(lambda _: self._schedule())
             self.q_omega = self._spin(1e-4, 200,  1.0,  4, "",   0.1)
             self.q_bias  = self._spin(1e-9, 1e-3, 1e-4, 5, "",   1e-5)
             self.r_meas  = self._spin(0.05, 500,  0.5,  3, "",   0.05)
@@ -262,7 +286,7 @@ class UIMixin:
             btn_sync.clicked.connect(self._sync_lkf_to_pt1)
             pl.addWidget(self._group("2-state LKF (ω + bias)",
                 [("ω:", self.q_omega), ("q_b:", self.q_bias), ("r:", self.r_meas)],
-                extras=[btn_sync]))
+                extras=[btn_sync, self.chk_lkf_en]))
 
             # Notch A/B
             self.n1_en = QCheckBox("启用 Notch A"); self.n1_en.setChecked(True)
