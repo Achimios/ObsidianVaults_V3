@@ -1,0 +1,18 @@
+filters:
+  and:
+    - file.inFolder("-人类思维笔记/-Base演示_希尔伯特/-subWikis")
+    - parent == "希尔伯特空间"
+views:
+  - type: table
+    name: 子页面总览
+    order:
+      - file.name
+      - status
+      - difficulty
+      - file.mtime
+  - type: cards
+    name: 卡片浏览
+    order:
+      - file.name
+      - difficulty
+      - status

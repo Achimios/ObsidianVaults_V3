@@ -1,1 +1,2 @@
-﻿<!-- magic: async/await 已解，JS超人在线 -->
+﻿
+<magic> async/await 已解，JS超人在线 </magic>

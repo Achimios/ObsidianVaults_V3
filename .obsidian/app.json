@@ -1,5 +1,6 @@
 {
   "alwaysUpdateLinks": true,
   "readableLineLength": true,
-  "autoPairMarkdown": false
+  "autoPairMarkdown": false,
+  "attachmentFolderPath": "./__attatch"
 }

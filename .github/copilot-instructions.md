@@ -1,5 +1,6 @@
 # CyberDomain V3 — Copilot 铁律层
-<!-- magic: 铁律在线，PARDON 已就绪 -->
+
+<magic> 铁律在线，PARDON 已就绪 </magic>
 
 ## 【COPILOT 独占】Skills
 

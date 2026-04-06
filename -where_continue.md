@@ -4,11 +4,15 @@
 
 ## 📍 最近编辑（按时间倒序）
 
-1. **根目录 + .github/ + -人类思维笔记** — `./-CONTEXT.md`  
-   → 已完成：magic XML + CLAUDE.md硬链接×4 + Skills junction + `-project-continue` + `-yiti-tts` + Skills研究报告 + Claude Code 独占层 + 全局Skill引用修正(4处)  
-   → 下一步：OpenClaw 机制研究，然后声线宏 VOICE_COPILOT vs VOICE_VICTOR 清查
+1. **PT1和LKF 分析仪** — `./-Vault空间/@Code_Project/Python/PID和滤波分析/PT1和LKF/-CONTEXT.md`  
+   → 已完成：v3 — 字体修复、噪声默认值↓、±400 dps固定Y轴、3模式打杆按钮(新增/删除/调整)、打杆注入滤波、共振分布模式(多峰+种子)  
+   → 下一步：测试运行；solo时域放大区域是否需要改动
 
-2. *(下次完成后追加)*
+2. **根目录 + .github/** — `./-CONTEXT.md`  
+   → 已完成：AGENTS.md内联session流程 + 听觉接口精简 + instructions.md去重 + Skills迁移至.claude/skills/ + 人类接入手册恢复+补Skills行+Magic节  
+   → 下一步：OpenClaw 机制研究（或继续人类接入手册其他待整理内容）
+
+3. *(下次完成后追加)*
 
 ## 规则
 

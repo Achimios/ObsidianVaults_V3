@@ -13,44 +13,15 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "-人类思维笔记/Y_从他人的AI工作流学习/ai_Copilot_SKILL/研究报告_Agent_Skills机制.md",
+                "file": "z_临时提问位置_方便打字.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "研究报告_Agent_Skills机制"
-            }
-          },
-          {
-            "id": "2984777b48558f16",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "-人类思维笔记/Y_从他人的AI工作流学习/ai_ClaudeCode/z_ClaudeCode机制研究.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "z_ClaudeCode机制研究"
-            }
-          },
-          {
-            "id": "512b88029256a514",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "CLAUDE.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "CLAUDE"
+              "title": "z_临时提问位置_方便打字"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -82,7 +53,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "tag:#runSubAgent",
+                "query": "",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -123,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "1_人类接入手册_修订版_人类再修订版.md",
+                "file": "z_临时提问位置_方便打字.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -133,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "1_人类接入手册_修订版_人类再修订版 的反向链接列表"
+              "title": "z_临时提问位置_方便打字 的反向链接列表"
             }
           },
           {
@@ -142,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "temp_1_about instructions.md",
+                "file": "z_临时提问位置_方便打字.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "temp_1_about instructions 的出链列表"
+              "title": "z_临时提问位置_方便打字 的出链列表"
             }
           },
           {
@@ -185,21 +156,21 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "_Vault自身进化/01_高速公路选型.md",
+                "file": "z_临时提问位置_方便打字.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "01_高速公路选型 的大纲"
+              "title": "z_临时提问位置_方便打字 的大纲"
             }
           }
-        ]
+        ],
+        "currentTab": 4
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 289.5
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -212,53 +183,54 @@
       "bases:新建数据库": false
     }
   },
-  "active": "512b88029256a514",
+  "active": "2f0fd2b1513e557d",
   "lastOpenFiles": [
-    "1_人类接入手册_修订版.md",
-    "-CONTEXT_old备份.md",
+    "_TEMP/_ScreenShots/AGENTS.md",
+    "-人类思维笔记/L_AkiDynamic/1_可落地自动PID系统.md",
+    "_chk.py",
+    "-人类思维笔记/L_AkiDynamic/2_可落地意图控制层.md",
+    "-人类思维笔记/L_AkiDynamic/z_理论数学/0.1_Copilot_Lp范数核心提炼.md",
     "z_临时提问位置_方便打字.md",
-    "0_AI接入口在哪？.md",
-    "-人类思维笔记/Y_从他人的AI工作流学习/ai_Copilot_SKILL/研究报告_Agent_Skills机制.md",
-    "-Vault自身进化/-软件操作手册/VSCode-Copilot 指令机制参考.md",
-    "-Vault自身进化/-软件操作手册/VSCode-Copilot SKILL机制.md",
+    "_bom_fix.py",
+    "_theme_system.py",
+    "_verify.py",
+    "_fix_colors2.py",
+    "_mirror_edge_theme.py",
+    "_rewrite_class.py",
+    "_fix_ax5.py",
+    "_fix_canvas_click.py",
+    "-人类思维笔记/L_AkiDynamic/z_理论数学/0.0_豆包_Lp范数与稀疏性_原文.md",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/PT1和LKF/__pycache__/2_Copilot_交互式分析仪_PT1vsLKF.cpython-310.pyc",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/PT1和LKF/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/PT1和LKF/AGENTS.md",
+    "-人类思维笔记/L_AkiDynamic/z_理论数学/-CONTEXT.md",
+    "_TEMP/_ScreenShots/abb647d9-9bf3-4052-bf47-22771a448cde.png",
+    "_TEMP/_ScreenShots/ScreenShot_2026-04-04_224725_088.png",
+    "-人类思维笔记/L_数学学习/S_范数/0_AI解释示例.md",
+    "-人类思维笔记/-Base演示_希尔伯特/-subWikis/线性代数基础.md",
+    "-人类思维笔记/-Base演示_希尔伯特/希尔伯特空间.md",
+    "1_人类接入手册_修订版.md",
     "-Vault自身进化/-软件操作手册/VSCode-Copilot SubAgent机制.md",
-    "-人类思维笔记/Y_从他人的AI工作流学习/ai_ClaudeCode/z_ClaudeCode研究后可执行操作.md",
-    "-人类思维笔记/Y_从他人的AI工作流学习/ai_Copilot_SKILL",
-    "-人类思维笔记/CLAUDE.md",
-    "-Vault空间/@Code_Project/Python/CLAUDE.md",
-    "-Vault空间/@Code_Project/-架构方法演示/-局部指令表&注释码表系统_演示/CLAUDE.md",
-    "CLAUDE.md",
-    "-人类思维笔记/Y_从他人的AI工作流学习/ai_ClaudeCode/z_ClaudeCode机制研究.md",
-    "make_claude_symlinks.bat",
-    "-人类思维笔记/Y_从他人的AI工作流学习/github_mlflow/z_mlflow 研究报告.md",
-    "-人类思维笔记/Y_从他人的AI工作流学习/github_mlflow/z_mlflow 阅后可执行方案.md",
-    "-人类思维笔记/Y_从他人的AI工作流学习/ai_ClaudeCode",
-    "z_临时AI回复位置_方便阅读.md",
-    "AGENTS.md",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/src/lora_dechirp.py",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/pid-nn-norm-compare/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/natural-gradient-nn/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/src",
+    "-Vault自身进化/-软件操作手册/VSCode-Copilot SKILL机制.md",
+    "-Vault自身进化/-软件操作手册/VSCode-Copilot 指令机制参考.md",
+    "软件操作手册/VSCode-Copilot指令机制参考.md",
+    "VSCode-Copilot指令机制参考.md",
+    "-Vault自身进化/-人类与AI交互手册/AI提示词分隔符指南.md",
+    "-人类思维笔记/z_文本格式的讨论/0.1_Copilot_Gemini方案审阅与V3实践.md",
+    "-人类思维笔记/z_文本格式的讨论/0.0_Gemini_二进制码表注入&高熵断句符.md",
+    "-人类思维笔记/z_范数空间/0.0_Doubao_范数空间.md",
+    "-人类思维笔记/-Base演示_希尔伯特/-subWikis/巴拿赫空间.md",
+    "-人类思维笔记/-Base演示_希尔伯特/-subWikis/内积空间.md",
+    "-人类思维笔记/-Base演示_希尔伯特/-subWikis/保范变换.md",
+    "-人类思维笔记/z_Base演示_希尔伯特/希尔伯特空间.md",
+    "-人类思维笔记/L_AkiDynamic/未命名.canvas",
+    "-人类思维笔记/__trash/ai_Copilot_SKILL/__attatch/Pasted image 20260404032510.png",
+    "_attatch/Pasted image 20260404025406.png",
+    "-人类思维笔记/z_非线性Chirp解调/_attatch/Pasted image 20260403035944.png",
+    "-人类思维笔记/z_非线性Chirp解调/attatch/Pasted image 20260403035913.png",
+    "Pasted image 20260403035822.png",
     "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/lora_snr_curve.png",
     "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/-给人类解释.md",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/-PRD.md",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/pid-nn-norm-compare",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/natural-gradient-nn",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms",
-    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/lora-dechirp-verify/src/lora_dechirp.py",
-    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/pid-nn-norm-compare/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/natural-gradient-nn/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png",
-    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/lora-dechirp-verify/lora_snr_curve.png",
-    "-Vault空间/@Code_Project/Embeded/🚁_DroneTools/无线透传-5模-3芯片/ESP32_5Modes/笔记草稿/各种传输手段处理手法.png",
-    "-Vault空间/@Code_Project/嵌入式/无线透传-5模-3芯片/ESP32_Transmission_5Modes_V3/笔记草稿/各种传输手段处理手法.png",
-    "-Vault空间/@Code_Project/嵌入式/ESP/无线透传-5模-3芯片/ESP32_Transmission_5Modes_V3/笔记草稿/各种传输手段处理手法.png",
-    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/lora_snr_curve.png",
-    "-Vault空间/@Code_Project/Python/👥Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png",
-    "-Vault空间/@Code_Project/Python/lora-dechirp-verify/lora_demod_viz.png"
+    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png"
   ]
 }
