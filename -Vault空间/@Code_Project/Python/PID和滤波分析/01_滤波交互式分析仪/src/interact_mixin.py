@@ -69,9 +69,27 @@ class InteractMixin:
 
 
         def _on_canvas_drag(self, event):
-            """Drag to relocate a control point in 'adj' mode (debounced)."""
+            """Drag: sine range adjust OR stick-adj ctrl point (debounced)."""
             if self.nav_toolbar.mode:
                 return
+            # ── Sine range drag ─────────────────────────────────────────
+            if getattr(self, '_sine_range_item', None) is not None:
+                if event.xdata is None: return
+                item = self._sine_range_item; x = float(event.xdata)
+                t0v = item['t0'].value(); t1v = item['t1'].value(); dur = t1v - t0v
+                h   = self._sine_range_handle
+                if h == 't0':
+                    item['t0'].setValue(max(0.0, min(x, t1v - 0.5)))
+                elif h == 't1':
+                    item['t1'].setValue(min(float(N_SECONDS), max(x, t0v + 0.5)))
+                elif h == 'tctr':
+                    half = max(dur / 2, 0.25)
+                    nc   = max(half, min(float(N_SECONDS) - half, x))
+                    item['t0'].setValue(nc - half); item['t1'].setValue(nc + half)
+                self._timer.stop()   # suppress debounce timer during lightweight drag
+                self._drag_timer.start()
+                return
+            # ── Stick adj drag ──────────────────────────────────────────
             if self._stick_mode != 'adj' or self._drag_idx is None:
                 return
             ax5 = self._last_axes[4]
@@ -89,8 +107,12 @@ class InteractMixin:
 
 
         def _on_canvas_release(self, event):
-            """Finalize drag: sort user pts, clear drag state, full redraw."""
+            """Finalize drag: clear drag state, full redraw."""
             self._drag_timer.stop()
+            if getattr(self, '_sine_range_item', None) is not None:
+                self._sine_range_item = None; self._sine_range_handle = None
+                self._do_update()
+                return
             if self._drag_idx is not None and not self._drag_is_anchor:
                 self._stick_pts.sort(key=lambda p: p[0])
             self._drag_idx = None
@@ -100,15 +122,27 @@ class InteractMixin:
 
 
         def _on_canvas_click(self, event):
-            """Stick interaction: left click per mode; right click removes in range."""
+            """Stick/sine-range interaction: left click per mode; right click removes in range."""
             if self.nav_toolbar.mode:   # zoom/pan active — skip
-                return
-            if self._stick_mode is None:  # no mode selected — ignore canvas clicks
                 return
             ax5 = self._last_axes[4]
             if ax5 is None or not ax5.in_axes(event): return
             x, y = event.xdata, event.ydata
             if x is None or y is None: return
+            # ── Sine range mode intercepts click regardless of stick mode ──
+            active = next((it for it in getattr(self, '_sine_items', []) if it['btn_rng'].isChecked()), None)
+            if active is not None and event.button == 1:
+                t0v = active['t0'].value(); t1v = active['t1'].value()
+                dur = max(t1v - t0v, 0.01)
+                # 3-zone model: left→t0, middle→whole-move, right→t1
+                if x > t1v - dur / 3:      handle = 't1'
+                elif x >= t0v + dur / 3:   handle = 'tctr'
+                else:                      handle = 't0'
+                self._sine_range_item   = active
+                self._sine_range_handle = handle
+                return
+            if self._stick_mode is None:  # no mode selected — ignore canvas clicks
+                return
             mode = self._stick_mode
 
             if event.button == 1:

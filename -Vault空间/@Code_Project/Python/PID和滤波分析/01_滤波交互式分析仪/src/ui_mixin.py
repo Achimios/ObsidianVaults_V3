@@ -107,9 +107,14 @@ class UIMixin:
             lw_t1 = QLabel("t止:"); lw_t1.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_t1.setFixedWidth(28)
             t0_spin = self._spin(0, N_SECONDS, round(t0, 1), 1, "s", 0.5)
             t1_spin = self._spin(0, N_SECONDS, round(t1, 1), 1, "s", 0.5)
+            tc_spin = self._spin(0, N_SECONDS, round((t0 + t1) / 2, 1), 1, "s", 0.5)
             t_row.addWidget(lw_t0); t_row.addWidget(t0_spin)
             t_row.addWidget(lw_t1); t_row.addWidget(t1_spin)
             lay.addLayout(t_row)
+            tc_row = QHBoxLayout()
+            lw_tc = QLabel("t中:"); lw_tc.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_tc.setFixedWidth(28)
+            tc_row.addWidget(lw_tc); tc_row.addWidget(tc_spin)
+            lay.addLayout(tc_row)
             freq  = self._spin(1, 500, 20, 0, "Hz", 5)
             amp   = self._spin(1, 1000, 100, 0, "dps", 10)
             trans = self._spin(0, 0.5, 0.1, 2, "", 0.05)
@@ -124,12 +129,27 @@ class UIMixin:
                 row = QHBoxLayout()
                 lw = QLabel(lbl); lw.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw.setFixedWidth(50)
                 row.addWidget(lw); row.addWidget(w); lay.addLayout(row)
+            chk_en = QCheckBox("启用"); chk_en.setChecked(True)
+            chk_en.stateChanged.connect(lambda _: self._schedule())
+            lay.addWidget(chk_en)
             item = {'box': box, 'freq': freq, 'amp': amp, 'trans': trans,
-                    't0': t0_spin, 't1': t1_spin,
+                    't0': t0_spin, 't1': t1_spin, 'tctr': tc_spin, 'chk_en': chk_en,
                     'w_rms': w_rms, 'p_rms': p_rms, 'p_oct': p_oct, 'btn_rng': btn_rng}
             btn_del.clicked.connect(lambda: self._remove_sine_item(item))
             btn_dup.clicked.connect(lambda: self._duplicate_sine_item(item))
             btn_rng.clicked.connect(lambda: self._toggle_sine_range(item))
+            # t中 ↔ t起/t止 mutual update (signal-blocked to avoid feedback loops)
+            def _upd_tc():
+                c = (item['t0'].value() + item['t1'].value()) / 2
+                item['tctr'].blockSignals(True); item['tctr'].setValue(c); item['tctr'].blockSignals(False)
+            def _upd_t0t1(v):
+                d = (item['t1'].value() - item['t0'].value()) / 2
+                for w in (item['t0'], item['t1']): w.blockSignals(True)
+                item['t0'].setValue(max(0.0, v - d)); item['t1'].setValue(min(float(N_SECONDS), v + d))
+                for w in (item['t0'], item['t1']): w.blockSignals(False)
+            item['t0'].valueChanged.connect(lambda _: _upd_tc())
+            item['t1'].valueChanged.connect(lambda _: _upd_tc())
+            item['tctr'].valueChanged.connect(_upd_t0t1)
             return item
 
 
@@ -172,6 +192,7 @@ class UIMixin:
             item['w_rms'].setValue(src['w_rms'].value())
             item['p_rms'].setValue(src['p_rms'].value())
             item['p_oct'].setValue(src['p_oct'].value())
+            item['chk_en'].setChecked(src['chk_en'].isChecked())
             self._sine_items.append(item)
             src_idx = self._sine_layout.indexOf(src['box'])
             self._sine_layout.insertWidget(src_idx + 1, item['box'])
@@ -186,10 +207,12 @@ class UIMixin:
                 self._stick_mode = None
                 for btn in (self.btn_stick_add, self.btn_stick_del, self.btn_stick_adj):
                     btn.setChecked(False)
+                self._deactivate_toolbar()
             # Deactivate all other sine range buttons
             for it in self._sine_items:
                 if it is not item:
                     it['btn_rng'].setChecked(False)
+            self._schedule()   # force canvas refresh to show/hide range visualization
 
 
         def _build_ui(self):

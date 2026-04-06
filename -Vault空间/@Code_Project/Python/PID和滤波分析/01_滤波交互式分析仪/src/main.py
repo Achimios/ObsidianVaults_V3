@@ -41,7 +41,7 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self._noise_key   = None
         self._last_axes   = [None] * 5
         self._saved_views = [None] * 5
-        self._saved_views[3] = ([0.0, 720.0], [-5.0, 100.0])
+        self._saved_views[3] = ([0.0, 720.0], [-5.0, 400.0])
         self._saved_views[4] = ([0.0, float(N_SECONDS)], [-400.0, 400.0])
         self._views_reset = False  # skip save on next tick after home
         self._stick_pts   = []      # [(t, y)] user control points (not anchors)
@@ -50,6 +50,8 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self._drag_idx    = None    # index into _build_all_pts() during adj drag
         self._drag_is_anchor = False
         self._drag_anchor_idx = None
+        self._sine_range_item   = None   # sine item being range-adjusted via canvas
+        self._sine_range_handle = None   # 't0' | 'tctr' | 't1'
         self._td_cache    = None    # (signal, b_pt1, a_pt1, b_lkf, a_lkf,
                                     #  use_n1, b_n1, a_n1, use_n2, b_n2, a_n2)
         self._dark_mode   = False   # light mode by default

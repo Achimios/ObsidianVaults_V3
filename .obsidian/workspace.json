@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "z_临时提问位置_方便打字.md",
+                "file": "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "z_临时提问位置_方便打字"
+              "title": "0.0_Doubao"
             }
           }
         ]
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "z_临时提问位置_方便打字.md",
+                "file": "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "z_临时提问位置_方便打字 的大纲"
+              "title": "0.0_Doubao 的大纲"
             }
           }
         ],
@@ -185,6 +185,10 @@
   },
   "active": "2f0fd2b1513e557d",
   "lastOpenFiles": [
+    "z_临时提问位置_方便打字.md",
+    "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
+    "-人类思维笔记/B_一些思考/关于宇宙和数学本质",
+    "-人类思维笔记/B_一些思考",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__trash/1_豆包_PT1 vs 2‑state LKF 波特图对比.py",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__trash/1.1_豆包_.py",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__pycache__/2_Copilot_交互式分析仪_PT1vsLKF.cpython-310.pyc",
@@ -195,9 +199,6 @@
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/-CONTEXT.md",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF",
     "_compile_check.txt",
-    "_debug_err.txt",
-    "_debug_out.txt",
-    "_fix_startup_mutex.py",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-🛒PRD.md",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-🌲项目架构.md",
@@ -206,7 +207,6 @@
     "-人类思维笔记/L_AkiDynamic/1_可落地自动PID系统.md",
     "-人类思维笔记/L_AkiDynamic/2_可落地意图控制层.md",
     "-人类思维笔记/L_AkiDynamic/z_理论数学/0.1_Copilot_Lp范数核心提炼.md",
-    "z_临时提问位置_方便打字.md",
     "-人类思维笔记/L_AkiDynamic/z_理论数学/0.0_豆包_Lp范数与稀疏性_原文.md",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/PT1和LKF/-CONTEXT.md",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/PT1和LKF/AGENTS.md",

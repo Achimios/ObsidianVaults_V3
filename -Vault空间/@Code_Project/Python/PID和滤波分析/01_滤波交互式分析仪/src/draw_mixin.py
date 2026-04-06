@@ -14,12 +14,25 @@ from dsp import (
 class DrawMixin:
 
         def _compute_sine_total(self):
-            """Sum all sine injection signals (stick + windowed sine + local noise)."""
-            if not getattr(self, '_sine_items', []):
+            """Sum all sine injection signals (half-Hann window + local noise). Cached by param key."""
+            items = getattr(self, '_sine_items', [])
+            if not items:
+                self._sine_cache_key = None
                 return np.zeros(N_SIG)
+            key = tuple(
+                (it['freq'].value(), it['amp'].value(), it['trans'].value(),
+                 it['t0'].value(), it['t1'].value(),
+                 it['w_rms'].value(), it['p_rms'].value(), it['p_oct'].value(),
+                 it.get('chk_en') is None or it['chk_en'].isChecked())
+                for it in items
+            )
+            if getattr(self, '_sine_cache_key', None) == key:
+                return self._sine_cache
             t_full = np.arange(N_SIG) / FS
             total  = np.zeros(N_SIG)
-            for item in self._sine_items:
+            for item in items:
+                if item.get('chk_en') is not None and not item['chk_en'].isChecked():
+                    continue
                 freq  = item['freq'].value();  amp   = item['amp'].value()
                 trans = item['trans'].value(); t0    = item['t0'].value()
                 t1    = item['t1'].value()
@@ -47,6 +60,8 @@ class DrawMixin:
                     if w_rms > 0: loc += rng.standard_normal(N_SIG) * w_rms
                     if p_rms > 0: loc += perlin_noise_1d(N_SIG, octaves=p_oct, seed=seed+1) * p_rms
                     total += loc * window
+            self._sine_cache_key = key
+            self._sine_cache = total
             return total
 
 
@@ -62,6 +77,26 @@ class DrawMixin:
             ax5.grid(True, which="both", color=T['grid'], linewidth=0.55)
             ax5.tick_params(colors=T['tick'], labelsize=7.5)
             for sp in ax5.spines.values(): sp.set_edgecolor(T['spine'])
+            # 正弦范围模式：只显示当前注入波形和范围标记
+            if getattr(self, '_sine_range_item', None) is not None:
+                s_sine = self._compute_sine_total()
+                dec_r = 10; t_r = np.arange(N_SIG)[::dec_r] / FS
+                ax5.plot(t_r, s_sine[::dec_r], color=T['sine'], lw=0.5, alpha=0.7)
+                item_r = self._sine_range_item
+                t0v = item_r['t0'].value(); t1v = item_r['t1'].value()
+                dur = max(t1v - t0v, 0.01)
+                ax5.axvspan(t0v,         t0v + dur/3,  alpha=0.12, color='#7799bb', zorder=1)
+                ax5.axvspan(t0v + dur/3, t1v - dur/3,  alpha=0.20, color='#7799bb', zorder=1)
+                ax5.axvspan(t1v - dur/3, t1v,          alpha=0.12, color='#7799bb', zorder=1)
+                ax5.axvline(t0v,         color='#7799bb', lw=1.0, ls='--', alpha=0.80, zorder=5)
+                ax5.axvline(t1v,         color='#7799bb', lw=1.0, ls='--', alpha=0.80, zorder=5)
+                ax5.set_title("时域  [⇄ 正弦范围]  [拖拽中...]",
+                              color=T['label'], fontsize=7.5, pad=2)
+                ax5.set_xlabel("Time (s)", color=T['label'], fontsize=8)
+                ax5.set_ylabel("dps",      color=T['label'], fontsize=8)
+                ax5.set_xlim(xlim); ax5.set_ylim(ylim)
+                self.canvas.draw_idle()
+                return
             s_stick = self._compute_stick_signal()
             dec = 10; t = np.arange(N_SIG)[::dec] / FS
             ax5.plot(t, s_stick[::dec], color=T['stick'], lw=0.85, alpha=0.85)
@@ -374,19 +409,35 @@ class DrawMixin:
                                     color=T['dot'], s=22, zorder=6)                # 正弦注入曲线
                 has_sine = np.any(np.abs(si) > 1e-9)
                 if has_sine:
-                    ax5.plot(t, si, color=T['sine'], lw=0.75, alpha=0.80, label="正弦注入")                # 删除模式：1/200 视图宽度区域（含锚点保护不显示）
+                    ax5.plot(t, si, color=T['sine'], lw=0.5, alpha=0.50, label="正弦注入")                # 删除模式：1/200 视图宽度区域（含锚点保护不显示）
                 if self._stick_mode == 'del' and self._stick_pts:
                     _sv4 = self._saved_views[4] or ([0.0, float(N_SECONDS)], None)
                     zone = (_sv4[0][1] - _sv4[0][0]) / 200.0
                     for pt in self._stick_pts:
                         ax5.axvspan(pt[0] - zone/2, pt[0] + zone/2,
                                     alpha=0.15, color=T['dot'], zorder=2)
+                # 正弦注入范围（低饱和浅蓝，激活时显示3区段）
+                for it in getattr(self, '_sine_items', []):
+                    t0v = it['t0'].value(); t1v = it['t1'].value()
+                    if it['btn_rng'].isChecked():
+                        dur = max(t1v - t0v, 0.01)
+                        ax5.axvspan(t0v,          t0v + dur/3,  alpha=0.10, color='#7799bb', zorder=1)
+                        ax5.axvspan(t0v + dur/3,  t1v - dur/3, alpha=0.17, color='#7799bb', zorder=1)
+                        ax5.axvspan(t1v - dur/3,  t1v,         alpha=0.10, color='#7799bb', zorder=1)
+                        ax5.axvline(t0v,          color='#7799bb', lw=1.0, ls='--', alpha=0.75, zorder=5)
+                        ax5.axvline(t0v + dur/3,  color='#7799bb', lw=0.6, ls=':',  alpha=0.55, zorder=5)
+                        ax5.axvline(t1v - dur/3,  color='#7799bb', lw=0.6, ls=':',  alpha=0.55, zorder=5)
+                        ax5.axvline(t1v,          color='#7799bb', lw=1.0, ls='--', alpha=0.75, zorder=5)
+                    else:
+                        ax5.axvspan(t0v, t1v, alpha=0.08, color='#7799bb', zorder=0)
                 # 滤波输出
                 if use_pt1: ax5.plot(t, pp, color=C_PT1, lw=0.65, label="PT1+N")
                 if use_lkf: ax5.plot(t, lp, color=C_LKF, lw=0.65, label="LKF+N")
                 # 模式提示
                 _hint = {"add": "✚ 新增", "del": "✖ 删除(1/200)", "adj": "⇄ 调整"}
-                ax5.set_title(f"时域  [{_hint.get(self._stick_mode, '')}]  Y轴手动缩放",
+                _active_rng = hasattr(self, '_sine_items') and any(it['btn_rng'].isChecked() for it in self._sine_items)
+                _hint_str = "⇄ 正弦范围" if _active_rng else _hint.get(self._stick_mode, '')
+                ax5.set_title(f"时域  [{_hint_str}]  Y轴手动缩放",
                               color=T['label'], fontsize=7.5, pad=2)
                 ax5.set_xlabel("Time (s)", color=T['label'], fontsize=8)
                 ax5.set_ylabel("dps",     color=T['label'], fontsize=8)
