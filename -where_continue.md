@@ -4,9 +4,9 @@
 
 ## 📍 最近编辑（按时间倒序）
 
-1. **PT1和LKF 分析仪** — `./-Vault空间/@Code_Project/Python/PID和滤波分析/PT1和LKF/-CONTEXT.md`  
-   → 已完成：v3 — 字体修复、噪声默认值↓、±400 dps固定Y轴、3模式打杆按钮(新增/删除/调整)、打杆注入滤波、共振分布模式(多峰+种子)  
-   → 下一步：测试运行；solo时域放大区域是否需要改动
+1. **PT1vsLKF 分析仪** — `./-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md`  
+   → 已完成：打杆模式修复（startup=None）+ toolbar 互斥锁（_deactivate_toolbar）+ git commit  
+   → 下一步：👆 注入正弦功能
 
 2. **根目录 + .github/** — `./-CONTEXT.md`  
    → 已完成：AGENTS.md内联session流程 + 听觉接口精简 + instructions.md去重 + Skills迁移至.claude/skills/ + 人类接入手册恢复+补Skills行+Magic节  

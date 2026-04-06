@@ -30,6 +30,7 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
             "穿越机陀螺滤波器分析仪 v2  |  PT1 vs LKF + Notch  |  fs=2kHz"
         )
         self.resize(1680, 980)
+        self.setMinimumSize(500, 500)
         self._log_xaxis  = False
         self._log_yaxis  = False
         self._solo_idx   = None   # None | 0-4: solo display index
@@ -40,6 +41,7 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self._noise_key   = None
         self._last_axes   = [None] * 5
         self._saved_views = [None] * 5
+        self._saved_views[3] = ([0.0, 720.0], [0.0, 100.0])
         self._saved_views[4] = ([0.0, float(N_SECONDS)], [-400.0, 400.0])
         self._views_reset = False  # skip save on next tick after home
         self._stick_pts   = []      # [(t, y)] user control points (not anchors)
@@ -50,16 +52,19 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self._drag_anchor_idx = None
         self._td_cache    = None    # (signal, b_pt1, a_pt1, b_lkf, a_lkf,
                                     #  use_n1, b_n1, a_n1, use_n2, b_n2, a_n2)
-        self._dark_mode   = True    # Mirror's Edge dark by default
+        self._dark_mode   = False   # light mode by default
         # Timers
         self._timer = QTimer(); self._timer.setSingleShot(True)
         self._timer.setInterval(280); self._timer.timeout.connect(self._do_update)
         self._stick_timer = QTimer(); self._stick_timer.setSingleShot(True)
         self._stick_timer.setInterval(80); self._stick_timer.timeout.connect(self._do_update)
+        self._drag_timer = QTimer(); self._drag_timer.setSingleShot(True)
+        self._drag_timer.setInterval(30); self._drag_timer.timeout.connect(self._do_update_drag)
         self._build_ui()
         # Home button: reconnect QAction signal (instance attr won't intercept Qt signal)
         def _new_home(*_a, **_kw):
             self._saved_views = [None] * 5
+            self._saved_views[3] = ([0.0, 720.0], [0.0, 100.0])
             self._saved_views[4] = ([0.0, float(N_SECONDS)], [-400.0, 400.0])
             self._views_reset = True  # skip save on next tick
             self._schedule()
@@ -76,7 +81,9 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self.canvas.mpl_connect('button_press_event',   self._on_canvas_click)
         self.canvas.mpl_connect('motion_notify_event',  self._on_canvas_drag)
         self.canvas.mpl_connect('button_release_event', self._on_canvas_release)
-        self._do_update()
+        # Apply light theme on startup (sets palette + initial draw)
+        self.btn_theme.setChecked(True)
+        self._toggle_theme(True)
 
 
 def main():

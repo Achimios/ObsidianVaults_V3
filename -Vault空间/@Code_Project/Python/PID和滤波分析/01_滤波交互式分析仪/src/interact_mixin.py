@@ -81,11 +81,12 @@ class InteractMixin:
                 idx = self._drag_idx
                 if 0 <= idx < len(self._stick_pts):
                     self._stick_pts[idx] = (float(x), float(y))
-            self._stick_timer.start()
+            self._drag_timer.start()
 
 
         def _on_canvas_release(self, event):
-            """Finalize drag: sort user pts, clear drag state."""
+            """Finalize drag: sort user pts, clear drag state, full redraw."""
+            self._drag_timer.stop()
             if self._drag_idx is not None and not self._drag_is_anchor:
                 self._stick_pts.sort(key=lambda p: p[0])
             self._drag_idx = None
@@ -118,21 +119,18 @@ class InteractMixin:
                 elif mode == 'del':
                     self._try_delete_near(ax5, x)
                 elif mode == 'adj':
-                    # Check if near an anchor
-                    xlim = ax5.get_xlim()
-                    view = (xlim[1] - xlim[0]) or N_SECONDS
-                    a_zone = view / 20   # anchor pick zone is 1/20 (larger tolerance)
-                    if abs(x - 0.0) <= a_zone:
-                        self._drag_idx = 0; self._drag_is_anchor = True; self._drag_anchor_idx = 0
-                    elif abs(x - float(N_SECONDS)) <= a_zone:
-                        self._drag_idx = 0; self._drag_is_anchor = True; self._drag_anchor_idx = 1
-                    elif self._stick_pts:
-                        ylim  = ax5.get_ylim(); scale = max(ylim[1] - ylim[0], 1.0)
-                        self._drag_idx = min(
-                            range(len(self._stick_pts)),
-                            key=lambda i: (self._stick_pts[i][0]-x)**2
-                                         + ((self._stick_pts[i][1]-y)/scale)**2)
-                        self._drag_is_anchor = False
+                    # Pure nearest-neighbor: anchors + user pts, no fixed zone
+                    ylim  = ax5.get_ylim(); scale = max(ylim[1] - ylim[0], 1.0)
+                    anchors = [(0.0, self._anchor_y[0]), (float(N_SECONDS), self._anchor_y[1])]
+                    candidates = anchors + self._stick_pts
+                    best = min(range(len(candidates)),
+                               key=lambda i: (candidates[i][0]-x)**2
+                                             + ((candidates[i][1]-y)/scale)**2)
+                    if best < 2:
+                        self._drag_idx = 0; self._drag_is_anchor = True
+                        self._drag_anchor_idx = best
+                    else:
+                        self._drag_idx = best - 2; self._drag_is_anchor = False
 
             elif event.button == 3:
                 self._try_delete_near(ax5, x)

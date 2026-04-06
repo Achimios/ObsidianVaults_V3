@@ -4,7 +4,7 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
     QGridLayout, QLabel, QDoubleSpinBox, QGroupBox,
-    QPushButton, QCheckBox, QSpinBox,
+    QPushButton, QCheckBox, QSpinBox, QScrollArea, QMessageBox,
 )
 from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import (
@@ -15,10 +15,24 @@ from matplotlib.figure import Figure
 from constants import FS, N_SECONDS, N_SIG
 
 
+class _FocusDSpin(QDoubleSpinBox):
+    """Ignores wheel events unless focused — prevents accidental param change."""
+    def wheelEvent(self, e):
+        if self.hasFocus(): super().wheelEvent(e)
+        else: e.ignore()
+
+
+class _FocusISpin(QSpinBox):
+    """Ignores wheel events unless focused."""
+    def wheelEvent(self, e):
+        if self.hasFocus(): super().wheelEvent(e)
+        else: e.ignore()
+
+
 class UIMixin:
 
         def _spin(self, lo, hi, val, decs=1, suffix="", step=None):
-            sb = QDoubleSpinBox()
+            sb = _FocusDSpin()
             sb.setRange(lo, hi); sb.setValue(val); sb.setDecimals(decs)
             if suffix: sb.setSuffix(f" {suffix}")
             if step:   sb.setSingleStep(step)
@@ -27,7 +41,7 @@ class UIMixin:
 
 
         def _ispin(self, lo, hi, val):
-            sb = QSpinBox()
+            sb = _FocusISpin()
             sb.setRange(lo, hi); sb.setValue(val)
             sb.valueChanged.connect(lambda _: self._schedule())
             return sb
@@ -82,7 +96,8 @@ class UIMixin:
             ml.setContentsMargins(5, 5, 5, 5); ml.setSpacing(6)
 
             # ── 左侧参数面板 ──────────────────────
-            pane = QWidget(); pane.setFixedWidth(305)
+            pane = QWidget()
+            pane.setFixedWidth(295)
             pl = QVBoxLayout(pane); pl.setSpacing(4)
 
             # 轴切换
@@ -117,6 +132,38 @@ class UIMixin:
             self.btn_theme.setToolTip("切换明暗色主题")
             self.btn_theme.clicked.connect(self._toggle_theme)
             pl.addWidget(self.btn_theme)
+
+            # Toolbar 小工具说明
+            tb_row = QHBoxLayout()
+            _MSG_SUBPLOTS = (
+                "⚙ 配置子图（Configure Subplots）\n\n"
+                "调整画布内各子图的边距：\n"
+                "• left/right/top/bottom — 图表区在画布内的占比（百分比）\n"
+                "• hspace — 子图之间纵向间距\n"
+                "• wspace — 子图之间横向间距\n\n"
+                "使用方式：拖动滑块后立即生效（无需Apply）。\n\n"
+                "⚠ 注意：每次参数变更触发刷新时，布局会被重建，\n"
+                "此处调整将被还原。建议仅在截图前临时调整。"
+            )
+            _MSG_EDITAXIS = (
+                "✒ 编辑轴（Edit Axis / Curves \u2014 Ctrl+E）\n\n"
+                "点击后在弹出窗口中：\n"
+                "• Axes — 修改坐标轴标题、范围、小数点位\n"
+                "• Curves — 调整每条线的颜色、线宽、标签\n\n"
+                "注意：修改将在下次 刷新时被换掉。"
+            )
+            _btn_sp = QPushButton("ⓘ 子图配置")
+            _btn_sp.setFixedHeight(22)
+            _btn_sp.setToolTip("查看 Configure Subplots 使用说明")
+            _btn_sp.clicked.connect(
+                lambda: QMessageBox.information(self, "Configure Subplots", _MSG_SUBPLOTS))
+            _btn_ea = QPushButton("ⓘ 编辑坐标轴")
+            _btn_ea.setFixedHeight(22)
+            _btn_ea.setToolTip("查看 Edit Axis 使用说明")
+            _btn_ea.clicked.connect(
+                lambda: QMessageBox.information(self, "Edit Axis", _MSG_EDITAXIS))
+            tb_row.addWidget(_btn_sp); tb_row.addWidget(_btn_ea)
+            pl.addLayout(tb_row)
 
             # PT1
             self.fc_pt1 = self._spin(10, 900, 100, 0, "Hz", 10)
@@ -240,6 +287,12 @@ class UIMixin:
             pl.addWidget(note)
             pl.addStretch()
 
+            scroll = QScrollArea()
+            scroll.setWidget(pane)
+            scroll.setWidgetResizable(False)
+            scroll.setFixedWidth(316)
+            scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
             # ── 右侧画布 ──────────────────────────────────
             self.fig    = Figure(facecolor="#080c14")
             self.canvas = FigureCanvas(self.fig)
@@ -249,4 +302,4 @@ class UIMixin:
             canvas_col = QVBoxLayout()
             canvas_col.setContentsMargins(0, 0, 0, 0); canvas_col.setSpacing(2)
             canvas_col.addWidget(toolbar); canvas_col.addWidget(self.canvas)
-            ml.addWidget(pane); ml.addLayout(canvas_col, stretch=1)
+            ml.addWidget(scroll); ml.addLayout(canvas_col, stretch=1)

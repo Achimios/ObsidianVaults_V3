@@ -13,6 +13,39 @@ from dsp import (
 
 class DrawMixin:
 
+        def _do_update_drag(self):
+            """拖拽中轻量更新 — 仅重绘打杆曲线+控制点，跳过噪声/滤波/PSD/频响。"""
+            ax5 = self._last_axes[4]
+            if ax5 is None:
+                self._do_update(); return
+            T = self._DARK if self._dark_mode else self._LIGHT
+            xlim, ylim = ax5.get_xlim(), ax5.get_ylim()
+            ax5.cla()
+            ax5.set_facecolor(T['ax'])
+            ax5.grid(True, which="both", color=T['grid'], linewidth=0.55)
+            ax5.tick_params(colors=T['tick'], labelsize=7.5)
+            for sp in ax5.spines.values(): sp.set_edgecolor(T['spine'])
+            s_stick = self._compute_stick_signal()
+            dec = 10; t = np.arange(N_SIG)[::dec] / FS
+            ax5.plot(t, s_stick[::dec], color=T['stick'], lw=0.85, alpha=0.85)
+            ax5.scatter([0.0, float(N_SECONDS)],
+                        [self._anchor_y[0], self._anchor_y[1]],
+                        color=T['dot'], s=38, marker='s', zorder=7)
+            if self._stick_pts:
+                inner = [(t_, y_) for t_, y_ in self._stick_pts
+                         if 0.05 < t_ < N_SECONDS - 0.05]
+                if inner:
+                    ax5.scatter([p[0] for p in inner], [p[1] for p in inner],
+                                color=T['dot'], s=22, zorder=6)
+            _hint = {"add": "✚ 新增", "del": "✖ 删除(1/200)", "adj": "⇄ 调整"}
+            ax5.set_title(f"时域  [{_hint.get(self._stick_mode, '')}]  [拖拽中...]",
+                          color=T['label'], fontsize=7.5, pad=2)
+            ax5.set_xlabel("Time (s)", color=T['label'], fontsize=8)
+            ax5.set_ylabel("dps",      color=T['label'], fontsize=8)
+            ax5.set_xlim(xlim); ax5.set_ylim(ylim)
+            self.canvas.draw_idle()
+
+
         def _toggle_x(self, checked):
             self._log_xaxis = checked
             self.btn_x.setText("频率轴: 对数" if checked else "频率轴: 线性")
@@ -174,12 +207,12 @@ class DrawMixin:
             if n_en == 0:
                 self.canvas.draw_idle()
                 return
-            _all_hr = [3.0, 2.0, 1.4, 2.8, 1.4]
+            _all_hr  = [3.0, 2.0, 1.4, 2.8, 2.2]
             _en_hr  = [_all_hr[i] for i, e in enumerate(en) if e]
             if n_en > 1:
                 gs = GridSpec(n_en, 1, figure=self.fig,
                               height_ratios=_en_hr,
-                              hspace=0.42,
+                              hspace=0.28,
                               left=0.065, right=0.975, top=0.965, bottom=0.045)
             else:
                 gs = None
