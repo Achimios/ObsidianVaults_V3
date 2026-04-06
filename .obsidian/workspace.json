@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
+                "file": "z_临时提问位置_方便打字.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "0.0_Doubao"
+              "title": "z_临时提问位置_方便打字"
             }
           }
         ]
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
+                "file": "z_临时提问位置_方便打字.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "0.0_Doubao 的大纲"
+              "title": "z_临时提问位置_方便打字 的大纲"
             }
           }
         ],
@@ -170,7 +170,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 289.5
+    "width": 289.5,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -185,8 +186,8 @@
   },
   "active": "2f0fd2b1513e557d",
   "lastOpenFiles": [
-    "z_临时提问位置_方便打字.md",
     "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
+    "z_临时提问位置_方便打字.md",
     "-人类思维笔记/B_一些思考/关于宇宙和数学本质",
     "-人类思维笔记/B_一些思考",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__trash/1_豆包_PT1 vs 2‑state LKF 波特图对比.py",

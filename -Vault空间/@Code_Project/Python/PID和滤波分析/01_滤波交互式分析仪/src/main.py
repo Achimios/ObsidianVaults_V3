@@ -66,7 +66,7 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         # Home button: reconnect QAction signal (instance attr won't intercept Qt signal)
         def _new_home(*_a, **_kw):
             self._saved_views = [None] * 5
-            self._saved_views[3] = ([0.0, 720.0], [0.0, 100.0])
+            self._saved_views[3] = ([0.0, 720.0], [-5.0, 400.0])
             self._saved_views[4] = ([0.0, float(N_SECONDS)], [-400.0, 400.0])
             self._views_reset = True  # skip save on next tick
             self._schedule()

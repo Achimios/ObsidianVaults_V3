@@ -409,7 +409,7 @@ class DrawMixin:
                                     color=T['dot'], s=22, zorder=6)                # 正弦注入曲线
                 has_sine = np.any(np.abs(si) > 1e-9)
                 if has_sine:
-                    ax5.plot(t, si, color=T['sine'], lw=0.5, alpha=0.50, label="正弦注入")                # 删除模式：1/200 视图宽度区域（含锚点保护不显示）
+                    ax5.plot(t, si, color=T['sine'], lw=0.5, alpha=0.30, label="正弦注入")                # 删除模式：1/200 视图宽度区域（含锚点保护不显示）
                 if self._stick_mode == 'del' and self._stick_pts:
                     _sv4 = self._saved_views[4] or ([0.0, float(N_SECONDS)], None)
                     zone = (_sv4[0][1] - _sv4[0][0]) / 200.0

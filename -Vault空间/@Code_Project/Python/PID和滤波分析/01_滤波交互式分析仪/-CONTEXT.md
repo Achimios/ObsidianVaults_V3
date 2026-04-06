@@ -12,27 +12,27 @@ PT1 vs 2-state LKF 陀螺滤波器交互式分析仪（多模块版）。
 ✅ 图层独立 checkbox + solo 按钮 + 左侧 QScrollArea（可滚动）
 ✅ 全轴 zoom/pan 保留（_saved_views 机制），Home 按钮重置
 ✅ 亮色主题默认启动，toolbar 图标反色
-✅ 拖拽期间轻量更新（_do_update_drag）：仅 stick+sine 曲线，松开后全量刷新
+✅ 拖拽期间轻量更新（_do_update_drag）：stick 拖拽只更新打杆曲线；正弦范围拖拽只显示注入波
 ✅ adj 模式纯最近邻拾取（无锚点 zone 问题）
-✅ 打杆注入 + 正弦注入（周期波_N，动态新增/复制/删除，t0/t1 spinbox）
-✅ _compute_sine_total：half-Hann 窗 + 局部噪声（白噪音/Perlin）
+✅ 打杆注入 + 正弦注入（周期波_N：t起/t中/t止、频率/幅度/过渡区、白噪音/Perlin、复制/删除/启用复选框）
+✅ _compute_sine_total：half-Hann 窗 + 局部噪声 + param-key 缓存
+✅ ⇄ 范围 canvas 交互：3区(左=拖t起/中=拖整体/右=拖t止)，ax5 蓝色3段可视化
 ✅ PT1 / LKF 启用 checkbox（可独立关闭）
 ✅ FocusSpin：滚轮仅在 focused 时修改参数（防误触）
 
-## 上次做了什么
-2026-04-07 session 2：
-- 拖拽轻量刷新（_drag_timer 30ms → _do_update_drag）
-- 左侧 QScrollArea 包裹面板，最小窗口 500×500
-- adj 模式改纯最近邻（anchor zone 被用户点附近吸住的 bug 修复）
-- 正弦注入完整 UI + 后端信号合成（`_compute_sine_total`）
-- PT1/LKF 启用 checkbox，所有频域/时域/PSD 绘图对 use_pt1/use_lkf 响应
-- 默认亮色主题，PSD 默认显示范围 [0,100]，时域 hspace 缩小至 0.28
+## 上次做了什么（2026-04-07 session 3）
+- t中 spinbox（t起/t止 双向联动，平移范围时保持时长锁定）
+- sine_key param 缓存（stickdrag时 sine 不重算，含 chk_en 状态）
+- ⇄ 范围 canvas 3区交互（3-zone 点击，_do_update_drag 仅显示注入波）
+- 各期 ax5 低饱和蓝色 axvspan 范围可视化（激活时3段，非激活时细条）
+- 每注入波"启用"复选框（取消则从合成信号移除，缓存key含此状态）
+- 正弦注入线 lw=0.5, alpha=0.50（更细更淡）
+- 范围⇄画布工具互斥锁（_toggle_sine_range 调用 _deactivate_toolbar）
+- _toggle_sine_range 末尾加 _schedule() 修复"点击按钮不刷新范围"的 bug
+- git: a5b0b18
 
 ## 下一步（优先级）
-1. **⇄ 范围按钮 canvas 交互** — 激活后在 ax5 拖拽红色标记线设置 t0/t1（当前仅互斥锁无交互）
-2. **正弦注入缓存优化** — 加 sine_key 缓存，仅当参数变更时重新计算（类似 noise_key）
-3. **抗混叠 AAF 选项**（低优先级）— 可选 500Hz LP 前置滤波器，用于降采样模拟
-
+1. （无明确 next-step，等待指挥官指示）
 
 
 
