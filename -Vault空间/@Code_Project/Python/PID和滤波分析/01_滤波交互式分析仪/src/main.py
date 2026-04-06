@@ -41,7 +41,7 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self._noise_key   = None
         self._last_axes   = [None] * 5
         self._saved_views = [None] * 5
-        self._saved_views[3] = ([0.0, 720.0], [0.0, 100.0])
+        self._saved_views[3] = ([0.0, 720.0], [-5.0, 100.0])
         self._saved_views[4] = ([0.0, float(N_SECONDS)], [-400.0, 400.0])
         self._views_reset = False  # skip save on next tick after home
         self._stick_pts   = []      # [(t, y)] user control points (not anchors)

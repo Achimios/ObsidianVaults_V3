@@ -20,13 +20,17 @@ class InteractMixin:
                 pass
 
         def _set_stick_mode(self, mode):
-            """Switch stick mode. Mutex: deactivates toolbar zoom/pan if active."""
+            """Switch stick mode. Mutex: deactivates toolbar zoom/pan and sine range buttons."""
             self._deactivate_toolbar()   # pre-update deactivation
             self._stick_mode = mode
             for btn, m in [(self.btn_stick_add, 'add'),
                            (self.btn_stick_del, 'del'),
                            (self.btn_stick_adj, 'adj')]:
                 btn.setChecked(m == mode)
+            # Deactivate sine range buttons when stick mode is active
+            if mode is not None and hasattr(self, '_sine_items'):
+                for it in self._sine_items:
+                    it['btn_rng'].setChecked(False)
             self._do_update()
             # post-update insurance: if redraw re-armed zoom, kill it again
             from PyQt5.QtCore import QTimer

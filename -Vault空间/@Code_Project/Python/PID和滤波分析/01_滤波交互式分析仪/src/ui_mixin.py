@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QGridLayout, QLabel, QDoubleSpinBox, QGroupBox,
     QPushButton, QCheckBox, QSpinBox, QScrollArea, QMessageBox,
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavToolbar,
@@ -90,6 +90,89 @@ class UIMixin:
             self._schedule()
 
 
+        def _build_sine_item(self, n):
+            """Create UI for one sine injection entry. Returns item dict."""
+            box = QGroupBox(f"周期波_{n}")
+            lay = QVBoxLayout(box)
+            lay.setContentsMargins(5, 6, 5, 4); lay.setSpacing(2)
+            btn_row = QHBoxLayout()
+            btn_dup = QPushButton("复制"); btn_dup.setFixedHeight(20)
+            btn_rng = QPushButton("⇄ 范围"); btn_rng.setFixedHeight(20); btn_rng.setCheckable(True)
+            btn_del = QPushButton("✖ 删除"); btn_del.setFixedHeight(20)
+            btn_row.addWidget(btn_dup); btn_row.addWidget(btn_rng); btn_row.addWidget(btn_del)
+            lay.addLayout(btn_row)
+            freq  = self._spin(1, 500, 20, 0, "Hz", 5)
+            amp   = self._spin(1, 1000, 100, 0, "dps", 10)
+            trans = self._spin(0, 0.5, 0.1, 2, "", 0.05)
+            for lbl, w in [("频率:", freq), ("幅度:", amp), ("过渡区:", trans)]:
+                row = QHBoxLayout()
+                lw = QLabel(lbl); lw.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw.setFixedWidth(50)
+                row.addWidget(lw); row.addWidget(w); lay.addLayout(row)
+            w_rms = self._spin(0, 500, 0, 0, "dps", 5)
+            p_rms = self._spin(0, 200, 0, 0, "dps", 2)
+            p_oct = self._ispin(1, 8, 4)
+            for lbl, w in [("白噪音:", w_rms), ("Perlin:", p_rms), ("倍频程:", p_oct)]:
+                row = QHBoxLayout()
+                lw = QLabel(lbl); lw.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw.setFixedWidth(50)
+                row.addWidget(lw); row.addWidget(w); lay.addLayout(row)
+            item = {'box': box, 'freq': freq, 'amp': amp, 'trans': trans,
+                    'w_rms': w_rms, 'p_rms': p_rms, 'p_oct': p_oct, 'btn_rng': btn_rng}
+            btn_del.clicked.connect(lambda: self._remove_sine_item(item))
+            btn_dup.clicked.connect(lambda: self._duplicate_sine_item(item))
+            btn_rng.clicked.connect(lambda: self._toggle_sine_range(item))
+            return item
+
+
+        def _add_sine_injection(self):
+            """Append a new sine injection entry to the panel."""
+            item = self._build_sine_item(len(self._sine_items) + 1)
+            self._sine_items.append(item)
+            self._sine_layout.addWidget(item['box'])
+            QTimer.singleShot(0, self._left_pane.adjustSize)
+            self._schedule()
+
+
+        def _remove_sine_item(self, item):
+            """Remove a sine injection entry and renumber remaining."""
+            if item in self._sine_items:
+                self._sine_items.remove(item)
+                item['box'].setParent(None)
+                item['box'].deleteLater()
+                for i, it in enumerate(self._sine_items):
+                    it['box'].setTitle(f"周期波_{i + 1}")
+                QTimer.singleShot(0, self._left_pane.adjustSize)
+                self._schedule()
+
+
+        def _duplicate_sine_item(self, src):
+            """Duplicate a sine injection entry with identical parameters."""
+            item = self._build_sine_item(len(self._sine_items) + 1)
+            item['freq'].setValue(src['freq'].value())
+            item['amp'].setValue(src['amp'].value())
+            item['trans'].setValue(src['trans'].value())
+            item['w_rms'].setValue(src['w_rms'].value())
+            item['p_rms'].setValue(src['p_rms'].value())
+            item['p_oct'].setValue(src['p_oct'].value())
+            self._sine_items.append(item)
+            src_idx = self._sine_layout.indexOf(src['box'])
+            self._sine_layout.insertWidget(src_idx + 1, item['box'])
+            QTimer.singleShot(0, self._left_pane.adjustSize)
+            self._schedule()
+
+
+        def _toggle_sine_range(self, item):
+            """Exclusive: deactivate stick mode + other sine range buttons."""
+            if item['btn_rng'].isChecked():
+                # Deactivate stick mode buttons
+                self._stick_mode = None
+                for btn in (self.btn_stick_add, self.btn_stick_del, self.btn_stick_adj):
+                    btn.setChecked(False)
+            # Deactivate all other sine range buttons
+            for it in self._sine_items:
+                if it is not item:
+                    it['btn_rng'].setChecked(False)
+
+
         def _build_ui(self):
             central = QWidget(); self.setCentralWidget(central)
             ml = QHBoxLayout(central)
@@ -98,6 +181,7 @@ class UIMixin:
             # ── 左侧参数面板 ──────────────────────
             pane = QWidget()
             pane.setFixedWidth(295)
+            self._left_pane = pane
             pl = QVBoxLayout(pane); pl.setSpacing(4)
 
             # 轴切换
@@ -251,10 +335,14 @@ class UIMixin:
                 ("倍频程:", self.perlin_oct),
             ], extras=[self.chk_noise_en]))
 
-            # ── 打杆曲线控制（GroupBox）──
-            stick_box = QGroupBox("打杆曲线控制")
+            # ── 打杆注入（手动 Cubic 曲线 + 注入正弦）──
+            inject_box = QGroupBox("打杆注入")
+            inj_lay = QVBoxLayout(inject_box)
+            inj_lay.setContentsMargins(4, 8, 4, 5); inj_lay.setSpacing(4)
+            # 手动 Cubic 曲线
+            stick_box = QGroupBox("手动 Cubic 曲线")
             sb_layout = QVBoxLayout(stick_box)
-            sb_layout.setContentsMargins(5, 8, 5, 5); sb_layout.setSpacing(3)
+            sb_layout.setContentsMargins(5, 6, 5, 4); sb_layout.setSpacing(3)
             mode_row = QHBoxLayout()
             self.btn_stick_add = QPushButton("✚ 新增")
             self.btn_stick_del = QPushButton("✖ 删除")
@@ -270,10 +358,17 @@ class UIMixin:
                 btn.clicked.connect(lambda _, mode=m: self._set_stick_mode(mode))
             self.btn_stick_clr.clicked.connect(self._clear_sticks)
             sb_layout.addLayout(mode_row)
-            btn_upd = QPushButton("↺ 更新全局状态"); btn_upd.setFixedHeight(22)
-            btn_upd.clicked.connect(lambda: self._do_update())
-            sb_layout.addWidget(btn_upd)
-            pl.addWidget(stick_box)
+            inj_lay.addWidget(stick_box)
+            # 注入正弦
+            self._sine_items = []
+            sine_box = QGroupBox("注入正弦")
+            self._sine_layout = QVBoxLayout(sine_box)
+            self._sine_layout.setContentsMargins(4, 8, 4, 5); self._sine_layout.setSpacing(3)
+            btn_add_sine = QPushButton("＋ 新增周期波"); btn_add_sine.setFixedHeight(22)
+            btn_add_sine.clicked.connect(self._add_sine_injection)
+            self._sine_layout.addWidget(btn_add_sine)
+            inj_lay.addWidget(sine_box)
+            pl.addWidget(inject_box)
 
             note = QLabel(
                 "<small>"
@@ -285,7 +380,6 @@ class UIMixin:
             )
             note.setWordWrap(True); note.setStyleSheet("color:#a0b8c8; padding:3px;")
             pl.addWidget(note)
-            pl.addStretch()
 
             scroll = QScrollArea()
             scroll.setWidget(pane)
