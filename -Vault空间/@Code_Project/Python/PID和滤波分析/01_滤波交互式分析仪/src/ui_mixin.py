@@ -16,9 +16,17 @@ from constants import FS, N_SECONDS, N_SIG
 
 
 class _FocusDSpin(QDoubleSpinBox):
-    """Ignores wheel events unless focused — prevents accidental param change."""
+    """Ignores wheel events unless focused.
+    # 步进规则：方向键/箭头图标 = singleStep（精调）；滚轮 = _WHEEL_MULT × singleStep（快调）
+    # → _spin() 中以 step/_WHEEL_MULT 设置 singleStep，保证滚轮实际步长 = 调用方指定 step
+    """
+    _WHEEL_MULT = 5  # 滚轮每格 = 5× 精调步进
+
     def wheelEvent(self, e):
-        if self.hasFocus(): super().wheelEvent(e)
+        if self.hasFocus():
+            delta = 1 if e.angleDelta().y() > 0 else -1
+            self.stepBy(delta * self._WHEEL_MULT)
+            e.accept()  # 阻止事件冒泡到⍫外层 QScrollArea 滚动
         else: e.ignore()
 
 
@@ -35,7 +43,8 @@ class UIMixin:
             sb = _FocusDSpin()
             sb.setRange(lo, hi); sb.setValue(val); sb.setDecimals(decs)
             if suffix: sb.setSuffix(f" {suffix}")
-            if step:   sb.setSingleStep(step)
+            # 精调步 = step / _WHEEL_MULT；轮步 = _WHEEL_MULT × 精调步 = step（见 _FocusDSpin）
+            if step:   sb.setSingleStep(step / _FocusDSpin._WHEEL_MULT)
             sb.valueChanged.connect(lambda _: self._schedule())
             return sb
 
@@ -129,6 +138,13 @@ class UIMixin:
             fq_row.addWidget(lw_f0); fq_row.addWidget(freq)
             fq_row.addWidget(lw_f1); fq_row.addWidget(freq_end)
             lay.addLayout(fq_row)
+            # f中 spinbox（f起=f止时单频，f起≠f止时chirp；修改f中保持带宽平移）
+            fc_spin = self._spin(1, 9999, 20, 0, "Hz", 5)
+            fc_spin.setToolTip("f中 = (f起+f止)/2；修改时等比平移f起/f止，保持频带宽度")
+            fc_row = QHBoxLayout()
+            lw_fc = QLabel("f中:"); lw_fc.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_fc.setFixedWidth(28)
+            fc_row.addWidget(lw_fc); fc_row.addWidget(fc_spin)
+            lay.addLayout(fc_row)
             for lbl, w in [("幅度:", amp), ("FM频偏:", f_mod), ("过渡区:", trans)]:
                 row = QHBoxLayout()
                 lw = QLabel(lbl); lw.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw.setFixedWidth(50)
@@ -143,7 +159,7 @@ class UIMixin:
             chk_en = QCheckBox("启用"); chk_en.setChecked(True)
             chk_en.stateChanged.connect(lambda _: self._schedule())
             lay.addWidget(chk_en)
-            item = {'box': box, 'freq': freq, 'freq_end': freq_end, 'f_mod': f_mod,
+            item = {'box': box, 'freq': freq, 'freq_end': freq_end, 'fctr': fc_spin, 'f_mod': f_mod,
                     'amp': amp, 'trans': trans,
                     't0': t0_spin, 't1': t1_spin, 'tctr': tc_spin, 'chk_en': chk_en,
                     'w_rms': w_rms, 'p_rms': p_rms, 'p_oct': p_oct, 'btn_rng': btn_rng}
@@ -162,6 +178,19 @@ class UIMixin:
             item['t0'].valueChanged.connect(lambda _: _upd_tc())
             item['t1'].valueChanged.connect(lambda _: _upd_tc())
             item['tctr'].valueChanged.connect(_upd_t0t1)
+            # f中 ↔ f起/f止 mutual update（同 t中 规则）
+            def _upd_fc():
+                c = (item['freq'].value() + item['freq_end'].value()) / 2
+                item['fctr'].blockSignals(True); item['fctr'].setValue(c); item['fctr'].blockSignals(False)
+            def _upd_f_ends(v):
+                d = (item['freq_end'].value() - item['freq'].value()) / 2
+                lo = max(1.0, v - d); hi = min(9999.0, v + d)
+                for w in (item['freq'], item['freq_end']): w.blockSignals(True)
+                item['freq'].setValue(lo); item['freq_end'].setValue(hi)
+                for w in (item['freq'], item['freq_end']): w.blockSignals(False)
+            item['freq'].valueChanged.connect(lambda _: _upd_fc())
+            item['freq_end'].valueChanged.connect(lambda _: _upd_fc())
+            item['fctr'].valueChanged.connect(_upd_f_ends)
             return item
 
 
@@ -234,7 +263,11 @@ class UIMixin:
             ml = QHBoxLayout(central)
             ml.setContentsMargins(5, 5, 5, 5); ml.setSpacing(6)
 
-            # ── 左侧参数面板 ──────────────────────
+            # ── 左侧：固定顶区（轴切换+图层+提示）+ 可滚参数区 ───────────────
+            # 顶区（不随滚轮滚动）
+            top_pane = QWidget(); top_pane.setFixedWidth(316)
+            tp = QVBoxLayout(top_pane); tp.setContentsMargins(5, 5, 5, 2); tp.setSpacing(4)
+            # 可滚参数区
             pane = QWidget()
             pane.setFixedWidth(295)
             self._left_pane = pane
@@ -246,64 +279,41 @@ class UIMixin:
             self.btn_x.clicked.connect(self._toggle_x)
             self.btn_y = QPushButton("幅度: 线性");   self.btn_y.setCheckable(True)
             self.btn_y.clicked.connect(self._toggle_y)
+            self.btn_psd_amp = QPushButton("PSD: 功率谱"); self.btn_psd_amp.setCheckable(True)
+            self.btn_psd_amp.setToolTip("切换 PSD 功率谱(dps²/Hz) ↔ ASD 幅度谱(dps/√Hz)")
+            self.btn_psd_amp.clicked.connect(self._toggle_psd_amp)
             btn_row.addWidget(self.btn_x); btn_row.addWidget(self.btn_y)
-            pl.addLayout(btn_row)
+            btn_row.addWidget(self.btn_psd_amp)
+            tp.addLayout(btn_row)
+            # <提示> 滚轮=快调（×5步），方向键/GUI箭头=精调（×1步）</提示>
+            hint_lbl = QLabel("💡 滚轮=快调×5，方向键/箭头图标=精调×1")
+            hint_lbl.setStyleSheet("color:#7aaa55; padding:1px 3px;")  # font size unchanged (no <small>)
+            tp.addWidget(hint_lbl)
 
-            # 图层显示
+            # 图层显示（紧凖布局：2列排列）
             show_grp = QGroupBox('图层显示'); show_lay = QGridLayout(show_grp)
             show_lay.setSpacing(2)
-            _show_names = ["① 幅频", "② 相频", "③ 群延迟", "④ PSD", "⑤ 时域"]
+            _show_names = ["\u2460 幅频", "\u2461 相频", "\u2462 群延迟", "\u2463 PSD", "\u2464 时域"]
             self.chk_show = []; self.btn_solo = []
             for _i, _nm in enumerate(_show_names):
                 _chk = QCheckBox(_nm)
                 _chk.setChecked(True)
                 _chk.stateChanged.connect(lambda _: self._schedule())
                 self.chk_show.append(_chk)
-                show_lay.addWidget(_chk, _i, 0)
-                _sbtn = QPushButton("独"); _sbtn.setFixedWidth(26); _sbtn.setCheckable(True)
+                _r, _c = _i // 2, (_i % 2) * 2  # 2项一行，4列共(chk,独,chk,独)
+                show_lay.addWidget(_chk, _r, _c)
+                _sbtn = QPushButton("独"); _sbtn.setFixedWidth(24); _sbtn.setCheckable(True)
                 _sbtn.clicked.connect(lambda _, i=_i: self._toggle_solo(i))
                 self.btn_solo.append(_sbtn)
-                show_lay.addWidget(_sbtn, _i, 1)
-            pl.addWidget(show_grp)
+                show_lay.addWidget(_sbtn, _r, _c + 1)
+            tp.addWidget(show_grp)
 
             # 主题切换
             self.btn_theme = QPushButton("☀ 亮色主题")
             self.btn_theme.setCheckable(True)
             self.btn_theme.setToolTip("切换明暗色主题")
             self.btn_theme.clicked.connect(self._toggle_theme)
-            pl.addWidget(self.btn_theme)
-
-            # Toolbar 小工具说明
-            tb_row = QHBoxLayout()
-            _MSG_SUBPLOTS = (
-                "⚙ 配置子图（Configure Subplots）\n\n"
-                "调整画布内各子图的边距：\n"
-                "• left/right/top/bottom — 图表区在画布内的占比（百分比）\n"
-                "• hspace — 子图之间纵向间距\n"
-                "• wspace — 子图之间横向间距\n\n"
-                "使用方式：拖动滑块后立即生效（无需Apply）。\n\n"
-                "⚠ 注意：每次参数变更触发刷新时，布局会被重建，\n"
-                "此处调整将被还原。建议仅在截图前临时调整。"
-            )
-            _MSG_EDITAXIS = (
-                "✒ 编辑轴（Edit Axis / Curves \u2014 Ctrl+E）\n\n"
-                "点击后在弹出窗口中：\n"
-                "• Axes — 修改坐标轴标题、范围、小数点位\n"
-                "• Curves — 调整每条线的颜色、线宽、标签\n\n"
-                "注意：修改将在下次 刷新时被换掉。"
-            )
-            _btn_sp = QPushButton("ⓘ 子图配置")
-            _btn_sp.setFixedHeight(22)
-            _btn_sp.setToolTip("查看 Configure Subplots 使用说明")
-            _btn_sp.clicked.connect(
-                lambda: QMessageBox.information(self, "Configure Subplots", _MSG_SUBPLOTS))
-            _btn_ea = QPushButton("ⓘ 编辑坐标轴")
-            _btn_ea.setFixedHeight(22)
-            _btn_ea.setToolTip("查看 Edit Axis 使用说明")
-            _btn_ea.clicked.connect(
-                lambda: QMessageBox.information(self, "Edit Axis", _MSG_EDITAXIS))
-            tb_row.addWidget(_btn_sp); tb_row.addWidget(_btn_ea)
-            pl.addLayout(tb_row)
+            tp.addWidget(self.btn_theme)
 
             # PT1
             self.chk_pt1_en = QCheckBox("启用 PT1"); self.chk_pt1_en.setChecked(True)
@@ -470,6 +480,11 @@ class UIMixin:
             scroll.setWidgetResizable(False)
             scroll.setFixedWidth(316)
             scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            # 左栏容器：顶区固定 + 参数区可滚动
+            left_wrap = QWidget(); left_wrap.setFixedWidth(316)
+            lw_lay = QVBoxLayout(left_wrap); lw_lay.setContentsMargins(0, 0, 0, 0); lw_lay.setSpacing(0)
+            lw_lay.addWidget(top_pane)
+            lw_lay.addWidget(scroll, 1)
 
             # ── 右侧画布 ──────────────────────────────────
             self.fig    = Figure(facecolor="#080c14")
@@ -477,7 +492,33 @@ class UIMixin:
             toolbar = NavToolbar(self.canvas, self)
             self.nav_toolbar = toolbar
             toolbar.setStyleSheet("background:#1a1a2e; color:#ccccdd; font-size:8pt;")
+            # ⓘ 说明按鈕与 toolbar 同行（toolbar 有大片空白，放这里很合适）
+            _MSG_SUBPLOTS = (
+                "⚙ 配置子图（Configure Subplots）\n\n"
+                "调整画布内各子图的边距：\n"
+                "• left/right/top/bottom — 图表区在画布内的占比（百分比）\n"
+                "• hspace — 子图之间纵向间距\n"
+                "• wspace — 子图之间横向间距\n\n"
+                "使用方式：拖动滑块后立即生效（无需Apply）。\n\n"
+                "⚠ 注意：每次参数变更触发刷新时，布局会被重建，\n"
+                "此处调整将被还原。建议仅在截图前临时调整。"
+            )
+            _MSG_EDITAXIS = (
+                "✒ 编辑轴（Edit Axis / Curves \u2014 Ctrl+E）\n\n"
+                "点击后在弹出窗口中：\n"
+                "• Axes — 修改坐标轴标题、范围、小数点位\n"
+                "• Curves — 调整每条线的颜色、线宽、标签\n\n"
+                "注意：修改将在下次刷新时被换掉。"
+            )
+            _btn_sp = QPushButton("ⓘ 子图")
+            _btn_sp.setFixedHeight(26); _btn_sp.setToolTip("查看 Configure Subplots 使用说明")
+            _btn_sp.clicked.connect(lambda: QMessageBox.information(self, "Configure Subplots", _MSG_SUBPLOTS))
+            _btn_ea = QPushButton("ⓘ 坐标轴")
+            _btn_ea.setFixedHeight(26); _btn_ea.setToolTip("查看 Edit Axis 使用说明")
+            _btn_ea.clicked.connect(lambda: QMessageBox.information(self, "Edit Axis", _MSG_EDITAXIS))
+            toolbar_row = QHBoxLayout(); toolbar_row.setSpacing(3); toolbar_row.setContentsMargins(0, 0, 0, 0)
+            toolbar_row.addWidget(toolbar); toolbar_row.addWidget(_btn_sp); toolbar_row.addWidget(_btn_ea)
             canvas_col = QVBoxLayout()
             canvas_col.setContentsMargins(0, 0, 0, 0); canvas_col.setSpacing(2)
-            canvas_col.addWidget(self.canvas); canvas_col.addWidget(toolbar)
-            ml.addWidget(scroll); ml.addLayout(canvas_col, stretch=1)
+            canvas_col.addWidget(self.canvas); canvas_col.addLayout(toolbar_row)
+            ml.addWidget(left_wrap); ml.addLayout(canvas_col, stretch=1)

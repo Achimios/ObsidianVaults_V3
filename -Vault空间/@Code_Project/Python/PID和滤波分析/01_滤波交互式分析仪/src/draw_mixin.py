@@ -149,6 +149,13 @@ class DrawMixin:
             self._do_update()
 
 
+        def _toggle_psd_amp(self, checked):
+            # 切换 PSD 功率谱(dps²/Hz) ↔ ASD 幅度谱(dps/√Hz = 平方开功率谱)
+            self._psd_amp_mode = checked
+            self.btn_psd_amp.setText("ASD: 幅度谱" if checked else "PSD: 功率谱")
+            self._do_update()
+
+
         def _sync_lkf_to_pt1(self):
             """Binary search r_meas until LKF -3dB freq ≈ PT1 fc."""
             fc = self.fc_pt1.value(); w_t = 2 * np.pi * fc / FS; tgt = 1.0 / np.sqrt(2)
@@ -281,10 +288,13 @@ class DrawMixin:
             # baseline noise-only (thin dashed reference)
             _,   P_pt1_ref = welch(out_pt1_n, fs, nperseg=nperseg)
             _,   P_lkf_ref = welch(out_lkf_n, fs, nperseg=nperseg)
-            mask = (f_w >= 0.5) & (f_w <= 700)
+            mask = (f_w >= 0.5) & (f_w <= 1000)
 
-            # ── 时域（抽取显示）──
-            dec = 10
+            # ── 时域（自适应抖帧：目标约6000个显示点，缩放后分辨率自动提升，高频注入不混叠）──
+            _tv4 = self._saved_views[4]
+            _t_span = max(0.1, ((_tv4[0][1] - _tv4[0][0]) if _tv4 else float(N_SECONDS)))
+            dec = max(1, int(np.ceil(_t_span * fs / 6000)))  # zoom到小范围时 dec=1、全视图时 dec=10
+            _disp_hz = fs / dec  # 当前显示分辨率（奈奎斯特限制在 disp_hz/2）
             t   = np.arange(N_SIG)[::dec] / fs
             sp  = signal_ws[::dec]          # 输入（噪声+打杆+注入）
             sk  = s_stick[::dec]            # 纯打杆
@@ -392,19 +402,22 @@ class DrawMixin:
 
             # ── 4. PSD ──────────────────────────────────
             if ax4 is not None:
+                # 功率谱(dps²/Hz) 或 幅度谱 ASD(dps/√Hz)；由 btn_psd_amp 切换
+                _amp = getattr(self, '_psd_amp_mode', False)
+                def _cvt(P): return np.sqrt(np.maximum(P, 0)) if _amp else P
                 psd_plot = ax4.semilogy if self._log_yaxis else ax4.plot
-                psd_plot(f_w[mask], P_in[mask],     color=T['noise_psd'], lw=0.6,  label="输入+打杆")
-                if use_pt1: psd_plot(f_w[mask], P_pt1_ref[mask], color=C_PT1, lw=0.5, ls="--", alpha=0.35)
-                if use_pt1: psd_plot(f_w[mask], P_pt1n[mask],   color=C_PT1, lw=1.2,  label="PT1+N")
-                if use_lkf: psd_plot(f_w[mask], P_lkf_ref[mask], color=C_LKF, lw=0.5, ls="--", alpha=0.35)
-                if use_lkf: psd_plot(f_w[mask], P_lkfn[mask],   color=C_LKF, lw=1.2,  label="LKF+N")
+                psd_plot(f_w[mask], _cvt(P_in[mask]),          color=T['noise_psd'], lw=0.6,  label="输入+打杆")
+                if use_pt1: psd_plot(f_w[mask], _cvt(P_pt1_ref[mask]), color=C_PT1, lw=0.5, ls="--", alpha=0.35)
+                if use_pt1: psd_plot(f_w[mask], _cvt(P_pt1n[mask]),   color=C_PT1, lw=1.2,  label="PT1+N")
+                if use_lkf: psd_plot(f_w[mask], _cvt(P_lkf_ref[mask]), color=C_LKF, lw=0.5, ls="--", alpha=0.35)
+                if use_lkf: psd_plot(f_w[mask], _cvt(P_lkfn[mask]),   color=C_LKF, lw=1.2,  label="LKF+N")
                 for fr, col in [(self.fr1.value(), T['lkf']), (self.fr2.value(), T['pt1'])]:  # fr1=lkf color, fr2=pt1 color
                     ax4.axvline(fr, color=col, lw=0.65, ls=":", alpha=0.8)
                 ax4.axvspan(0, 30, alpha=0.09, color=T['band'], zorder=0)
                 ax4.axvline(500, color=T['xmark'], lw=0.6, ls="--", alpha=0.50)
-                ax4.set_xlim(0, 720)
-                ax4.set_ylabel("PSD (dps²/Hz)" + (" — log" if self._log_yaxis else ""),
-                               color=T['label'], fontsize=8)
+                ax4.set_xlim(0, 1000)
+                _ylabel = ("ASD (dps/√Hz)" if _amp else "PSD (dps²/Hz)") + (" — log" if self._log_yaxis else "")
+                ax4.set_ylabel(_ylabel, color=T['label'], fontsize=8)
                 ax4.legend(fontsize=7.5, facecolor=T['legend_bg'], labelcolor=T['legend_txt'],
                            framealpha=0.85, ncol=3, loc="upper right")
 
@@ -457,7 +470,7 @@ class DrawMixin:
                 _hint = {"add": "✚ 新增", "del": "✖ 删除(1/200)", "adj": "⇄ 调整"}
                 _active_rng = hasattr(self, '_sine_items') and any(it['btn_rng'].isChecked() for it in self._sine_items)
                 _hint_str = "⇄ 正弦范围" if _active_rng else _hint.get(self._stick_mode, '')
-                ax5.set_title(f"时域  [{_hint_str}]  Y轴手动缩放",
+                ax5.set_title(f"时域  [{_hint_str}]  显示{_disp_hz:.0f}Hz（缩放可提升）  Y轴手动缩放",
                               color=T['label'], fontsize=7.5, pad=2)
                 ax5.set_xlabel("Time (s)", color=T['label'], fontsize=8)
                 ax5.set_ylabel("dps",     color=T['label'], fontsize=8)
