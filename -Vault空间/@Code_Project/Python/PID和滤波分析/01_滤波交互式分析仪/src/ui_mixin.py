@@ -162,7 +162,8 @@ class UIMixin:
             item = {'box': box, 'freq': freq, 'freq_end': freq_end, 'fctr': fc_spin, 'f_mod': f_mod,
                     'amp': amp, 'trans': trans,
                     't0': t0_spin, 't1': t1_spin, 'tctr': tc_spin, 'chk_en': chk_en,
-                    'w_rms': w_rms, 'p_rms': p_rms, 'p_oct': p_oct, 'btn_rng': btn_rng}
+                    'w_rms': w_rms, 'p_rms': p_rms, 'p_oct': p_oct, 'btn_rng': btn_rng,
+                    'n_peaks': n_peaks, 'harmonic': btn_harmonic, 'delta_f': delta_f}
             btn_del.clicked.connect(lambda: self._remove_sine_item(item))
             btn_dup.clicked.connect(lambda: self._duplicate_sine_item(item))
             btn_rng.clicked.connect(lambda: self._toggle_sine_range(item))
@@ -236,6 +237,10 @@ class UIMixin:
             item['p_rms'].setValue(src['p_rms'].value())
             item['p_oct'].setValue(src['p_oct'].value())
             item['chk_en'].setChecked(src['chk_en'].isChecked())
+            item['n_peaks'].setValue(src['n_peaks'].value())
+            item['harmonic'].setChecked(src['harmonic'].isChecked())
+            item['delta_f'].setValue(src['delta_f'].value())
+            item['harmonic'].clicked.emit(item['harmonic'].isChecked())  # 触发显隐更新
             self._sine_items.append(item)
             src_idx = self._sine_layout.indexOf(src['box'])
             self._sine_layout.insertWidget(src_idx + 1, item['box'])

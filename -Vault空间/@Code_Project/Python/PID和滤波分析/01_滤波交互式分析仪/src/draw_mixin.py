@@ -23,6 +23,9 @@ class DrawMixin:
             key = tuple(
                 (it['freq'].value(), it.get('freq_end', it['freq']).value(),
                  it.get('f_mod', it['freq']).value() if hasattr(it.get('f_mod', None), 'value') else 0,
+                 it['n_peaks'].value() if 'n_peaks' in it else 1,
+                 it['harmonic'].isChecked() if 'harmonic' in it else False,
+                 it['delta_f'].value() if 'delta_f' in it else 0.0,
                  it['amp'].value(), it['trans'].value(),
                  it['t0'].value(), it['t1'].value(),
                  it['w_rms'].value(), it['p_rms'].value(), it['p_oct'].value(),
@@ -57,18 +60,31 @@ class DrawMixin:
                     window[mx_mid] = 1.0
                 else:
                     window[(t_full >= t0) & (t_full <= t1)] = 1.0
-                # Phase synthesis: chirp + optional FM modulation
-                if abs(f_end - f_start) > 0.5:  # chirp
-                    k = (f_end - f_start) / dur
-                    t_loc = np.clip(t_full - t0, 0, dur)
-                    phase = 2 * np.pi * (f_start * t_loc + 0.5 * k * t_loc**2)
-                else:
-                    phase = 2 * np.pi * f_start * t_full
-                if f_mod_v > 0:
-                    seed_fm = int(f_start * 73 + f_end * 37 + t0 * 11) % (2**31)
-                    lfo = perlin_noise_1d(N_SIG, octaves=3, seed=seed_fm)  # slow modulator
-                    phase += 2 * np.pi * f_mod_v * np.cumsum(lfo) / FS
-                total += amp * np.sin(phase) * window
+                # Phase synthesis: multi-peak support (comb / harmonic / single)
+                n_pk   = int(item['n_peaks'].value()) if 'n_peaks' in item else 1
+                use_hm = item['harmonic'].isChecked() if 'harmonic' in item else False
+                d_f    = item['delta_f'].value()       if 'delta_f'  in item else 0.0
+                seed_fm_base = int(f_start * 73 + f_end * 37 + t0 * 11) % (2**31)
+                for pk in range(n_pk):
+                    if n_pk == 1:
+                        pk_f0, pk_f1 = f_start, f_end
+                    elif use_hm:                           # 谐波: 1× 2× 3× ...
+                        pk_f0 = f_start * (pk + 1)
+                        pk_f1 = f_end   * (pk + 1)
+                    else:                                  # 法状: 均匀间距
+                        pk_f0 = f_start + pk * d_f
+                        pk_f1 = f_end   + pk * d_f
+                    if abs(pk_f1 - pk_f0) > 0.5:          # chirp
+                        k = (pk_f1 - pk_f0) / dur
+                        t_loc = np.clip(t_full - t0, 0, dur)
+                        phase = 2 * np.pi * (pk_f0 * t_loc + 0.5 * k * t_loc**2)
+                    else:
+                        phase = 2 * np.pi * pk_f0 * t_full
+                    if f_mod_v > 0:
+                        seed_fm = (seed_fm_base + pk * 17) % (2**31)
+                        lfo = perlin_noise_1d(N_SIG, octaves=3, seed=seed_fm)
+                        phase += 2 * np.pi * f_mod_v * np.cumsum(lfo) / FS
+                    total += (amp / n_pk) * np.sin(phase) * window
                 if w_rms > 0 or p_rms > 0:
                     seed = int(f_start * 100 + amp + t0 * 10) % (2**31)
                     rng  = np.random.default_rng(seed)
