@@ -167,7 +167,7 @@ class DrawMixin:
                 if abs(H[0]) > tgt: lo = mid
                 else:               hi = mid
             self.r_meas.blockSignals(True)
-            self.r_meas.setValue(float(np.clip(np.sqrt(lo * hi), 0.05, 500)))
+            self.r_meas.setValue(float(np.clip(np.sqrt(lo * hi), 0.001, 500)))  # 下限与 spinbox 同步
             self.r_meas.blockSignals(False)
             self._do_update()
 
