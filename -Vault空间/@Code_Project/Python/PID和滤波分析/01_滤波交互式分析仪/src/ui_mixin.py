@@ -327,7 +327,7 @@ class UIMixin:
             self.chk_lkf_en.stateChanged.connect(lambda _: self._schedule())
             self.q_omega = self._spin(1e-4, 200,  1.0,  4, "",   0.1)
             self.q_bias  = self._spin(1e-9, 1e-3, 1e-4, 5, "",   1e-5)
-            self.r_meas  = self._spin(0.05, 500,  0.5,  3, "",   0.05)
+            self.r_meas  = self._spin(0.001, 500, 0.012, 3, "",  0.001)  # 默认 r=0.012 → LKF -3dB≈100Hz≈PT1 fc
             btn_sync = QPushButton("同步 PT1 fc")
             btn_sync.setToolTip("自动调整 r, 使 LKF -3dB 频率 = PT1 截止频率")
             btn_sync.clicked.connect(self._sync_lkf_to_pt1)
