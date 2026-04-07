@@ -166,6 +166,71 @@ class DrawMixin:
             self._do_update()
 
 
+        def _reposition_ax_ctrl_overlay(self, event=None):
+            """每次 figure draw 后，将各图左侧控件组定位到对应 axes 左边距中央。"""
+            grps = getattr(self, '_ax_ctrl_groups', [])
+            if not grps:
+                return
+            cw = self.canvas.width(); ch = self.canvas.height()
+            if cw <= 0 or ch <= 0:
+                return
+            for _i, _entry in enumerate(grps):
+                _ax  = self._last_axes[_i] if _i < len(self._last_axes) else None
+                _w   = _entry['widget']
+                _vis = (self.chk_show[_i].isChecked() if _i < len(self.chk_show) else True)
+                if _ax is None or not _vis:
+                    _w.hide(); continue
+                _bb   = _ax.get_position()          # 图坐标系分数（y 从底部起）
+                _ytop = int((1.0 - _bb.y1) * ch)
+                _ybot = int((1.0 - _bb.y0) * ch)
+                _cy   = (_ytop + _ybot) // 2
+                _w.move(2, max(0, _cy - _w.height() // 2))
+                _w.show(); _w.raise_()
+
+        def _on_yfit(self, ax_idx, checked):
+            """Toggle per-axis Y auto-fit（覆盖峰谷）。"""
+            if not hasattr(self, '_y_auto'):
+                self._y_auto = [False] * 5
+            self._y_auto[ax_idx] = checked
+            self._schedule()
+
+        def _on_yreset(self, ax_idx):
+            """Reset Y axis of given plot to its default range."""
+            ax = self._last_axes[ax_idx] if ax_idx < len(self._last_axes) else None
+            if ax is None:
+                return
+            if ax_idx == 3:
+                ylim_def = [0.0, 200.0] if getattr(self, '_psd_amp_mode', True) else [0.0, 2000.0]
+            elif ax_idx == 0:
+                ylim_def = [-65.0, 8.0] if self._log_yaxis else [-0.05, 1.15]
+            else:
+                dv = getattr(self, '_default_views', None)
+                if dv is None:
+                    return
+                ylim_def = list(dv[ax_idx][1])
+            sv = self._saved_views[ax_idx]
+            xl = list(sv[0]) if sv else [0.0, 1000.0]
+            self._saved_views[ax_idx] = (xl, ylim_def)
+            ax.set_ylim(ylim_def)
+            self.canvas.draw_idle()
+
+        def _on_xreset(self, ax_idx):
+            """Reset X axis of given plot to its default range."""
+            ax = self._last_axes[ax_idx] if ax_idx < len(self._last_axes) else None
+            if ax is None:
+                return
+            if ax_idx in (0, 1, 2):
+                xlim_def = [1.0 if self._log_xaxis else 0.0, float(FS / 2)]
+            elif ax_idx == 3:
+                xlim_def = [0.0, 1000.0]
+            else:
+                xlim_def = [0.0, float(N_SECONDS)]
+            sv = self._saved_views[ax_idx]
+            yl = list(sv[1]) if sv else list(getattr(self, '_default_views', [[]] * 5)[ax_idx][1])
+            self._saved_views[ax_idx] = (xlim_def, yl)
+            ax.set_xlim(xlim_def)
+            self.canvas.draw_idle()
+
         def _sync_lkf_to_pt1(self):
             """Binary search r_meas until LKF -3dB freq ≈ PT1 fc."""
             fc = self.fc_pt1.value(); w_t = 2 * np.pi * fc / FS; tgt = 1.0 / np.sqrt(2)
@@ -488,10 +553,14 @@ class DrawMixin:
                 ax5.legend(fontsize=7.5, facecolor=T['legend_bg'], labelcolor=T['legend_txt'],
                            framealpha=0.85, loc="upper right", ncol=4)
             # Restore saved views for all axes (zoom/pan preserved across ticks)
+            _y_auto = getattr(self, '_y_auto', [False] * 5)
             for _i, _ax in enumerate([ax1, ax2, ax3, ax4, ax5]):
                 if _ax is not None and self._saved_views[_i] is not None:
                     _ax.set_xlim(self._saved_views[_i][0])
-                    _ax.set_ylim(self._saved_views[_i][1])
+                    if _y_auto[_i]:
+                        _ax.relim(); _ax.autoscale_view(scalex=False, scaley=True)
+                    else:
+                        _ax.set_ylim(self._saved_views[_i][1])
             self._last_axes = [ax1, ax2, ax3, ax4, ax5]
 
             self.canvas.draw()

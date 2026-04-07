@@ -279,8 +279,8 @@ class UIMixin:
             self.btn_x.clicked.connect(self._toggle_x)
             self.btn_y = QPushButton("幅度: 线性");   self.btn_y.setCheckable(True)
             self.btn_y.clicked.connect(self._toggle_y)
-            self.btn_psd_amp = QPushButton("PSD: 功率谱"); self.btn_psd_amp.setCheckable(True)
-            self.btn_psd_amp.setToolTip("切换 PSD 功率谱(dps²/Hz) ↔ ASD 幅度谱(dps/√Hz)")
+            self.btn_psd_amp = QPushButton("ASD: 幅度谱"); self.btn_psd_amp.setCheckable(True); self.btn_psd_amp.setChecked(True)
+            self.btn_psd_amp.setToolTip("切换 ASD 幅度谱(dps/√Hz) ↔ PSD 功率谱(dps²/Hz)")
             self.btn_psd_amp.clicked.connect(self._toggle_psd_amp)
             btn_row.addWidget(self.btn_x); btn_row.addWidget(self.btn_y)
             btn_row.addWidget(self.btn_psd_amp)
@@ -489,6 +489,33 @@ class UIMixin:
             # ── 右侧画布 ──────────────────────────────────
             self.fig    = Figure(facecolor="#080c14")
             self.canvas = FigureCanvas(self.fig)
+            # ── 每图左侧快捷轴控按钮（悬浮于画布左边距，draw_event 后自动定位）──
+            _BTN_SS = ("QPushButton{background:rgba(30,35,55,190);color:#99bbcc;"
+                       "border:1px solid #3a4a5a;border-radius:2px;"
+                       "font-size:7pt;padding:0px;}"
+                       "QPushButton:checked{background:rgba(60,140,80,210);color:#eeffee;}"
+                       "QPushButton:hover{background:rgba(50,70,100,220);}")
+            self._ax_ctrl_groups = []
+            for _ai in range(5):
+                _grp = QWidget(self.canvas)
+                _grp.setStyleSheet("background:transparent;")
+                _grp.setAttribute(Qt.WA_TransparentForMouseEvents, False)
+                _vl = QVBoxLayout(_grp)
+                _vl.setSpacing(1); _vl.setContentsMargins(1, 1, 1, 1)
+                _bya = QPushButton("≡"); _bya.setCheckable(True)
+                _bya.setFixedSize(22, 16); _bya.setStyleSheet(_BTN_SS)
+                _bya.setToolTip("Y轴适应（开关，自动覆盖峰谷）")
+                _bya.clicked.connect(lambda checked, i=_ai: self._on_yfit(i, checked))
+                _byr = QPushButton("↕"); _byr.setFixedSize(22, 16); _byr.setStyleSheet(_BTN_SS)
+                _byr.setToolTip("Y轴重置")
+                _byr.clicked.connect(lambda _, i=_ai: self._on_yreset(i))
+                _bxr = QPushButton("↔"); _bxr.setFixedSize(22, 16); _bxr.setStyleSheet(_BTN_SS)
+                _bxr.setToolTip("X轴重置")
+                _bxr.clicked.connect(lambda _, i=_ai: self._on_xreset(i))
+                _vl.addWidget(_bya); _vl.addWidget(_byr); _vl.addWidget(_bxr)
+                _grp.adjustSize(); _grp.hide()
+                self._ax_ctrl_groups.append({'widget': _grp, 'ya': _bya})
+            self.canvas.mpl_connect('draw_event', self._reposition_ax_ctrl_overlay)
             toolbar = NavToolbar(self.canvas, self)
             self.nav_toolbar = toolbar
             toolbar.setStyleSheet("background:#1a1a2e; color:#ccccdd; font-size:8pt;")

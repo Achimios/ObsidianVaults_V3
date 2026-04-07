@@ -33,7 +33,7 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self.setMinimumSize(500, 500)
         self._log_xaxis  = False
         self._log_yaxis  = False
-        self._psd_amp_mode = False   # PSD 功率谱(False=dps²/Hz) | ASD 幅度谱(True=dps/√Hz)
+        self._psd_amp_mode = True    # PSD 功率谱(False=dps²/Hz) | ASD 幅度谱(True=dps/√Hz)
         self._solo_idx   = None   # None | 0-4: solo display index
         self._solo_cache = None   # list[bool] of chk_show states before solo
         self._noise_cache = None
@@ -42,8 +42,16 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self._noise_key   = None
         self._last_axes   = [None] * 5
         self._saved_views = [None] * 5
-        self._saved_views[3] = ([0.0, 1000.0], [0.0, 2000.0])  # >v<📊 PSD默认Y范围 - ASD模式切换即 ÷10=[0,200]
+        self._saved_views[3] = ([0.0, 1000.0], [0.0, 200.0])   # >v<📊 ASD默认Y范围 - PSD模式切换即 ×10=[0,2000]
         self._saved_views[4] = ([0.0, float(N_SECONDS)], [-400.0, 400.0])
+        self._y_auto = [False] * 5          # 每图 Y轴自动适应开关
+        self._default_views = [             # Y重置 / X重置 的默认范围
+            ([0.0, 1000.0], [-0.05, 1.15]),         # ax1 幅频 linear
+            ([0.0, 1000.0], [-188.0, 95.0]),         # ax2 相频
+            ([0.0, 1000.0], [-0.5,  15.0]),          # ax3 群延迟
+            ([0.0, 1000.0], [0.0,  200.0]),          # ax4 ASD
+            ([0.0, float(N_SECONDS)], [-400.0, 400.0]),  # ax5 时域
+        ]
         self._views_reset = False  # skip save on next tick after home
         self._stick_pts   = []      # [(t, y)] user control points (not anchors)
         self._anchor_y    = [0.0, 0.0]   # y at t=0 and t=N_SECONDS
@@ -67,7 +75,7 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         # Home button: reconnect QAction signal (instance attr won't intercept Qt signal)
         def _new_home(*_a, **_kw):
             self._saved_views = [None] * 5
-            self._saved_views[3] = ([0.0, 1000.0], [0.0, 2000.0])  # >v<📊 PSD默认Y范围
+            self._saved_views[3] = ([0.0, 1000.0], [0.0, 200.0])   # >v<📊 ASD默认Y范围(Home重置回ASD)
             self._saved_views[4] = ([0.0, float(N_SECONDS)], [-400.0, 400.0])
             self._views_reset = True  # skip save on next tick
             self._schedule()
