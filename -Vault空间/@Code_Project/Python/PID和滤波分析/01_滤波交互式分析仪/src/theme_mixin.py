@@ -27,6 +27,19 @@ class ThemeMixin:
             T = self._DARK if self._dark_mode else self._LIGHT
             self.nav_toolbar.setStyleSheet(T['tbar'])
             self._update_toolbar_icons()
+            # 每图轴控按钮随主题更新样式
+            _BT_DARK  = ("QPushButton{background:rgba(30,35,55,190);color:#99bbcc;"
+                         "border:1px solid #3a4a5a;border-radius:2px;font-size:7pt;padding:0px;}"
+                         "QPushButton:checked{background:rgba(60,140,80,210);color:#eeffee;}"
+                         "QPushButton:hover{background:rgba(50,70,100,220);}")
+            _BT_LIGHT = ("QPushButton{background:rgba(200,210,230,210);color:#334466;"
+                         "border:1px solid #8899aa;border-radius:2px;font-size:7pt;padding:0px;}"
+                         "QPushButton:checked{background:rgba(80,160,100,220);color:#ffffff;}"
+                         "QPushButton:hover{background:rgba(160,180,210,230);}")
+            _bss = _BT_DARK if self._dark_mode else _BT_LIGHT
+            for _e in getattr(self, '_ax_ctrl_groups', []):
+                for _bk in ('ya', 'yr', 'xr'):
+                    if _bk in _e: _e[_bk].setStyleSheet(_bss)
             self.btn_theme.setText("☀ 亮色主题" if self._dark_mode else "🌙 深色主题")
             from PyQt5.QtGui import QPalette, QColor
             pal = QPalette()

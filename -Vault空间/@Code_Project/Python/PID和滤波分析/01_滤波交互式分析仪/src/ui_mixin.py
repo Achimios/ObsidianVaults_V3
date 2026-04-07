@@ -514,7 +514,7 @@ class UIMixin:
                 _bxr.clicked.connect(lambda _, i=_ai: self._on_xreset(i))
                 _vl.addWidget(_bya); _vl.addWidget(_byr); _vl.addWidget(_bxr)
                 _grp.adjustSize(); _grp.hide()
-                self._ax_ctrl_groups.append({'widget': _grp, 'ya': _bya})
+                self._ax_ctrl_groups.append({'widget': _grp, 'ya': _bya, 'yr': _byr, 'xr': _bxr})
             self.canvas.mpl_connect('draw_event', self._reposition_ax_ctrl_overlay)
             toolbar = NavToolbar(self.canvas, self)
             self.nav_toolbar = toolbar
