@@ -42,7 +42,7 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self._noise_key   = None
         self._last_axes   = [None] * 5
         self._saved_views = [None] * 5
-        self._saved_views[3] = ([0.0, 1000.0], [-5.0, 400.0])
+        self._saved_views[3] = ([0.0, 1000.0], [0.0, 2000.0])  # >v<📊 PSD默认Y范围 - ASD模式切换即 ÷10=[0,200]
         self._saved_views[4] = ([0.0, float(N_SECONDS)], [-400.0, 400.0])
         self._views_reset = False  # skip save on next tick after home
         self._stick_pts   = []      # [(t, y)] user control points (not anchors)
@@ -67,7 +67,7 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         # Home button: reconnect QAction signal (instance attr won't intercept Qt signal)
         def _new_home(*_a, **_kw):
             self._saved_views = [None] * 5
-            self._saved_views[3] = ([0.0, 1000.0], [-5.0, 400.0])
+            self._saved_views[3] = ([0.0, 1000.0], [0.0, 2000.0])  # >v<📊 PSD默认Y范围
             self._saved_views[4] = ([0.0, float(N_SECONDS)], [-400.0, 400.0])
             self._views_reset = True  # skip save on next tick
             self._schedule()

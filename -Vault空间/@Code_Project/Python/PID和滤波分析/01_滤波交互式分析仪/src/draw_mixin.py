@@ -150,9 +150,19 @@ class DrawMixin:
 
 
         def _toggle_psd_amp(self, checked):
-            # 切换 PSD 功率谱(dps²/Hz) ↔ ASD 幅度谱(dps/√Hz = 平方开功率谱)
+            # >v<📊PSD_ASD切换 - checked=True=ASD; Y轴自动×0.1(→ASD)或×10(→PSD); 无需HOME
+            # PSD默认Y=[0,2000], ASD默认Y=[0,200] (见main.py _saved_views[3])
             self._psd_amp_mode = checked
             self.btn_psd_amp.setText("ASD: 幅度谱" if checked else "PSD: 功率谱")
+            # 自动调整 PSD 轴 Y 范围（用户约定：ASD↔PSD ×0.1 or ×10，不需要按 HOME）
+            _tv3 = self._saved_views[3]
+            if _tv3 is not None:
+                xl = list(_tv3[0])
+                yl = list(_tv3[1])
+                factor = 0.1 if checked else 10.0  # →ASD=÷10, →PSD=×10
+                self._saved_views[3] = (xl, [yl[0] * factor, yl[1] * factor])
+            else:
+                self._saved_views[3] = ([0.0, 1000.0], [0.0, 200.0] if checked else [0.0, 2000.0])
             self._do_update()
 
 
@@ -167,7 +177,7 @@ class DrawMixin:
                 if abs(H[0]) > tgt: lo = mid
                 else:               hi = mid
             self.r_meas.blockSignals(True)
-            self.r_meas.setValue(float(np.clip(np.sqrt(lo * hi), 0.001, 500)))  # 下限与 spinbox 同步
+            self.r_meas.setValue(float(np.clip(np.sqrt(lo * hi), 0.001, 500)))  # >v<🎯LKF同步下限 - 必须与 r_meas spinbox 下限一致(0.001)
             self.r_meas.blockSignals(False)
             self._do_update()
 
@@ -290,6 +300,7 @@ class DrawMixin:
             _,   P_lkf_ref = welch(out_lkf_n, fs, nperseg=nperseg)
             mask = (f_w >= 0.5) & (f_w <= 1000)
 
+            # >v<🕐抖帧公式 - dec=ceil(t_span*FS/6000); 目标显示6000点; 缩放到小范围dec=1消除显示混叠
             # ── 时域（自适应抖帧：目标约6000个显示点，缩放后分辨率自动提升，高频注入不混叠）──
             _tv4 = self._saved_views[4]
             _t_span = max(0.1, ((_tv4[0][1] - _tv4[0][0]) if _tv4 else float(N_SECONDS)))

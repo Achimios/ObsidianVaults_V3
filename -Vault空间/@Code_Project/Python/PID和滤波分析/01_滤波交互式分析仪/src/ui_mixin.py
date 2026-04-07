@@ -20,7 +20,7 @@ class _FocusDSpin(QDoubleSpinBox):
     # 步进规则：方向键/箭头图标 = singleStep（精调）；滚轮 = _WHEEL_MULT × singleStep（快调）
     # → _spin() 中以 step/_WHEEL_MULT 设置 singleStep，保证滚轮实际步长 = 调用方指定 step
     """
-    _WHEEL_MULT = 5  # 滚轮每格 = 5× 精调步进
+    _WHEEL_MULT = 5  # >v<⚡步进规则 - 滚轮每格=5×singleStep; _spin(step)=滚轮目标步，singleStep=step/5(精调)
 
     def wheelEvent(self, e):
         if self.hasFocus():
@@ -327,7 +327,7 @@ class UIMixin:
             self.chk_lkf_en.stateChanged.connect(lambda _: self._schedule())
             self.q_omega = self._spin(1e-4, 200,  1.0,  4, "",   0.1)
             self.q_bias  = self._spin(1e-9, 1e-3, 1e-4, 5, "",   1e-5)
-            self.r_meas  = self._spin(0.001, 500, 0.012, 3, "",  0.001)  # 默认 r=0.012 → LKF -3dB≈100Hz≈PT1 fc
+            self.r_meas  = self._spin(0.001, 500, 0.012, 3, "",  0.001)  # >v<🎯LKF默认r - q_omega=1.0,q_bias=1e-4时 r=0.012对应-3dB≈100Hz=PT1默认FC
             btn_sync = QPushButton("同步 PT1 fc")
             btn_sync.setToolTip("自动调整 r, 使 LKF -3dB 频率 = PT1 截止频率")
             btn_sync.clicked.connect(self._sync_lkf_to_pt1)
