@@ -346,13 +346,19 @@ class UIMixin:
             # PT1
             self.chk_pt1_en = QCheckBox("启用 PT1"); self.chk_pt1_en.setChecked(True)
             self.chk_pt1_en.stateChanged.connect(lambda _: self._schedule())
+            self.btn_top_pt1 = QPushButton("TOP"); self.btn_top_pt1.setCheckable(True)
+            self.btn_top_pt1.setToolTip("PT1 操线置顶（互斜）—使 PT1 的所有线段绘制在最上层")
+            self.btn_top_pt1.clicked.connect(lambda: self._toggle_filter_top('pt1'))
             self.fc_pt1 = self._spin(10, 900, 100, 0, "Hz", 10)
             pl.addWidget(self._group("PT1 Filter", [("截止 fc:", self.fc_pt1)],
-                                     extras=[self.chk_pt1_en]))
+                                     extras=[self.chk_pt1_en, self.btn_top_pt1]))
 
             # LKF
             self.chk_lkf_en = QCheckBox("启用 LKF"); self.chk_lkf_en.setChecked(True)
             self.chk_lkf_en.stateChanged.connect(lambda _: self._schedule())
+            self.btn_top_lkf = QPushButton("TOP"); self.btn_top_lkf.setCheckable(True)
+            self.btn_top_lkf.setToolTip("LKF 操线置顶（互斜）—使 LKF 的所有线段绘制在最上层")
+            self.btn_top_lkf.clicked.connect(lambda: self._toggle_filter_top('lkf'))
             self.q_omega = self._spin(1e-4, 200,  1.0,  4, "",   0.1)
             self.q_bias  = self._spin(1e-9, 1e-3, 1e-4, 5, "",   1e-5)
             self.r_meas  = self._spin(0.001, 500, 0.012, 3, "",  0.001)  # >v<🎯LKF默认r - q_omega=1.0,q_bias=1e-4时 r=0.012对应-3dB≈100Hz=PT1默认FC
@@ -361,7 +367,7 @@ class UIMixin:
             btn_sync.clicked.connect(self._sync_lkf_to_pt1)
             pl.addWidget(self._group("2-state LKF (ω + bias)",
                 [("ω:", self.q_omega), ("q_b:", self.q_bias), ("r:", self.r_meas)],
-                extras=[btn_sync, self.chk_lkf_en]))
+                extras=[btn_sync, self.chk_lkf_en, self.btn_top_lkf]))
 
             # Notch A/B
             self.n1_en = QCheckBox("启用 Notch A"); self.n1_en.setChecked(True)

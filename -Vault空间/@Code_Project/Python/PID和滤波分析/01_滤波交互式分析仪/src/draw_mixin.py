@@ -247,6 +247,18 @@ class DrawMixin:
             ax.set_xlim(xlim_def)
             self.canvas.draw_idle()
 
+        def _toggle_filter_top(self, name):
+            """Exclusive TOP: 互斥选择一个滤波器的线置顶显示。"""
+            checked = getattr(self, f'btn_top_{name}').isChecked()
+            self._top_filter = name if checked else None
+            # 解除其他 TOP 按钮
+            for _n in ('pt1', 'lkf'):
+                if _n != name:
+                    btn = getattr(self, f'btn_top_{_n}', None)
+                    if btn is not None:
+                        btn.setChecked(False)
+            self._schedule()
+
         def _sync_lkf_to_pt1(self):
             """Binary search r_meas until LKF -3dB freq ≈ PT1 fc."""
             fc = self.fc_pt1.value(); w_t = 2 * np.pi * fc / FS; tgt = 1.0 / np.sqrt(2)
@@ -578,5 +590,14 @@ class DrawMixin:
                     else:
                         _ax.set_ylim(self._saved_views[_i][1])
             self._last_axes = [ax1, ax2, ax3, ax4, ax5]
+
+            # 置顶处理：将 _top_filter 对应滤波器的所有 label 匹配线提升 zorder
+            _top = getattr(self, '_top_filter', None)
+            if _top is not None:
+                _top_kw = 'PT1' if _top == 'pt1' else 'LKF'
+                for _ax in filter(None, [ax1, ax2, ax3, ax4, ax5]):
+                    for _ln in _ax.get_lines():
+                        if _top_kw in (_ln.get_label() or ''):
+                            _ln.set_zorder(4)
 
             self.canvas.draw()

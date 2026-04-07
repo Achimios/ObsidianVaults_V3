@@ -34,6 +34,7 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self._log_xaxis  = False
         self._log_yaxis  = False
         self._psd_amp_mode = True    # PSD 功率谱(False=dps²/Hz) | ASD 幅度谱(True=dps/√Hz)
+        self._top_filter   = None       # None | 'pt1' | 'lkf' | 'hs' — 置顶滤波器
         self._solo_idx   = None   # None | 0-4: solo display index
         self._solo_cache = None   # list[bool] of chk_show states before solo
         self._noise_cache = None
