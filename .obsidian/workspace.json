@@ -8,17 +8,31 @@
         "type": "tabs",
         "children": [
           {
+            "id": "a6c4603544eec910",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "-人类思维笔记/L_AkiDynamic/a_上古草稿/自动PID与滤波分析.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "自动PID与滤波分析"
+            }
+          },
+          {
             "id": "2f0fd2b1513e557d",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
+                "file": "-人类思维笔记/L_AkiDynamic/z_动力学系统/0.0_Doubao_AkiDynamic_和宇宙.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "0.0_Doubao"
+              "title": "0.0_Doubao_AkiDynamic_和宇宙"
             }
           },
           {
@@ -27,16 +41,16 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
+                "file": "-人类思维笔记/L_AkiDynamic/1_设计参考/0.1_Copilot_可执行方案.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "0.0_Doubao"
+              "title": "0.1_Copilot_可执行方案"
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -68,7 +82,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "file:PRD",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -171,13 +185,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
+                "file": "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "0.0_Doubao 的大纲"
+              "title": "-CONTEXT 的大纲"
             }
           }
         ],
@@ -185,7 +199,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 289.5
+    "width": 289.5,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -198,46 +213,47 @@
       "bases:新建数据库": false
     }
   },
-  "active": "dd0d5e32ca772244",
+  "active": "c693318721dd317a",
   "lastOpenFiles": [
+    "-人类思维笔记/L_AkiDynamic/1_设计参考/0.0_Gemini_浅层NN自动PID.md",
+    "-人类思维笔记/L_AkiDynamic/0_理论数学/0.1_Copilot_Lp范数核心提炼.md",
+    "-人类思维笔记/L_AkiDynamic/0_理论数学/0.0_豆包_Lp范数与稀疏性_原文.md",
+    "-人类思维笔记/L_AkiDynamic/z_动力学系统/0.0_Doubao_AkiDynamic_和宇宙.md",
+    "-人类思维笔记/L_AkiDynamic/a_上古草稿/自动PID与滤波分析.md",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-🛒PRD.md",
+    "-Vault空间/@Code_Project/-架构方法演示/-局部指令表&注释码表系统_演示/-🛒PRD.md",
+    "z_临时提问位置_方便打字.md",
+    "__attatch/3d22befa-6549-4d2d-b43e-d042c2cb7ca6.png",
+    "__attatch",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-📇索引码表.md",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/src/__pycache__/ui_mixin.cpython-310.pyc.22669872",
+    "-人类思维笔记/L_AkiDynamic/a_上古草稿",
+    "-人类思维笔记/L_AkiDynamic/2_可落地意图控制层.md",
+    "-人类思维笔记/L_AkiDynamic/1_可落地自动PID系统.md",
+    "-人类思维笔记/L_AkiDynamic/1_设计参考/1.1_Gemini_MLflow整合方案.md",
+    "-人类思维笔记/L_AkiDynamic/z_理论数学/-CONTEXT.md",
+    "-人类思维笔记/z_范数空间/0.0_Doubao_关于宇宙.md",
+    "-人类思维笔记/z_范数空间/0.0_Doubao_范数空间_短.md",
     "-人类思维笔记/z_范数空间/0.0_Doubao_范数空间.md",
+    "-人类思维笔记/z_范数空间/0.1_Copilot_Thinking.md",
+    "-人类思维笔记/L_AkiDynamic/z_动力学系统",
     "-人类思维笔记/-CONTEXT.md",
     "-人类思维笔记/z_文本格式的讨论/0.1_Copilot_Gemini方案审阅与V3实践.md",
     "-人类思维笔记/z_文本格式的讨论/0.0_Gemini_二进制码表注入&高熵断句符.md",
     "-人类思维笔记/z_非线性Chirp解调/00_Gemini_.md",
-    "-人类思维笔记/z_范数空间/0.1_Copilot_Thinking.md",
-    "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_Doubao.md",
     "-人类思维笔记/z_范数空间/0.2_Copilot_可执行操作.md",
     "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/4_L3旋转.py",
     "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/4_.py",
     "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/新建文本文档.txt",
     "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/新建文件夹",
-    "z_临时提问位置_方便打字.md",
     "-人类思维笔记/B_一些思考/关于宇宙和数学本质",
     "-人类思维笔记/B_一些思考",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__trash/1_豆包_PT1 vs 2‑state LKF 波特图对比.py",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__trash/1.1_豆包_.py",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__pycache__/2_Copilot_交互式分析仪_PT1vsLKF.cpython-310.pyc",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/__trash",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/AGENTS.md",
     "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-🛒PRD.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-🌲项目架构.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/AGENTS.md",
-    "_TEMP/_ScreenShots/AGENTS.md",
-    "-人类思维笔记/L_AkiDynamic/1_可落地自动PID系统.md",
-    "-人类思维笔记/L_AkiDynamic/2_可落地意图控制层.md",
-    "-人类思维笔记/L_AkiDynamic/z_理论数学/0.1_Copilot_Lp范数核心提炼.md",
-    "-人类思维笔记/L_AkiDynamic/z_理论数学/0.0_豆包_Lp范数与稀疏性_原文.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/PT1和LKF/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/PT1和LKF/AGENTS.md",
-    "-人类思维笔记/L_AkiDynamic/z_理论数学/-CONTEXT.md",
     "_TEMP/_ScreenShots/abb647d9-9bf3-4052-bf47-22771a448cde.png",
     "_TEMP/_ScreenShots/ScreenShot_2026-04-04_224725_088.png",
-    "-人类思维笔记/L_数学学习/S_范数/0_AI解释示例.md",
-    "-人类思维笔记/-Base演示_希尔伯特/-subWikis/线性代数基础.md",
-    "-人类思维笔记/-Base演示_希尔伯特/希尔伯特空间.md",
     "-人类思维笔记/L_AkiDynamic/未命名.canvas",
     "-人类思维笔记/__trash/ai_Copilot_SKILL/__attatch/Pasted image 20260404032510.png",
     "_attatch/Pasted image 20260404025406.png",
@@ -245,7 +261,6 @@
     "-人类思维笔记/z_非线性Chirp解调/attatch/Pasted image 20260403035913.png",
     "Pasted image 20260403035822.png",
     "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/lora_snr_curve.png",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png",
-    "-Vault空间/@Code_Project/Python/🌑Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png"
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png"
   ]
 }

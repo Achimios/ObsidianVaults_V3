@@ -23,21 +23,19 @@
 | `theme_mixin.py` | Mirror's Edge 主题切换 + toolbar 图标 |
 | `main.py` | 入口：FilterAnalyzer 类 + main() |
 
-## >v< 注释码表（关键参数搜索标记）
-
-搜索方式：`grep -r ">v<" src/`
-
-| 标记 | 含义 | 文件:位置 |
-|---|---|---|
-| `>v<⚡步进规则` | 滚轮 = 5× 精调步，方向键 = 精调步，改此处须同步注释 | ui_mixin.py `_WHEEL_MULT` |
-| `>v<🎯LKF默认r` | r_meas=0.012 → -3dB≈100Hz≈PT1默认fc；与 spinbox 下限联动 | ui_mixin.py `r_meas` |
-| `>v<🎯LKF同步下限` | sync 按钮 clip 下限必须与 r_meas spinbox 下限一致 | draw_mixin.py `_sync_lkf_to_pt1` |
-| `>v<📊PSD_ASD切换` | ASD↔PSD 切换逻辑 + Y 轴 ×0.1/×10 自动规则 | draw_mixin.py `_toggle_psd_amp` |
-| `>v<📊PSD默认Y范围` | PSD 初始 Y=[0,2000]，ASD 切换后=[0,200]；Home 重置也用此值 | main.py `_saved_views[3]` |
-| `>v<🕐抽帧公式` | dec=ceil(t_span×FS/6000)，缩放后 dec→1 消除显示混叠 | draw_mixin.py `_do_update` 时域段 |
 
 ## 新增功能落点
 - **新滤波算法** → `dsp.py` + `draw_mixin.py`（_do_update 调用）
 - **新 UI 控件** → `ui_mixin.py`（_build_ui）+ `main.py`（__init__ 若需新状态变量）
 - **新画布交互** → `interact_mixin.py`
 - **主题颜色调整** → `constants.py` 仅改此处
+
+# -🛒PRD.md
+主要用于 构建自己的项目
+写明需求，设计理念，功能模块，用户场景，交互流程，界面设计，技术选型，数据结构设计，接口设计，测试方案等内容。
+
+# -📇索引码表.md
+特殊的、重要的注释以指定格式写在代码里，并记录于此文件。看码表，grep对应名称，就能找到对应段落。
+
+# -🌲项目架构.md
+解读巨型代码项目时，把架构写入此文件，便于人和AI获得概览

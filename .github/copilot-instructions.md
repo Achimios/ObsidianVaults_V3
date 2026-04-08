@@ -4,7 +4,7 @@
 
 ## 【COPILOT 独占】Skills
 
-Skills 在 `.github/skills/` 中，VS Code 从 SKILL.md 的 YAML frontmatter 自动发现，无需手动注册。
+Skills 在 `.claude/skills/` 中，VS Code 从 SKILL.md 的 YAML frontmatter 自动发现，无需手动注册。
 
 ## 🚨【COPILOT 独占】PARDON 机制 — 绝对强制，无例外
 
