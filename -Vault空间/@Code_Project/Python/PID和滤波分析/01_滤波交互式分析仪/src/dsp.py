@@ -2,7 +2,7 @@
 # perlin_noise_1d / pt1_coeffs / lkf_coeffs / resonance / notch_coeffs / resonance_dist
 
 import numpy as np
-from scipy.signal import freqz, lfilter, welch, butter, iirnotch
+from scipy.signal import freqz, lfilter, welch, butter, iirnotch, bilinear
 from constants import FS
 
 def perlin_noise_1d(n, octaves=5, persistence=0.5, lacunarity=2.0, seed=7):
@@ -110,3 +110,21 @@ def resonance_dist(white, freq_r, gain_lin, q_factor, n_peaks, f_spread, seed_va
     for off in offsets:
         total += resonance(white, freq_r + off, g_each, q_factor, fs)
     return total
+
+
+def custom_tf_to_digital(num_s, den_s, fs=FS):
+    """H(s) = num(s)/den(s) → H(z) via bilinear transform.
+    num_s, den_s: list of float, highest power first (e.g. [s^2, s^1, s^0]).
+    Returns (b_z, a_z) for lfilter / freqz."""
+    b_z, a_z = bilinear(num_s, den_s, fs=fs)
+    return b_z, a_z
+
+
+def teo(x):
+    """Teager Energy Operator: T[x(n)] = x(n)^2 - x(n-1)*x(n+1).
+    Returns array of same length (edges extrapolated)."""
+    y = np.empty_like(x)
+    y[1:-1] = x[1:-1]**2 - x[:-2] * x[2:]
+    y[0] = y[1]
+    y[-1] = y[-2]
+    return y
