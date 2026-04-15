@@ -929,7 +929,7 @@ class DrawMixin:
             if ax5 is not None:
                 # 输入（噪声+打杆）灰色背景线
                 if not pid_solo:
-                    ax5.plot(t, sp, color=T['noise'], lw=0.28, alpha=0.55, label="Setpoints+噪音")
+                    ax5.plot(t, sp, color=T['noise'], lw=0.55, alpha=0.80, label="Setpoints+噪音")  # >v<🎨sp线透明度
                 else:
                     # 独奏: 显示 setpoint (stick+sine) 而非噪声输入
                     _sp_dec = (s_stick + s_sine_total)[::dec]
