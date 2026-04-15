@@ -5,24 +5,32 @@ import numpy as np
 from scipy.signal import freqz, lfilter, welch, butter, iirnotch, bilinear
 from constants import FS
 
-def perlin_noise_1d(n, octaves=5, persistence=0.5, lacunarity=2.0, seed=7):
-    rng = np.random.default_rng(seed)
+def perlin_noise_1d(n, octaves=5, persistence=0.5, lacunarity=2.0, seed=7,
+                    base_freq=40.0, coord_offset=0.0):
+    """Perlin-style 1D noise sampled at n points.
+    base_freq    : base octave frequency in Hz — controls knot density (default 40 Hz).
+    coord_offset : integer domain offset — slide to get a different noise patch.
+    coord_offset=0 reproduces old behavior exactly (same random sequence).
+    """
+    rng = np.random.default_rng(int(seed))
     result = np.zeros(n)
     amp = 1.0
-    freq = 1.0
+    freq_mult = 1.0
     total_amp = 0.0
+    co = max(0, int(coord_offset))
     for _ in range(octaves):
-        n_knots = max(2, int(n * freq / 50))   # 每 octave 的控制点数
-        knots = rng.standard_normal(n_knots + 2)
-        t = np.linspace(0, n_knots, n)
-        idx = np.clip(t.astype(int), 0, n_knots - 1)
-        frac = t - idx
-        s = frac * frac * (3.0 - 2.0 * frac)  # smoothstep
-        val = knots[idx] * (1.0 - s) + knots[idx + 1] * s
+        n_knots = max(2, int(n * base_freq * freq_mult / FS))
+        n_total = co + n_knots + 2              # enough knots to cover offset window
+        knots   = rng.standard_normal(n_total)
+        t       = np.linspace(co, co + n_knots, n)   # shifted domain window
+        idx     = np.clip(t.astype(int), 0, n_total - 2)
+        frac    = t - idx
+        s       = frac * frac * (3.0 - 2.0 * frac)   # smoothstep
+        val     = knots[idx] * (1.0 - s) + knots[idx + 1] * s
         result += val * amp
         total_amp += amp
         amp *= persistence
-        freq *= lacunarity
+        freq_mult *= lacunarity
     return result / total_amp
 
 

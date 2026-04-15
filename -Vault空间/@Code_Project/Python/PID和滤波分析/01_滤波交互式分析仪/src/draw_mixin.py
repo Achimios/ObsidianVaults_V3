@@ -32,6 +32,11 @@ class DrawMixin:
                  it['amp'].value(), it['trans'].value(),
                  it['t0'].value(), it['t1'].value(),
                  it['w_rms'].value(), it['p_rms'].value(), it['p_oct'].value(),
+                 it['fm_smooth'].value()   if 'fm_smooth'   in it else 3,
+                 it['p_base_freq'].value() if 'p_base_freq' in it else 20.0,
+                 it['p_persist'].value()   if 'p_persist'   in it else 0.6,
+                 it['p_lacunar'].value()   if 'p_lacunar'   in it else 2.0,
+                 it['p_seed'].value()      if 'p_seed'      in it else 0,
                  it.get('chk_en') is None or it['chk_en'].isChecked())
                 for it in items
             )
@@ -47,8 +52,13 @@ class DrawMixin:
                 f_mod_v = item['f_mod'].value()    if 'f_mod'   in item else 0.0
                 amp   = item['amp'].value()
                 trans = item['trans'].value(); t0 = item['t0'].value(); t1 = item['t1'].value()
-                w_rms = item['w_rms'].value(); p_rms = item['p_rms'].value()
-                p_oct = int(item['p_oct'].value())
+                w_rms         = item['w_rms'].value(); p_rms = item['p_rms'].value()
+                p_oct         = int(item['p_oct'].value())
+                p_base_freq_v = item['p_base_freq'].value() if 'p_base_freq' in item else 20.0
+                p_persist_v   = item['p_persist'].value()   if 'p_persist'   in item else 0.6
+                p_lacunar_v   = item['p_lacunar'].value()   if 'p_lacunar'   in item else 2.0
+                p_seed_v      = int(item['p_seed'].value()) if 'p_seed'      in item else 0
+                fm_smooth_v   = int(item['fm_smooth'].value()) if 'fm_smooth' in item else 3
                 dur   = t1 - t0
                 if dur <= 0:
                     continue
@@ -85,7 +95,7 @@ class DrawMixin:
                         phase = 2 * np.pi * pk_f0 * t_full
                     if f_mod_v > 0:
                         seed_fm = (seed_fm_base + pk * 17) % (2**31)
-                        lfo = perlin_noise_1d(N_SIG, octaves=3, seed=seed_fm)
+                        lfo = perlin_noise_1d(N_SIG, octaves=fm_smooth_v, seed=seed_fm)
                         phase += 2 * np.pi * f_mod_v * np.cumsum(lfo) / FS
                     total += (amp / n_pk) * np.sin(phase) * window
                 if w_rms > 0 or p_rms > 0:
@@ -93,7 +103,11 @@ class DrawMixin:
                     rng  = np.random.default_rng(seed)
                     loc  = np.zeros(N_SIG)
                     if w_rms > 0: loc += rng.standard_normal(N_SIG) * w_rms
-                    if p_rms > 0: loc += perlin_noise_1d(N_SIG, octaves=p_oct, seed=seed+1) * p_rms
+                    if p_rms > 0: loc += perlin_noise_1d(
+                        N_SIG, octaves=p_oct,
+                        base_freq=p_base_freq_v, persistence=p_persist_v,
+                        lacunarity=p_lacunar_v,
+                        seed=(seed + 1 + p_seed_v) % (2**31)) * p_rms
                     total += loc * window
             self._sine_cache_key = key
             self._sine_cache = total
@@ -435,6 +449,8 @@ class DrawMixin:
             # ── 噪声生成（缓存）──
             nk = (self.chk_noise_en.isChecked(),
                   self.white_rms.value(), self.perlin_rms.value(), self.perlin_oct.value(),
+                  self.perlin_base_freq.value(), self.perlin_persist.value(),
+                  self.perlin_lacunar.value(), self.perlin_coord.value(), self.perlin_seed.value(),
                   self.fr1.value(), self.gain_r1.value(), self.qr1.value(),
                   self.chk_r1.isChecked(),
                   self.fr2.value(), self.gain_r2.value(), self.qr2.value(),
@@ -444,7 +460,13 @@ class DrawMixin:
             if self._noise_key != nk:
                 rng = np.random.default_rng(42)
                 w   = rng.standard_normal(N_SIG) * self.white_rms.value()
-                p   = perlin_noise_1d(N_SIG, octaves=self.perlin_oct.value()) \
+                p   = perlin_noise_1d(N_SIG,
+                                      octaves=self.perlin_oct.value(),
+                                      persistence=self.perlin_persist.value(),
+                                      lacunarity=self.perlin_lacunar.value(),
+                                      base_freq=self.perlin_base_freq.value(),
+                                      coord_offset=float(self.perlin_coord.value()),
+                                      seed=self.perlin_seed.value()) \
                       * self.perlin_rms.value()
                 if self.chk_res_dist.isChecked():
                     n_pk = self.n_res_peaks.value()
@@ -730,8 +752,15 @@ class DrawMixin:
             if n_en == 0:
                 self.canvas.draw_idle()
                 return
+            # >v<📐子图顺序 - _all_hr[i]对应逻辑索引: 0=幅频 1=相频 2=群延迟 3=PSD 4=时域
             _all_hr  = [2.0, 2.0, 1.4, 2.8, 2.8]
-            _en_hr  = [_all_hr[i] for i, e in enumerate(en) if e]
+            # _DISP: 从上到下的物理显示顺序（值=逻辑索引）
+            # 改这一行就能重排子图，不用动其他任何代码
+            # 当前: 幅频→相频→群延迟→时域→PSD
+            _DISP = [0, 1, 2, 4, 3]
+            # 按显示顺序取 checkbox 启用状态和对应高度
+            _disp_en = [en[i] for i in _DISP]
+            _en_hr  = [_all_hr[_DISP[j]] for j, e in enumerate(_disp_en) if e]
             if n_en > 1:
                 gs = GridSpec(n_en, 1, figure=self.fig,
                               height_ratios=_en_hr,
@@ -740,17 +769,21 @@ class DrawMixin:
             else:
                 gs = None
                 self.fig.subplots_adjust(left=0.07, right=0.975, top=0.955, bottom=0.085)
-            _axes = []; _gi = 0
-            for _ei in en:
-                if _ei:
+            # 按显示顺序创建 axes，然后映射回逻辑索引 ax1-ax5
+            _axes_disp = []; _gi = 0
+            for de in _disp_en:
+                if de:
                     if gs is not None:
-                        _axes.append(self.fig.add_subplot(gs[_gi]))
+                        _axes_disp.append(self.fig.add_subplot(gs[_gi]))
                     else:
-                        _axes.append(self.fig.add_subplot(1, 1, 1))
+                        _axes_disp.append(self.fig.add_subplot(1, 1, 1))
                     _gi += 1
                 else:
-                    _axes.append(None)
-            ax1, ax2, ax3, ax4, ax5 = _axes
+                    _axes_disp.append(None)
+            _ax_map = [None] * 5
+            for di, li in enumerate(_DISP):
+                _ax_map[li] = _axes_disp[di]
+            ax1, ax2, ax3, ax4, ax5 = _ax_map
 
             C_PT1 = T['pt1']; C_LKF = T['lkf']; C_TEO = T['teo']; C_GRID = T['grid']
             C_DEQ = T.get('deq', '#e07830')

@@ -173,10 +173,20 @@ class UIMixin:
             lw_fc = QLabel("f中:"); lw_fc.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_fc.setFixedWidth(28)
             fc_row.addWidget(lw_fc); fc_row.addWidget(fc_spin)
             lay.addLayout(fc_row)
-            for lbl, w in [("幅度:", amp), ("FM频偏:", f_mod), ("过渡区:", trans)]:
-                row = QHBoxLayout()
-                lw = QLabel(lbl); lw.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw.setFixedWidth(50)
-                row.addWidget(lw); row.addWidget(w); lay.addLayout(row)
+            fm_smooth = self._ispin(1, 8, 3)
+            fm_smooth.setToolTip("FM调制LFO的倍频程：1=平滑大弧，8=粗糙随机（f_mod=0时无效）")
+            amp_row = QHBoxLayout()
+            lw_amp = QLabel("幅度:"); lw_amp.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_amp.setFixedWidth(50)
+            amp_row.addWidget(lw_amp); amp_row.addWidget(amp); lay.addLayout(amp_row)
+            fm_row = QHBoxLayout()
+            lw_fmd = QLabel("FM频偏:"); lw_fmd.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_fmd.setFixedWidth(50)
+            lw_fms = QLabel("光滑:"); lw_fms.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_fms.setFixedWidth(36)
+            fm_row.addWidget(lw_fmd); fm_row.addWidget(f_mod)
+            fm_row.addWidget(lw_fms); fm_row.addWidget(fm_smooth)
+            lay.addLayout(fm_row)
+            trans_row = QHBoxLayout()
+            lw_tr = QLabel("过渡区:"); lw_tr.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_tr.setFixedWidth(50)
+            trans_row.addWidget(lw_tr); trans_row.addWidget(trans); lay.addLayout(trans_row)
             # 多峰：N峰 spinbox + 梳/谐 切换 + Δf（谐波模式时隐藏）
             n_peaks = self._ispin(1, 8, 1)
             btn_harmonic = QPushButton("梳"); btn_harmonic.setCheckable(True); btn_harmonic.setFixedHeight(20)
@@ -200,13 +210,34 @@ class UIMixin:
             btn_harmonic.clicked.connect(_upd_mp_vis)
             n_peaks.valueChanged.connect(lambda _: self._schedule())
             delta_f.valueChanged.connect(lambda _: self._schedule())
-            w_rms = self._spin(0, 500, 0, 0, "dps", 5)
-            p_rms = self._spin(0, 200, 0, 0, "dps", 2)
-            p_oct = self._ispin(1, 8, 4)
-            for lbl, w in [("白噪音:", w_rms), ("Perlin:", p_rms), ("倍频程:", p_oct)]:
-                row = QHBoxLayout()
-                lw = QLabel(lbl); lw.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw.setFixedWidth(50)
-                row.addWidget(lw); row.addWidget(w); lay.addLayout(row)
+            w_rms       = self._spin(0,   500,   0,   0, "dps", 5)
+            p_rms       = self._spin(0,   200,   0,   0, "dps", 2)
+            p_oct       = self._ispin(1, 8, 4)
+            p_base_freq = self._spin(0.1, 400,  20.0, 1, "Hz",  1.0)
+            p_persist   = self._spin(0.1, 1.0,   0.6, 2, "",    0.05)
+            p_lacunar   = self._spin(1.2, 4.0,   2.0, 1, "×",   0.1)
+            p_seed      = self._ispin(0, 99, 0)
+            wnoise_row = QHBoxLayout()
+            lw_wn = QLabel("白噪音:"); lw_wn.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_wn.setFixedWidth(50)
+            wnoise_row.addWidget(lw_wn); wnoise_row.addWidget(w_rms); lay.addLayout(wnoise_row)
+            pr_row = QHBoxLayout()
+            lw_pr = QLabel("Perlin:"); lw_pr.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_pr.setFixedWidth(44)
+            lw_po = QLabel("程:"); lw_po.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_po.setFixedWidth(26)
+            pr_row.addWidget(lw_pr); pr_row.addWidget(p_rms)
+            pr_row.addWidget(lw_po); pr_row.addWidget(p_oct)
+            lay.addLayout(pr_row)
+            bf_row = QHBoxLayout()
+            lw_bf = QLabel("基Hz:"); lw_bf.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_bf.setFixedWidth(44)
+            lw_sd = QLabel("种:"); lw_sd.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_sd.setFixedWidth(26)
+            bf_row.addWidget(lw_bf); bf_row.addWidget(p_base_freq)
+            bf_row.addWidget(lw_sd); bf_row.addWidget(p_seed)
+            lay.addLayout(bf_row)
+            ps_row = QHBoxLayout()
+            lw_ps = QLabel("持续:"); lw_ps.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_ps.setFixedWidth(44)
+            lw_lc = QLabel("间隔:"); lw_lc.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_lc.setFixedWidth(26)
+            ps_row.addWidget(lw_ps); ps_row.addWidget(p_persist)
+            ps_row.addWidget(lw_lc); ps_row.addWidget(p_lacunar)
+            lay.addLayout(ps_row)
             chk_en = QCheckBox("启用"); chk_en.setChecked(True)
             chk_en.stateChanged.connect(lambda _: self._schedule())
             lay.addWidget(chk_en)
@@ -214,7 +245,10 @@ class UIMixin:
                     'amp': amp, 'trans': trans,
                     't0': t0_spin, 't1': t1_spin, 'tctr': tc_spin, 'chk_en': chk_en,
                     'w_rms': w_rms, 'p_rms': p_rms, 'p_oct': p_oct, 'btn_rng': btn_rng,
-                    'n_peaks': n_peaks, 'harmonic': btn_harmonic, 'delta_f': delta_f}
+                    'n_peaks': n_peaks, 'harmonic': btn_harmonic, 'delta_f': delta_f,
+                    'fm_smooth': fm_smooth,
+                    'p_base_freq': p_base_freq, 'p_persist': p_persist,
+                    'p_lacunar': p_lacunar, 'p_seed': p_seed}
             btn_del.clicked.connect(lambda: self._remove_sine_item(item))
             btn_dup.clicked.connect(lambda: self._duplicate_sine_item(item))
             btn_rng.clicked.connect(lambda: self._toggle_sine_range(item))
@@ -287,6 +321,11 @@ class UIMixin:
             item['w_rms'].setValue(src['w_rms'].value())
             item['p_rms'].setValue(src['p_rms'].value())
             item['p_oct'].setValue(src['p_oct'].value())
+            item['fm_smooth'].setValue(src['fm_smooth'].value())
+            item['p_base_freq'].setValue(src['p_base_freq'].value())
+            item['p_persist'].setValue(src['p_persist'].value())
+            item['p_lacunar'].setValue(src['p_lacunar'].value())
+            item['p_seed'].setValue(src['p_seed'].value())
             item['chk_en'].setChecked(src['chk_en'].isChecked())
             item['n_peaks'].setValue(src['n_peaks'].value())
             item['harmonic'].setChecked(src['harmonic'].isChecked())
@@ -479,12 +518,22 @@ class UIMixin:
             self.chk_noise_en.setChecked(True)
             self.chk_noise_en.stateChanged.connect(lambda _: self._schedule())
             self.white_rms  = self._spin(0, 2000,  5, 0, "dps", 5)
-            self.perlin_rms = self._spin(0,  500,   5, 0, "dps", 2)
-            self.perlin_oct = self._ispin(1, 8, 4)
+            self.perlin_rms       = self._spin(0,   500,    5,   0, "dps", 2)
+            self.perlin_oct       = self._ispin(1, 8, 4)
+            self.perlin_base_freq = self._spin(0.1, 400,  5.0,  1, "Hz",  1.0)
+            self.perlin_persist   = self._spin(0.1, 1.0,  0.5,  2, "",    0.05)
+            self.perlin_lacunar   = self._spin(1.2, 4.0,  2.0,  1, "×",   0.1)
+            self.perlin_coord     = self._ispin(0, 999, 0)
+            self.perlin_seed      = self._ispin(0,  99, 7)
             pl.addWidget(self._group("全局噪声参数", [
                 ("白噪声:", self.white_rms),
                 ("Perlin:", self.perlin_rms),
                 ("倍频程:", self.perlin_oct),
+                ("基频率:", self.perlin_base_freq),
+                ("持续度:", self.perlin_persist),
+                ("倍频间隔:", self.perlin_lacunar),
+                ("坐标:",   self.perlin_coord),
+                ("种子:",   self.perlin_seed),
             ], extras=[self.chk_noise_en]))
 
             # ── Setpoints注入（手动 Cubic 曲线 + 正弦注入）──
