@@ -38,10 +38,15 @@ PT1 vs 2-state LKF 陀螺滤波器交互式分析仪（多模块版）。
 - PT1 Euler/Bilinear 切换 + LKF 2模式 + info标签全面升级 + TF H(z) + auto-sync + 字体警告抑制 + legend右上角 + r_meas精度 + stick toggle-off + subplot高比
 
 ## 上次做了什么（2026-04-21 session 8）
-- **1_给人类解释.md 完整写作**：~550行数学指南，16节，覆盖信号/滤波/s-z域/传递函数/离散化/DEQ/PT1/LKF/Notch/Bode/PSD/PID/工程近似/术语表
-  - 新增 §15 代码锚点（14项数学→代码映射表）
-  - 新增 §16 常见误解纠正（6条：KF非线性/DC≡1/Euler生态/二分≠MC/PSD≠FFT²/H(z)=DEQ）
-  - 参考 LoRa + MagCal 解释风格：motivation-first + 代码锚定 + "以为的vs实际的"
+- **1_给人类解释.md 完整写作**：~550行，16节，含代码锚点+误解纠正
+
+## 上次做了什么（2026-04-22 session 9）
+- Perlin 全参数暴露：base_freq(Hz)/持续度/倍频间隔/坐标/种子 → 全局+注入双区
+  - fm_smooth 创建后删除（累积相位无法解耦，更多octave反而减小频偏）
+- 注入默认幅度 100→30 dps
+- 滚轮/`-R` 末尾加 `_schedule()`，修复时域降采样混叠
+- sp 线 alpha=0.55→0.80 lw=0.28→0.55 + 索引注释 + constants 颜色说明
+- 乱流参数建议：全局 base_freq=2Hz/persistence=0.65/octaves=5，注入 base_freq=10-15Hz
 
 ## 下一步（优先级）
 1. 👆 ODE 连续时间仿真（新功能）
