@@ -269,6 +269,7 @@ class DrawMixin:
             self._saved_views[ax_idx] = (xlim_def, yl)
             ax.set_xlim(xlim_def)
             self.canvas.draw_idle()
+            self._schedule()   # 重绘修正时域降采样
 
         def _toggle_filter_top(self, name):
             """Exclusive TOP: 互斥选择一个滤波器的线置顶显示。"""

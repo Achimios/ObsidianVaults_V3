@@ -155,7 +155,7 @@ class UIMixin:
             freq  = self._spin(0.01, 9999, 20, 2, "Hz", 5)
             freq_end = self._spin(0.01, 9999, 20, 2, "Hz", 5)
             freq_end.setToolTip("起止频率相同时=单频，不同时=Chirp扫频")
-            amp   = self._spin(1, 1000, 100, 0, "dps", 10)
+            amp   = self._spin(1, 1000, 30, 0, "dps", 10)
             f_mod = self._spin(0, 500, 0, 0, "Hz", 1)
             f_mod.setToolTip("频率调制（FM）的最大频偏幅度，0=关闭")
             trans = self._spin(0, 0.5, 0.1, 2, "", 0.05)
@@ -173,16 +173,12 @@ class UIMixin:
             lw_fc = QLabel("f中:"); lw_fc.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_fc.setFixedWidth(28)
             fc_row.addWidget(lw_fc); fc_row.addWidget(fc_spin)
             lay.addLayout(fc_row)
-            fm_smooth = self._ispin(1, 8, 3)
-            fm_smooth.setToolTip("FM调制LFO的倍频程：1=平滑大弧，8=粗糙随机（f_mod=0时无效）")
             amp_row = QHBoxLayout()
             lw_amp = QLabel("幅度:"); lw_amp.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_amp.setFixedWidth(50)
             amp_row.addWidget(lw_amp); amp_row.addWidget(amp); lay.addLayout(amp_row)
             fm_row = QHBoxLayout()
             lw_fmd = QLabel("FM频偏:"); lw_fmd.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_fmd.setFixedWidth(50)
-            lw_fms = QLabel("光滑:"); lw_fms.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_fms.setFixedWidth(36)
             fm_row.addWidget(lw_fmd); fm_row.addWidget(f_mod)
-            fm_row.addWidget(lw_fms); fm_row.addWidget(fm_smooth)
             lay.addLayout(fm_row)
             trans_row = QHBoxLayout()
             lw_tr = QLabel("过渡区:"); lw_tr.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_tr.setFixedWidth(50)
@@ -246,7 +242,6 @@ class UIMixin:
                     't0': t0_spin, 't1': t1_spin, 'tctr': tc_spin, 'chk_en': chk_en,
                     'w_rms': w_rms, 'p_rms': p_rms, 'p_oct': p_oct, 'btn_rng': btn_rng,
                     'n_peaks': n_peaks, 'harmonic': btn_harmonic, 'delta_f': delta_f,
-                    'fm_smooth': fm_smooth,
                     'p_base_freq': p_base_freq, 'p_persist': p_persist,
                     'p_lacunar': p_lacunar, 'p_seed': p_seed}
             btn_del.clicked.connect(lambda: self._remove_sine_item(item))
@@ -321,7 +316,6 @@ class UIMixin:
             item['w_rms'].setValue(src['w_rms'].value())
             item['p_rms'].setValue(src['p_rms'].value())
             item['p_oct'].setValue(src['p_oct'].value())
-            item['fm_smooth'].setValue(src['fm_smooth'].value())
             item['p_base_freq'].setValue(src['p_base_freq'].value())
             item['p_persist'].setValue(src['p_persist'].value())
             item['p_lacunar'].setValue(src['p_lacunar'].value())

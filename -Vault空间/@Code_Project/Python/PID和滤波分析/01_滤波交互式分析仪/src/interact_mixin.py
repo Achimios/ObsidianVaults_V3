@@ -259,3 +259,4 @@ class InteractMixin:
             if _ai is not None:
                 self._saved_views[_ai] = (list(ax.get_xlim()), list(ax.get_ylim()))
             self.canvas.draw_idle()
+            self._schedule()   # 0.3s 后重绘（修正时域降采样精度）
