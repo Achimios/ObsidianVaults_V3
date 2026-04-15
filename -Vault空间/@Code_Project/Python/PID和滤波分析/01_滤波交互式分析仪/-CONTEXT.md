@@ -29,30 +29,35 @@ PT1 vs 2-state LKF 陀螺滤波器交互式分析仪（多模块版）。
 - session 4: H(s) 后端完整(bilinear→5图) + TEO 能量算子 + 图例 note
 
 ## 上次做了什么（2026-04-16 session 5）
-- 差分表达式 DEQ 窗口完整实现：预设下拉（PT1/LKF/Notch/自定义TF/TEO）+ 自由输入 y[n]=…/H(z) 系数
-  - DEQ 状态标签 3 行：阶数/-3dB(+预设设计fc)、H(z) 表达式(poly_z_str)、差分方程(diff_eq_str)
-  - DEQ 颜色橙色 #e07830(dark)/#b06020(light)
-  - dsp.py: `poly_z_str()` 格式化 z⁻ⁿ 多项式为可读字符串
-- Notch-last 信号链修正：
-  - 信号链：Raw → [PT1/LKF] → [H(s)/DEQ] → Notch(最后应用一次) → PID
-  - 源 combo 移除 "+N" 后缀（H(s)/DEQ/TEO 全部）
-  - 新增 `out_pt1_td`/`out_lkf_td`（无 Notch 的完整信号）供级联使用
-- 级联频率响应（Cascade Bode）：
-  - 源≠未过滤时，Bode 实线=总级联响应(源×滤波器×Hn)，虚线=TF 自身
-  - 动态标签前缀如 "PT1→H(s)+N"
-- PID 控制器完全独立：
-  - 不再覆盖 H(s) 的 num/den，独立系数计算 `custom_tf_to_digital([kd,kp,ki],[τd,1,0],fs)`
-  - 独立信号源 combo（未滤波/PT1/LKF），默认 PT1
-  - PID 输入含 Notch(PT1_n/LKF_n)，输出不再叠加 Notch
-  - 5 图全接入：幅频/相频/群延迟/PSD/时域，独立颜色 C_PID=#e0a040
-  - TOP 按钮独立 'pid' key，移除 hs↔pid 同步
+- DEQ 窗口完整实现（预设下拉+自由输入，状态标签3行）
+- Notch-last 信号链修正
+- 级联 Bode（实线=总级联，虚线=TF自身）
+- PID 完全独立通道
+
+## 上次做了什么（2026-04-20 session 6~7）
+- PT1 Euler/Bilinear 切换（btn_pt1_bil）
+- LKF 3模式→2模式：原始 H=[1,1]（有谐振峰）/ H=[1,0]（纯低通，默认）
+  - DC归一化移除（KF DC恒=1，无偏估计数学性质）
+  - 代码保留 obs_mode=1，UI 只留 0/2
+- Riccati 150步 + 二分搜索 40步（同步到 PT1 -3dB）
+- **info 标签全面升级**：PT1/LKF 显示 DEQ差分方程 + b,a系数 + peak gain
+  - TF(H(s))区域新增 H(z) 显示
+  - DC增益→peak gain（KF DC恒=1是数学性质，真正有意义的是谐振峰值）
+- 打杆注入 box：objectName 隔离 + 主题色背景 + 橙色 checked 按钮
+- 启动自动同步 LKF → PT1 截止频率
+- Qt 字体警告抑制（`QT_LOGGING_RULES`）
+- 幅频/相频 legend 右上角
+- r_meas 5位小数、step 0.0005
+- Stick mode toggle-off（同按钮取消）
+- Subplot 高比 [2.0, 2.0, 1.4, 2.8, 2.8]
 
 ## 下一步（优先级）
-1. 👆 PID 默认参数调整（P=45 I=60 D=36，主乘数=1.0，D-LP=125Hz，500g 起飞重量）
-2. PID 物理映射：质量→旋转惯量→力→传递函数（5寸机架，20% 悬停油门）
-3. 阶跃响应图（新 subplot）
-4. 极点零点图（新 subplot）
-5. 窗口默认 1920×1080 + 新图默认隐藏
+1. 👆 ODE 连续时间仿真（新功能）
+2. 👆 固定群延迟滤波器（FIR-based）
+3. 极点零点图（新 subplot）
+4. 阶跃响应图（新 subplot）
+5. PID 默认参数调整 + 物理映射（5寸机架）
+6. 修复旧 bug：|R toggle / |A auto-fit / 中键 pan 抖动 / Ctrl+Shift 修饰键
 
 ## 未来可能的大步骤
 - 黑匣子 CSV 导入（Betaflight Blackbox .csv → 直接替代合成信号，做真实数据分析）

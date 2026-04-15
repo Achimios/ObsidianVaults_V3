@@ -5,14 +5,16 @@
 ## 📍 最近编辑（按时间倒序）
 
 1. **PT1vsLKF 分析仪** — `./-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md`  
-   → 已完成：打杆模式修复（startup=None）+ toolbar 互斥锁（_deactivate_toolbar）+ git commit  
-   → 下一步：👆 注入正弦功能
+   → 已完成：PT1 Euler/Bilinear切换 + LKF 2模式(原始/H=[1,0]) + info标签全面升级(DEQ+b,a+peak) + TF H(z)显示 + 启动auto-sync + 字体警告抑制 + legend右上角  
+   → 下一步：👆 ODE连续时间仿真 + 固定群延迟 + 极零点图 + 阶跃响应图
 
 2. **根目录 + .github/** — `./-CONTEXT.md`  
    → 已完成：AGENTS.md内联session流程 + 听觉接口精简 + instructions.md去重 + Skills迁移至.claude/skills/ + 人类接入手册恢复+补Skills行+Magic节  
    → 下一步：OpenClaw 机制研究（或继续人类接入手册其他待整理内容）
 
-3. *(下次完成后追加)*
+3. **AkiDynamic思维笔记** — `./-人类思维笔记/L_AkiDynamic/z_动力学系统/`  
+   → 已完成：12文件提炼（动力学/宇宙/人性 思考+可执行 + 总结+探索 + 0.1更新 + 1_1 PID + 2_1意图层 + 3_软件动力学）  
+   → 下一步：按需继续
 
 ## 规则
 

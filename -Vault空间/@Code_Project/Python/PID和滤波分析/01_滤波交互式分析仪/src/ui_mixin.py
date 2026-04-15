@@ -76,6 +76,28 @@ class UIMixin:
             return g
 
 
+        def _apply_inject_box_style(self, dark: bool) -> None:
+            """Set Setpoints注入 box style for current theme (only outer box background)."""
+            ib = getattr(self, '_inject_box', None)
+            if ib is None:
+                return
+            if dark:
+                ib.setStyleSheet(
+                    "QGroupBox#injectBox{background:#141e30; border:1px solid #253048;"
+                    "border-radius:4px; margin-top:8px; padding-top:14px;}"
+                    "QGroupBox#injectBox::title{subcontrol-origin:margin; subcontrol-position:top left;"
+                    "padding:0 6px; color:#8ab0cc;}"
+                    "QPushButton:checked{background:#8a5000; color:#ffe0a0; border:1px solid #c07800;}"
+                )
+            else:
+                ib.setStyleSheet(
+                    "QGroupBox#injectBox{background:#d4dee8; border:1px solid #a8b8cc;"
+                    "border-radius:4px; margin-top:8px; padding-top:14px;}"
+                    "QGroupBox#injectBox::title{subcontrol-origin:margin; subcontrol-position:top left;"
+                    "padding:0 6px; color:#2a3a50;}"
+                    "QPushButton:checked{background:#b06800; color:#ffffff; border:1px solid #d08a00;}"
+                )
+
         def _schedule(self):
             self._timer.stop(); self._timer.start()
 
@@ -130,8 +152,8 @@ class UIMixin:
             lw_tc = QLabel("t中:"); lw_tc.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_tc.setFixedWidth(28)
             tc_row.addWidget(lw_tc); tc_row.addWidget(tc_spin)
             lay.addLayout(tc_row)
-            freq  = self._spin(1, 9999, 20, 0, "Hz", 5)
-            freq_end = self._spin(1, 9999, 20, 0, "Hz", 5)
+            freq  = self._spin(0.01, 9999, 20, 2, "Hz", 5)
+            freq_end = self._spin(0.01, 9999, 20, 2, "Hz", 5)
             freq_end.setToolTip("起止频率相同时=单频，不同时=Chirp扫频")
             amp   = self._spin(1, 1000, 100, 0, "dps", 10)
             f_mod = self._spin(0, 500, 0, 0, "Hz", 1)
@@ -145,7 +167,7 @@ class UIMixin:
             fq_row.addWidget(lw_f1); fq_row.addWidget(freq_end)
             lay.addLayout(fq_row)
             # f中 spinbox（f起=f止时单频，f起≠f止时chirp；修改f中保持带宽平移）
-            fc_spin = self._spin(1, 9999, 20, 0, "Hz", 5)
+            fc_spin = self._spin(0.01, 9999, 20, 2, "Hz", 5)
             fc_spin.setToolTip("f中 = (f起+f止)/2；修改时等比平移f起/f止，保持频带宽度")
             fc_row = QHBoxLayout()
             lw_fc = QLabel("f中:"); lw_fc.setAlignment(Qt.AlignRight | Qt.AlignVCenter); lw_fc.setFixedWidth(28)
@@ -355,11 +377,17 @@ class UIMixin:
             self.btn_top_pt1 = QPushButton("TOP"); self.btn_top_pt1.setCheckable(True)
             self.btn_top_pt1.setToolTip("PT1 操线置顶（互斜）—使 PT1 的所有线段绘制在最上层")
             self.btn_top_pt1.clicked.connect(lambda: self._toggle_filter_top('pt1'))
+            self.btn_pt1_bil = QPushButton("E"); self.btn_pt1_bil.setCheckable(True)
+            self.btn_pt1_bil.setFixedWidth(26)
+            self.btn_pt1_bil.setToolTip("E=前向欧拉(受采样率影响大)  B=双线性(Tustin)—精度更高但多一次乘\n切换后查看实际-3dB偏差")
+            self.btn_pt1_bil.clicked.connect(lambda ch: (
+                self.btn_pt1_bil.setText("B" if ch else "E"), self._schedule()))
             self.fc_pt1 = self._spin(10, 900, 100, 0, "Hz", 10)
             self.pt1_info = QLabel("<small style='color:#778'>前向欧拉法 (Betaflight)</small>")
             self.pt1_info.setWordWrap(True)
+            self.pt1_info.setMinimumHeight(50)  # >v<📏标签高度 - PT1 info（DEQ + b,a显示需要足够高度）
             pl.addWidget(self._group("PT1 Filter", [("截止 fc:", self.fc_pt1)],
-                                     extras=[self.chk_pt1_en, self.btn_top_pt1, self.pt1_info]))
+                                     extras=[self.chk_pt1_en, self.btn_top_pt1, self.btn_pt1_bil, self.pt1_info]))
 
             # LKF
             self.chk_lkf_en = QCheckBox("启用 LKF"); self.chk_lkf_en.setChecked(True)
@@ -369,13 +397,24 @@ class UIMixin:
             self.btn_top_lkf.clicked.connect(lambda: self._toggle_filter_top('lkf'))
             self.q_omega = self._spin(1e-4, 200,  1.0,  4, "",   0.1)
             self.q_bias  = self._spin(1e-9, 1e-3, 1e-4, 5, "",   1e-5)
-            self.r_meas  = self._spin(0.001, 500, 0.012, 3, "",  0.001)  # >v<🎯LKF默认r - q_omega=1.0,q_bias=1e-4时 r=0.012对应-3dB≈100Hz=PT1默认FC
+            self.r_meas  = self._spin(0.0001, 500, 0.012, 5, "",  0.0005)  # >v<🎯LKF默认r - q_omega=1.0,q_bias=1e-4时 r=0.012对应-3dB≫100Hz=PT1默认FC
             btn_sync = QPushButton("同步 PT1 fc")
-            btn_sync.setToolTip("自动调整 r, 使 LKF -3dB 频率 = PT1 截止频率")
+            btn_sync.setToolTip("自动调整 r, 使 LKF -3dB 频率 = PT1 实际截止频率")
             btn_sync.clicked.connect(self._sync_lkf_to_pt1)
+            from PyQt5.QtWidgets import QComboBox
+            self.cmb_lkf_obs = QComboBox()
+            # DC归一化(obs_mode=1)已从UI移除：KF的DC恒=1(无偏估计), 归一化无意义
+            # 代码保留 lkf_coeffs(obs_mode=1) 供未来其他滤波器复用
+            self.cmb_lkf_obs.addItems(["原始 H=[1,1]", "H=[1,0]"])
+            self.cmb_lkf_obs.setCurrentIndex(1)  # 默认 H=[1,0]
+            self.cmb_lkf_obs.setToolTip("原始: 有谐振峰(bias分离副作用)\nH=[1,0]: 去掉bias观测，纯低通")
+            self.cmb_lkf_obs.currentIndexChanged.connect(lambda _: self._schedule())
+            self.lkf_info = QLabel("<small style='color:#778'>未计算</small>")
+            self.lkf_info.setWordWrap(True)
+            self.lkf_info.setMinimumHeight(70)  # >v<📏标签高度 - LKF info（DEQ + b,a + peak 显示需要更多高度）
             pl.addWidget(self._group("2-state LKF (ω + bias)",
-                [("ω:", self.q_omega), ("q_b:", self.q_bias), ("r:", self.r_meas)],
-                extras=[btn_sync, self.chk_lkf_en, self.btn_top_lkf]))
+                [("qω:", self.q_omega), ("q_b:", self.q_bias), ("r:", self.r_meas)],
+                extras=[btn_sync, self.cmb_lkf_obs, self.chk_lkf_en, self.btn_top_lkf, self.lkf_info]))
 
             # Notch A/B
             self.n1_en = QCheckBox("启用 Notch A"); self.n1_en.setChecked(True)
@@ -439,8 +478,8 @@ class UIMixin:
             self.chk_noise_en = QCheckBox("启用噪声")
             self.chk_noise_en.setChecked(True)
             self.chk_noise_en.stateChanged.connect(lambda _: self._schedule())
-            self.white_rms  = self._spin(0, 2000,  20, 0, "dps", 5)
-            self.perlin_rms = self._spin(0,  500,   8, 0, "dps", 2)
+            self.white_rms  = self._spin(0, 2000,  5, 0, "dps", 5)
+            self.perlin_rms = self._spin(0,  500,   5, 0, "dps", 2)
             self.perlin_oct = self._ispin(1, 8, 4)
             pl.addWidget(self._group("全局噪声参数", [
                 ("白噪声:", self.white_rms),
@@ -448,8 +487,11 @@ class UIMixin:
                 ("倍频程:", self.perlin_oct),
             ], extras=[self.chk_noise_en]))
 
-            # ── 信号注入（手动 Cubic 曲线 + 注入正弦）──
-            inject_box = QGroupBox("信号注入")
+            # ── Setpoints注入（手动 Cubic 曲线 + 正弦注入）──
+            inject_box = QGroupBox("Setpoints注入")
+            inject_box.setObjectName("injectBox")
+            self._inject_box = inject_box  # 主题切换时更新背景色
+            self._apply_inject_box_style(True)  # 初始暗色主题
             inj_lay = QVBoxLayout(inject_box)
             inj_lay.setContentsMargins(4, 8, 4, 5); inj_lay.setSpacing(4)
             # 手动 Cubic 曲线
@@ -475,12 +517,12 @@ class UIMixin:
             self.chk_stick_en.stateChanged.connect(lambda _: self._schedule())
             sb_layout.addWidget(self.chk_stick_en)
             inj_lay.addWidget(stick_box)
-            # 注入正弦
+            # 正弦注入
             self._sine_items = []
-            sine_box = QGroupBox("注入正弦")
+            sine_box = QGroupBox("正弦注入")
             self._sine_layout = QVBoxLayout(sine_box)
             self._sine_layout.setContentsMargins(4, 8, 4, 5); self._sine_layout.setSpacing(3)
-            btn_add_sine = QPushButton("＋ 新增周期波"); btn_add_sine.setFixedHeight(22)
+            btn_add_sine = QPushButton("＋ 新增周期波(to当前时间轴1/3范围)"); btn_add_sine.setFixedHeight(22)
             btn_add_sine.clicked.connect(self._add_sine_injection)
             self._sine_layout.addWidget(btn_add_sine)
             inj_lay.addWidget(sine_box)
@@ -625,23 +667,23 @@ class UIMixin:
             pid_box = QGroupBox("PID 控制器")
             pid_lay = QVBoxLayout(pid_box); pid_lay.setContentsMargins(5, 8, 5, 5); pid_lay.setSpacing(3)
             self.chk_pid_en = QCheckBox("启用"); self.chk_pid_en.setChecked(False)
-            self.chk_pid_en.setToolTip("独立PID: H(s) = (Kd·s²+Kp·s+Ki) / (τd·s²+s)")
+            self.chk_pid_en.setToolTip("闭环PID: T(s)=C(s)/s / (1+C(s)/s)\nG(s)=1/s (角加速度→角速率)")
             self.chk_pid_en.stateChanged.connect(lambda _: self._apply_pid())
             pid_lay.addWidget(self.chk_pid_en)
-            # PID 源
+            # PID 滤波
             pid_src_row = QHBoxLayout()
-            lw_psrc = QLabel("源:"); lw_psrc.setFixedWidth(46)
+            lw_psrc = QLabel("滤波:"); lw_psrc.setFixedWidth(46)
             lw_psrc.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             self.cmb_pid_src = QComboBox()
-            self.cmb_pid_src.addItems(["未滤波", "PT1", "LKF"])
+            self.cmb_pid_src.addItems(["未滤波", "PT1", "LKF", "差分表达式"])
             self.cmb_pid_src.setCurrentIndex(1)
-            self.cmb_pid_src.setToolTip("PID输入源\n非未过滤时含Notch")
+            self.cmb_pid_src.setToolTip("PID反馈路径滤波器\n独立差分迭代计算(不复用开环波形)")
             self.cmb_pid_src.currentIndexChanged.connect(lambda _: self._schedule())
             pid_src_row.addWidget(lw_psrc); pid_src_row.addWidget(self.cmb_pid_src)
             pid_lay.addLayout(pid_src_row)
-            self.pid_kp = self._spin(0, 500,  4.5,  2, "Kp", 0.5)
-            self.pid_ki = self._spin(0, 500,  6.0,  2, "Ki", 0.5)
-            self.pid_kd = self._spin(0, 50,  0.036, 4, "Kd", 0.002)
+            self.pid_kp = self._spin(0, 5000, 150,  1, "Kp", 5)
+            self.pid_ki = self._spin(0, 5000, 200,  1, "Ki", 20)
+            self.pid_kd = self._spin(0, 50,   0.5,  2, "Kd", 0.05)
             self.pid_df = self._spin(10, 500, 120,   0, "Hz", 10)
             self.pid_df.setToolTip("D项低通滤波截止频率")
             for lbl, w in [("Kp:", self.pid_kp), ("Ki:", self.pid_ki),
@@ -657,6 +699,11 @@ class UIMixin:
             self.btn_top_pid.setToolTip("PID曲线置顶")
             self.btn_top_pid.clicked.connect(lambda: self._toggle_filter_top('pid'))
             pid_lay.addWidget(self.btn_top_pid)
+            self.chk_pid_solo = QCheckBox("独奏 (隐藏非PID相关曲线)")
+            self.chk_pid_solo.setChecked(False)
+            self.chk_pid_solo.setToolTip("只显示PID闭环迭代曲线+PID所用滤波器开环曲线\n隐藏`其他滤波器`和`直接叠加噪音的输入`波形")
+            self.chk_pid_solo.stateChanged.connect(lambda _: self._schedule())
+            pid_lay.addWidget(self.chk_pid_solo)
             pl.addWidget(pid_box)
 
             # ── Teager能量算子(TEO) ──
@@ -670,7 +717,7 @@ class UIMixin:
             lw_src = QLabel("信号源:"); lw_src.setFixedWidth(46)
             lw_src.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             self.cmb_teo_src = QComboBox()
-            self.cmb_teo_src.addItems(["未滤波", "PT1", "LKF", "自定义TF", "差分表达式"])
+            self.cmb_teo_src.addItems(["未滤波", "PT1", "LKF", "自定义TF", "差分表达式", "PID_gyro filt", "PID_gyro unfilt"])
             self.cmb_teo_src.setCurrentIndex(1)  # 默认PT1（未滤波噪声太大TEO无意义）
             self.cmb_teo_src.currentIndexChanged.connect(lambda _: self._schedule())
             src_row.addWidget(lw_src); src_row.addWidget(self.cmb_teo_src)
@@ -771,8 +818,15 @@ class UIMixin:
             _btn_ea.setFixedHeight(26); _btn_ea.setToolTip("查看 Edit Axis 使用说明")
             _btn_ea.clicked.connect(lambda: QMessageBox.information(self, "Edit Axis", _MSG_EDITAXIS))
             toolbar_row = QHBoxLayout(); toolbar_row.setSpacing(3); toolbar_row.setContentsMargins(0, 0, 0, 0)
-            toolbar_row.addWidget(toolbar); toolbar_row.addWidget(_btn_sp); toolbar_row.addWidget(_btn_ea)
+            toolbar.setMaximumHeight(34)
+            toolbar_row.addWidget(toolbar)
+            # 画布控制提示（toolbar图标右侧、ⓘ按钮左侧，字体与左上角"滚轮=快调..."一致）
+            _canvas_hint = QLabel("中键=拖动  滚轮=缩放  +Ctrl=仅Y轴  +Shift=仅X轴")
+            _canvas_hint.setStyleSheet("color:#7aaa55; padding:1px 3px;")
+            toolbar_row.addWidget(_canvas_hint)
+            toolbar_row.addStretch()
+            toolbar_row.addWidget(_btn_sp); toolbar_row.addWidget(_btn_ea)
             canvas_col = QVBoxLayout()
             canvas_col.setContentsMargins(0, 0, 0, 0); canvas_col.setSpacing(2)
-            canvas_col.addWidget(self.canvas); canvas_col.addLayout(toolbar_row)
+            canvas_col.addWidget(self.canvas, stretch=1); canvas_col.addLayout(toolbar_row)
             ml.addWidget(left_wrap); ml.addLayout(canvas_col, stretch=1)

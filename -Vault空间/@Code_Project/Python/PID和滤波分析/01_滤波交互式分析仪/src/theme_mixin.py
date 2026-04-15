@@ -57,6 +57,8 @@ class ThemeMixin:
             for role, color in entries:
                 pal.setColor(role, QColor(color))
             QApplication.instance().setPalette(pal)
+            # Setpoints注入 box 背景色+按钮对比度（必须在 setPalette 之后，否则 palette 会覆盖样式）
+            self._apply_inject_box_style(self._dark_mode)
             self._do_update()
 
 

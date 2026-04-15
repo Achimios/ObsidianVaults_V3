@@ -60,6 +60,7 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self._drag_idx    = None    # index into _build_all_pts() during adj drag
         self._drag_is_anchor = False
         self._drag_anchor_idx = None
+        self._pan_ax      = None    # 中键拖动目标axes (None=非拖动状态)
         self._sine_range_item   = None   # sine item being range-adjusted via canvas
         self._sine_range_handle = None   # 't0' | 'tctr' | 't1'
         self._td_cache    = None    # (signal, b_pt1, a_pt1, b_lkf, a_lkf,
@@ -93,12 +94,16 @@ class FilterAnalyzer(ThemeMixin, InteractMixin, DrawMixin, UIMixin, QMainWindow)
         self.canvas.mpl_connect('button_press_event',   self._on_canvas_click)
         self.canvas.mpl_connect('motion_notify_event',  self._on_canvas_drag)
         self.canvas.mpl_connect('button_release_event', self._on_canvas_release)
+        self.canvas.mpl_connect('scroll_event',         self._on_scroll)
         # Apply light theme on startup (sets palette + initial draw)
+        self._sync_lkf_to_pt1()      # 启动时自动同步 LKF 到 PT1 截止频率
         self.btn_theme.setChecked(True)
         self._toggle_theme(True)
 
 
 def main():
+    import os
+    os.environ['QT_LOGGING_RULES'] = 'qt.qpa.fonts=false'  # 抑制 FONTSPRING DEMO 字体警告
     import matplotlib
     matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'DejaVu Sans']
     matplotlib.rcParams['axes.unicode_minus'] = False

@@ -35,18 +35,29 @@ def pt1_coeffs(fc, fs=FS):
     return [a], [1.0, -(1.0 - a)]
 
 
+def pt1_coeffs_bilinear(fc, fs=FS):
+    """PT1 bilinear (Tustin): s → (2/T)(z-1)/(z+1). Two b-coeffs."""
+    wc = 2 * np.pi * fc
+    k = 2 * fs          # 2/T
+    b0 = wc / (k + wc)
+    b1 = b0             # symmetric
+    a1 = (wc - k) / (wc + k)
+    return [b0, b1], [1.0, a1]
+
+
 # ─────────────────────────────────────────────────────────────────
 #  2-state LKF — Riccati 迭代至稳态
 # ─────────────────────────────────────────────────────────────────
-def lkf_coeffs(q_omega, q_bias, r_meas, fs=FS):
+def lkf_coeffs(q_omega, q_bias, r_meas, fs=FS, obs_mode=0):
+    """obs_mode: 0=原始 H=[1,1], 1=DC归一化, 2=H=[1,0](无bias观测)"""
     ts = 1.0 / fs
     F = np.array([[1.0, -ts], [0.0, 1.0]])
-    H = np.array([[1.0, 1.0]])
+    H = np.array([[1.0, 0.0]]) if obs_mode == 2 else np.array([[1.0, 1.0]])
     Q = np.diag([q_omega * ts, q_bias * ts])
     R = float(r_meas)
 
     P = np.eye(2)
-    for _ in range(3000):   # 迭代 Riccati 到稳态
+    for _ in range(150):    # 2-state Riccati 约50-100步收敛，150足够
         P_pred = F @ P @ F.T + Q
         S = float((H @ P_pred @ H.T).item()) + R
         K = (P_pred @ H.T) / S      # shape (2, 1)
@@ -67,6 +78,11 @@ def lkf_coeffs(q_omega, q_bias, r_meas, fs=FS):
 
     b_num = [0.0, K0, -A11 * K0 + A01 * K1]   # [z^0, z^{-1}, z^{-2}]
     a_den = [1.0, -tr_A, det_A]                 # [z^0, z^{-1}, z^{-2}]
+    # DC归一化: 使 H(1)=1
+    if obs_mode == 1:
+        dc_gain = sum(b_num) / sum(a_den)
+        if abs(dc_gain) > 1e-12:
+            b_num = [x / dc_gain for x in b_num]
     return b_num, a_den
 
 
@@ -128,6 +144,26 @@ def teo(x):
     y[0] = y[1]
     y[-1] = y[-2]
     return y
+
+
+# ─────────────────────────────────────────────────────────────────
+#  PID 闭环传递函数（被控对象 G(s)=1/s，角加速度→角速率）
+# ─────────────────────────────────────────────────────────────────
+def pid_cl_coeffs(kp, ki, kd, f_dlp, fs=FS):
+    """Closed-loop PID rate controller: setpoint → actual angular rate.
+
+    Plant: G(s) = 1/s
+    Controller: C(s) = Kp + Ki/s + Kd·s/(1+τd·s)
+    T_cl(s) = C·G / (1 + C·G)
+           = (Kd·s² + Kp·s + Ki) / (τd·s³ + (1+Kd)·s² + Kp·s + Ki)
+
+    Returns (b_z, a_z) via bilinear transform for lfilter / freqz.
+    """
+    tau_d = 1.0 / (2.0 * np.pi * max(f_dlp, 1.0))
+    num_s = [kd, kp, ki]
+    den_s = [tau_d, 1.0 + kd, kp, ki]
+    b_z, a_z = bilinear(num_s, den_s, fs=fs)
+    return b_z, a_z
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -213,3 +249,132 @@ def poly_z_str(coeffs):
         else:
             parts.append(f"{cs}·z{_sup.get(i, f'^(-{i})')}")
     return "".join(parts) if parts else "0"
+
+
+# ─────────────────────────────────────────────────────────────────
+#  PID 逐帧迭代闭环仿真
+# ─────────────────────────────────────────────────────────────────
+def pid_iterate(setpoint, noise, kp, ki, kd, f_dlp,
+                b_filt, a_filt, b_notch_list, a_notch_list,
+                fs=FS, plant_gain=1.0):
+    """Frame-by-frame PID closed-loop simulation.
+
+    Signal flow per frame (measurement-noise model):
+        error = setpoint[n] - gyro_filtered[n-1]
+        pid_sum = PID差分(error)    (P + I + D with D-term lowpass)
+        delta_omega = pid_sum * plant_gain * Ts
+        gyro_actual[n] = gyro_actual[n-1] + delta_omega      (pure physics)
+        gyro_unfiltered[n] = gyro_actual[n] + noise[n]        (sensor reading)
+        gyro_filtered[n] = apply_filters(gyro_unfiltered[0..n])
+
+    Noise is treated as sensor noise (not process disturbance), so it does NOT
+    get accumulated by the plant integrator.
+
+    PID implementation (forward Euler, Betaflight-style):
+        P = Kp * error
+        I += Ki * error * Ts  (with anti-windup clamping)
+        D = Kd * (error - prev_error) / Ts, lowpassed by PT1(f_dlp)
+
+    Args:
+        setpoint: (N,) array — desired angular rate
+        noise: (N,) array — sensor noise (white + perlin + resonance)
+        kp, ki, kd: PID gains
+        f_dlp: D-term lowpass cutoff (Hz)
+        b_filt, a_filt: feedback filter coefficients (PT1/LKF/DEQ) or ([1],[1]) for unfiltered
+        b_notch_list, a_notch_list: list of (b,a) tuples for notch filters
+        fs: sample rate
+        plant_gain: angular_accel → angular_rate scaling (default 1.0)
+
+    Returns:
+        gyro_unfiltered: (N,) sensor reading = actual angular rate + noise
+        gyro_filtered: (N,) filtered feedback signal
+    """
+    N = len(setpoint)
+    Ts = 1.0 / fs
+    gyro_actual = np.zeros(N)   # true physical angular rate (no noise)
+    gyro_unfilt = np.zeros(N)   # sensor reading = actual + noise
+    gyro_filt = np.zeros(N)
+
+    # Filter state buffers (b_filt / a_filt as difference equation)
+    b_f = np.asarray(b_filt, dtype=np.float64)
+    a_f = np.asarray(a_filt, dtype=np.float64)
+    # Normalize a_f
+    if abs(a_f[0]) > 1e-15 and a_f[0] != 1.0:
+        b_f = b_f / a_f[0]
+        a_f = a_f / a_f[0]
+    nb = len(b_f)
+    na = len(a_f)
+
+    # Notch filters state
+    notch_states = []
+    for bn, an in zip(b_notch_list, a_notch_list):
+        bn_ = np.asarray(bn, dtype=np.float64)
+        an_ = np.asarray(an, dtype=np.float64)
+        if abs(an_[0]) > 1e-15 and an_[0] != 1.0:
+            bn_ = bn_ / an_[0]; an_ = an_ / an_[0]
+        notch_states.append((bn_, an_, np.zeros(len(bn_)), np.zeros(len(an_))))
+
+    # PID state
+    integral = 0.0
+    prev_error = 0.0
+    d_filtered = 0.0
+    # D-term PT1 coefficient (forward Euler)
+    alpha_d = 2.0 * np.pi * max(f_dlp, 1.0) * Ts
+    alpha_d = alpha_d / (1.0 + alpha_d)
+
+    # Filter history buffers (ring buffer style)
+    x_hist = np.zeros(nb)  # input to main filter
+    y_hist = np.zeros(na)  # output of main filter
+
+    # Anti-windup limit
+    i_limit = 500.0 * Ts * ki * 100 if ki > 0 else 1e9
+
+    for n in range(N):
+        # --- PID computation ---
+        error = setpoint[n] - gyro_filt[n - 1] if n > 0 else setpoint[n]
+
+        # P
+        p_term = kp * error
+        # I (forward Euler with anti-windup)
+        integral += ki * error * Ts
+        integral = np.clip(integral, -i_limit, i_limit)
+        i_term = integral
+        # D (derivative of error, PT1 lowpassed)
+        d_raw = kd * (error - prev_error) / Ts
+        d_filtered += alpha_d * (d_raw - d_filtered)
+        d_term = d_filtered
+        prev_error = error
+
+        pid_sum = p_term + i_term + d_term
+
+        # --- Plant: angular acceleration → angular rate increment ---
+        delta_omega = pid_sum * plant_gain * Ts
+        gyro_actual[n] = (gyro_actual[n - 1] if n > 0 else 0.0) + delta_omega
+
+        # --- Sensor measurement: actual + noise ---
+        gyro_unfilt[n] = gyro_actual[n] + noise[n]
+
+        # --- Feedback filter (difference equation) ---
+        # Shift input history and insert new sample
+        x_hist[1:] = x_hist[:-1]
+        x_hist[0] = gyro_unfilt[n]
+        # Compute filtered output: y[n] = sum(b*x) - sum(a[1:]*y)
+        val = np.dot(b_f, x_hist[:nb])
+        for j in range(1, na):
+            val -= a_f[j] * y_hist[j - 1] if j - 1 < len(y_hist) else 0.0
+        # Shift output history
+        y_hist[1:] = y_hist[:-1]
+        y_hist[0] = val
+
+        # Apply notch filters sequentially
+        for k, (bn_, an_, xh, yh) in enumerate(notch_states):
+            xh[1:] = xh[:-1]; xh[0] = val
+            v = np.dot(bn_, xh[:len(bn_)])
+            for j in range(1, len(an_)):
+                v -= an_[j] * yh[j - 1] if j - 1 < len(yh) else 0.0
+            yh[1:] = yh[:-1]; yh[0] = v
+            val = v
+
+        gyro_filt[n] = val
+
+    return gyro_unfilt, gyro_filt
