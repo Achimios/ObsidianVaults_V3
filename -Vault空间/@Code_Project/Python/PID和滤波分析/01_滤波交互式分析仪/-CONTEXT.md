@@ -35,21 +35,13 @@ PT1 vs 2-state LKF 陀螺滤波器交互式分析仪（多模块版）。
 - PID 完全独立通道
 
 ## 上次做了什么（2026-04-20 session 6~7）
-- PT1 Euler/Bilinear 切换（btn_pt1_bil）
-- LKF 3模式→2模式：原始 H=[1,1]（有谐振峰）/ H=[1,0]（纯低通，默认）
-  - DC归一化移除（KF DC恒=1，无偏估计数学性质）
-  - 代码保留 obs_mode=1，UI 只留 0/2
-- Riccati 150步 + 二分搜索 40步（同步到 PT1 -3dB）
-- **info 标签全面升级**：PT1/LKF 显示 DEQ差分方程 + b,a系数 + peak gain
-  - TF(H(s))区域新增 H(z) 显示
-  - DC增益→peak gain（KF DC恒=1是数学性质，真正有意义的是谐振峰值）
-- 打杆注入 box：objectName 隔离 + 主题色背景 + 橙色 checked 按钮
-- 启动自动同步 LKF → PT1 截止频率
-- Qt 字体警告抑制（`QT_LOGGING_RULES`）
-- 幅频/相频 legend 右上角
-- r_meas 5位小数、step 0.0005
-- Stick mode toggle-off（同按钮取消）
-- Subplot 高比 [2.0, 2.0, 1.4, 2.8, 2.8]
+- PT1 Euler/Bilinear 切换 + LKF 2模式 + info标签全面升级 + TF H(z) + auto-sync + 字体警告抑制 + legend右上角 + r_meas精度 + stick toggle-off + subplot高比
+
+## 上次做了什么（2026-04-21 session 8）
+- **1_给人类解释.md 完整写作**：~550行数学指南，16节，覆盖信号/滤波/s-z域/传递函数/离散化/DEQ/PT1/LKF/Notch/Bode/PSD/PID/工程近似/术语表
+  - 新增 §15 代码锚点（14项数学→代码映射表）
+  - 新增 §16 常见误解纠正（6条：KF非线性/DC≡1/Euler生态/二分≠MC/PSD≠FFT²/H(z)=DEQ）
+  - 参考 LoRa + MagCal 解释风格：motivation-first + 代码锚定 + "以为的vs实际的"
 
 ## 下一步（优先级）
 1. 👆 ODE 连续时间仿真（新功能）

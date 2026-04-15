@@ -5,7 +5,7 @@
 ## 📍 最近编辑（按时间倒序）
 
 1. **PT1vsLKF 分析仪** — `./-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md`  
-   → 已完成：PT1 Euler/Bilinear切换 + LKF 2模式(原始/H=[1,0]) + info标签全面升级(DEQ+b,a+peak) + TF H(z)显示 + 启动auto-sync + 字体警告抑制 + legend右上角  
+   → 已完成：1_给人类解释.md 全16节完成（代码锚点+误解纠正），参考LoRa/MagCal风格  
    → 下一步：👆 ODE连续时间仿真 + 固定群延迟 + 极零点图 + 阶跃响应图
 
 2. **根目录 + .github/** — `./-CONTEXT.md`  
