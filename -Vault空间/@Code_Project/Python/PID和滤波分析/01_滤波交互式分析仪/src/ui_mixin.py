@@ -56,26 +56,9 @@ class UIMixin:
             return sb
 
         def _apply_pid(self):
-            """PID启用时：从Kp/Ki/Kd/Df生成H(s)系数 → 填入hs_num/hs_den → 启用TF。"""
-            import math
+            """PID参数变化→触发重绘（PID独立通道，不覆盖自定义TF）。"""
             if not hasattr(self, 'chk_pid_en'):
                 return
-            enabled = self.chk_pid_en.isChecked()
-            # 锁定/解锁手动输入
-            self.hs_num.setEnabled(not enabled)
-            self.hs_den.setEnabled(not enabled)
-            if hasattr(self, 'cmb_hs_preset'):
-                self.cmb_hs_preset.setEnabled(not enabled)
-            if enabled:
-                kp = self.pid_kp.value()
-                ki = self.pid_ki.value()
-                kd = self.pid_kd.value()
-                df = self.pid_df.value()
-                tau_d = 1.0 / (2.0 * math.pi * max(df, 1.0))
-                # H(s) = (Kd·s² + Kp·s + Ki) / (τd·s² + s)
-                self.hs_num.setText(f"{kd:g}, {kp:g}, {ki:g}")
-                self.hs_den.setText(f"{tau_d:.6g}, 1, 0")
-                self.chk_hs_en.setChecked(True)
             self._schedule()
 
 
@@ -373,8 +356,10 @@ class UIMixin:
             self.btn_top_pt1.setToolTip("PT1 操线置顶（互斜）—使 PT1 的所有线段绘制在最上层")
             self.btn_top_pt1.clicked.connect(lambda: self._toggle_filter_top('pt1'))
             self.fc_pt1 = self._spin(10, 900, 100, 0, "Hz", 10)
+            self.pt1_info = QLabel("<small style='color:#778'>前向欧拉法 (Betaflight)</small>")
+            self.pt1_info.setWordWrap(True)
             pl.addWidget(self._group("PT1 Filter", [("截止 fc:", self.fc_pt1)],
-                                     extras=[self.chk_pt1_en, self.btn_top_pt1]))
+                                     extras=[self.chk_pt1_en, self.btn_top_pt1, self.pt1_info]))
 
             # LKF
             self.chk_lkf_en = QCheckBox("启用 LKF"); self.chk_lkf_en.setChecked(True)
@@ -522,28 +507,17 @@ class UIMixin:
                 "PID示例 (5\"角速度)",
             ])
             def _apply_hs_preset(idx):
-                from dsp import pt1_coeffs as _pt1c
-                presets_s = {
+                presets = {
+                    1: ("1",            "1.592e-3, 1"),
+                    2: ("1",            "3.183e-3, 1"),
                     3: ("1",            "2.533e-6, 2.251e-3, 1"),
                     4: ("0.036, 4.5, 6.0", "1.33e-3, 1, 0"),
                 }
-                # PT1 presets: use same Euler formula as original PT1 (z-domain direct)
-                if idx == 1:
-                    b, a = _pt1c(100, FS)
-                    self._hs_z_direct = (list(b), list(a))
-                    self.hs_num.setText("1"); self.hs_den.setText("1.592e-3, 1")
-                elif idx == 2:
-                    b, a = _pt1c(50, FS)
-                    self._hs_z_direct = (list(b), list(a))
-                    self.hs_num.setText("1"); self.hs_den.setText("3.183e-3, 1")
-                elif idx in presets_s:
-                    self._hs_z_direct = None
-                    self.hs_num.setText(presets_s[idx][0])
-                    self.hs_den.setText(presets_s[idx][1])
-                else:
-                    self._hs_z_direct = None
-                    return
-                self._schedule()
+                self._hs_z_direct = None
+                if idx in presets:
+                    self.hs_num.setText(presets[idx][0])
+                    self.hs_den.setText(presets[idx][1])
+                    self._schedule()
             self.cmb_hs_preset.currentIndexChanged.connect(_apply_hs_preset)
             preset_row.addWidget(lw_pr); preset_row.addWidget(self.cmb_hs_preset)
             hs_lay.addLayout(preset_row)
@@ -552,8 +526,8 @@ class UIMixin:
             lw_hs_src = QLabel("源:"); lw_hs_src.setFixedWidth(46)
             lw_hs_src.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             self.cmb_hs_src = QComboBox()
-            self.cmb_hs_src.addItems(["未滤波", "PT1+N", "LKF+N"])
-            self.cmb_hs_src.setToolTip("时域+PSD的输入信号\n频率响应始终显示TF自身")
+            self.cmb_hs_src.addItems(["未滤波", "PT1", "LKF"])
+            self.cmb_hs_src.setToolTip("输入信号选择\n实线=级联总响应，虚线=TF自身")
             self.cmb_hs_src.currentIndexChanged.connect(lambda _: self._schedule())
             src_hs_row.addWidget(lw_hs_src); src_hs_row.addWidget(self.cmb_hs_src)
             hs_lay.addLayout(src_hs_row)
@@ -571,18 +545,100 @@ class UIMixin:
                 le.editingFinished.connect(lambda: (setattr(self, '_hs_z_direct', None), self._schedule()))
                 setattr(self, attr, le)
                 row.addWidget(lw); row.addWidget(le); hs_lay.addLayout(row)
-            hs_status = QLabel("<small style='color:#778'>未启用</small>"); hs_status.setWordWrap(True)
+            hs_status = QLabel("<small style='color:#778'>未启用</small>"); hs_status.setWordWrap(True); hs_status.setMinimumHeight(48)
             hs_lay.addWidget(hs_status)
             self.hs_status_label = hs_status
             pl.addWidget(hs_box)
 
+            # ── 差分表达式 y[n]=... ──
+            deq_box = QGroupBox("差分表达式 y[n]=...")
+            deq_lay = QVBoxLayout(deq_box); deq_lay.setContentsMargins(5, 8, 5, 5); deq_lay.setSpacing(3)
+            self.chk_deq_en = QCheckBox("启用"); self.chk_deq_en.setChecked(False)
+            self.chk_deq_en.setToolTip("z域差分方程: 直接指定 b(z)/a(z) 系数")
+            self.chk_deq_en.stateChanged.connect(lambda _: self._schedule())
+            deq_lay.addWidget(self.chk_deq_en)
+            # 预设
+            deq_pr_row = QHBoxLayout()
+            lw_dpr = QLabel("预设:"); lw_dpr.setFixedWidth(46)
+            lw_dpr.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.cmb_deq_preset = QComboBox()
+            self.cmb_deq_preset.addItems([
+                "(自定义)",
+                "PT1 @100Hz (Euler)",
+                "PT1 @50Hz (Euler)",
+                "PT1 @100Hz (Bilinear)",
+                "2阶Butter @100Hz",
+            ])
+            def _apply_deq_preset(idx):
+                import numpy as _np
+                from dsp import pt1_coeffs as _pt1c
+                from scipy.signal import butter as _butter, bilinear as _bil
+                _fc_map = {1: 100, 2: 50, 3: 100, 4: 100}
+                if idx == 1:
+                    b, a = _pt1c(100, FS)
+                elif idx == 2:
+                    b, a = _pt1c(50, FS)
+                elif idx == 3:
+                    b, a = _bil([1], [1.0/(2*_np.pi*100), 1], fs=FS)
+                elif idx == 4:
+                    b, a = _butter(2, 100, btype='low', fs=FS)
+                else:
+                    self._deq_designed_fc = None
+                    return
+                self._deq_designed_fc = _fc_map.get(idx)
+                self.deq_b.setText(", ".join(f"{c:.6g}" for c in b))
+                self.deq_a.setText(", ".join(f"{c:.6g}" for c in a))
+                self._schedule()
+            self.cmb_deq_preset.currentIndexChanged.connect(_apply_deq_preset)
+            deq_pr_row.addWidget(lw_dpr); deq_pr_row.addWidget(self.cmb_deq_preset)
+            deq_lay.addLayout(deq_pr_row)
+            # 源
+            deq_src_row = QHBoxLayout()
+            lw_dsrc = QLabel("源:"); lw_dsrc.setFixedWidth(46)
+            lw_dsrc.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.cmb_deq_src = QComboBox()
+            self.cmb_deq_src.addItems(["未滤波", "PT1", "LKF"])
+            self.cmb_deq_src.setToolTip("输入信号选择\n实线=级联总响应，虚线=TF自身")
+            self.cmb_deq_src.currentIndexChanged.connect(lambda _: self._schedule())
+            deq_src_row.addWidget(lw_dsrc); deq_src_row.addWidget(self.cmb_deq_src)
+            deq_lay.addLayout(deq_src_row)
+            self.btn_top_deq = QPushButton("TOP"); self.btn_top_deq.setCheckable(True)
+            self.btn_top_deq.setToolTip("差分表达式曲线置顶")
+            self.btn_top_deq.clicked.connect(lambda: self._toggle_filter_top('deq'))
+            deq_lay.addWidget(self.btn_top_deq)
+            for lbl_txt, attr, ph in [
+                ("b(z):", "deq_b", "z^-n系数: b0,b1,... (如 0.2392)"),
+                ("a(z):", "deq_a", "z^-n系数: 1,a1,... (如 1,-0.7608)")]:
+                row = QHBoxLayout()
+                lw = QLabel(lbl_txt); lw.setFixedWidth(46)
+                lw.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                le = QLineEdit(); le.setPlaceholderText(ph)
+                le.editingFinished.connect(lambda: (setattr(self, '_deq_designed_fc', None), self._schedule()))
+                setattr(self, attr, le)
+                row.addWidget(lw); row.addWidget(le); deq_lay.addLayout(row)
+            deq_status = QLabel("<small style='color:#778'>未启用</small>"); deq_status.setWordWrap(True); deq_status.setMinimumHeight(48)
+            deq_lay.addWidget(deq_status)
+            self.deq_status_label = deq_status
+            pl.addWidget(deq_box)
+
             # ── PID 控制器 ──
             pid_box = QGroupBox("PID 控制器")
             pid_lay = QVBoxLayout(pid_box); pid_lay.setContentsMargins(5, 8, 5, 5); pid_lay.setSpacing(3)
-            self.chk_pid_en = QCheckBox("启用 → 覆盖自定义TF"); self.chk_pid_en.setChecked(False)
-            self.chk_pid_en.setToolTip("启用后自动生成H(s)=(Kd·s²+Kp·s+Ki)/(τd·s²+s)，覆盖上方手动输入")
+            self.chk_pid_en = QCheckBox("启用"); self.chk_pid_en.setChecked(False)
+            self.chk_pid_en.setToolTip("独立PID: H(s) = (Kd·s²+Kp·s+Ki) / (τd·s²+s)")
             self.chk_pid_en.stateChanged.connect(lambda _: self._apply_pid())
             pid_lay.addWidget(self.chk_pid_en)
+            # PID 源
+            pid_src_row = QHBoxLayout()
+            lw_psrc = QLabel("源:"); lw_psrc.setFixedWidth(46)
+            lw_psrc.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.cmb_pid_src = QComboBox()
+            self.cmb_pid_src.addItems(["未滤波", "PT1", "LKF"])
+            self.cmb_pid_src.setCurrentIndex(1)
+            self.cmb_pid_src.setToolTip("PID输入源\n非未过滤时含Notch")
+            self.cmb_pid_src.currentIndexChanged.connect(lambda _: self._schedule())
+            pid_src_row.addWidget(lw_psrc); pid_src_row.addWidget(self.cmb_pid_src)
+            pid_lay.addLayout(pid_src_row)
             self.pid_kp = self._spin(0, 500,  4.5,  2, "Kp", 0.5)
             self.pid_ki = self._spin(0, 500,  6.0,  2, "Ki", 0.5)
             self.pid_kd = self._spin(0, 50,  0.036, 4, "Kd", 0.002)
@@ -598,12 +654,12 @@ class UIMixin:
             for w in (self.pid_kp, self.pid_ki, self.pid_kd, self.pid_df):
                 w.valueChanged.connect(lambda _: self._apply_pid())
             self.btn_top_pid = QPushButton("TOP"); self.btn_top_pid.setCheckable(True)
-            self.btn_top_pid.setToolTip("PID曲线置顶（与hs/pt1/lkf互斥）")
-            self.btn_top_pid.clicked.connect(lambda: self._toggle_filter_top('hs'))
+            self.btn_top_pid.setToolTip("PID曲线置顶")
+            self.btn_top_pid.clicked.connect(lambda: self._toggle_filter_top('pid'))
             pid_lay.addWidget(self.btn_top_pid)
             pl.addWidget(pid_box)
 
-            # ── TEO 能量算子 ──
+            # ── Teager能量算子(TEO) ──
             teo_box = QGroupBox("Teager能量算子(TEO)")
             teo_lay = QVBoxLayout(teo_box); teo_lay.setContentsMargins(5, 8, 5, 5); teo_lay.setSpacing(3)
             self.chk_teo_en = QCheckBox("启用 TEO"); self.chk_teo_en.setChecked(False)
@@ -614,8 +670,8 @@ class UIMixin:
             lw_src = QLabel("信号源:"); lw_src.setFixedWidth(46)
             lw_src.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             self.cmb_teo_src = QComboBox()
-            self.cmb_teo_src.addItems(["未滤波", "PT1+N", "LKF+N", "自定义TF+N"])
-            self.cmb_teo_src.setCurrentIndex(1)  # 默认PT1+N（未滤波噪声太大TEO无意义）
+            self.cmb_teo_src.addItems(["未滤波", "PT1", "LKF", "自定义TF", "差分表达式"])
+            self.cmb_teo_src.setCurrentIndex(1)  # 默认PT1（未滤波噪声太大TEO无意义）
             self.cmb_teo_src.currentIndexChanged.connect(lambda _: self._schedule())
             src_row.addWidget(lw_src); src_row.addWidget(self.cmb_teo_src)
             teo_lay.addLayout(src_row)
@@ -636,6 +692,7 @@ class UIMixin:
                 "<span style='color:#7ac4e0'>■</span> PT1 虚线=单独  实线=+Notch<br>"
                 "<span style='color:#e8394a'>■</span> LKF 同上<br>"
                 "<span style='color:#a070e0'>■</span> 自定义TF 同上<br>"
+                "<span style='color:#e07830'>■</span> 差分表达式 同上<br>"
                 "<span style='color:#50c878'>■</span> Teager能量算子TEO (PSD+时域)<br>"
                 "<span style='color:#e0a040'>■</span> PID 控制器<br>"
                 "<span style='color:#f5f5ff'>■</span> 信号（注入滤波）<br>"

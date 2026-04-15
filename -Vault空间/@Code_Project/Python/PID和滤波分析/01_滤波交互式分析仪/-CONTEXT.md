@@ -1,25 +1,20 @@
 ## 这是什么
 PT1 vs 2-state LKF 陀螺滤波器交互式分析仪（多模块版）。
-含 Notch 滤波、Perlin 噪声、机架共振模拟、打杆曲线注入、群延迟可视化、Mirror's Edge 双主题。
-## 跨 session 提醒
-- 环境：系统级 Python，**运行方式：`cd src && py main.py`**
-- 依赖：scipy / numpy / matplotlib / PyQt5
-- 代码有 box-drawing 字符（U+2500 `─`）：用 `replace_string_in_file` 修改相关行会失败，需写 Python temp 脚本
-- temp 脚本位置：放在项目目录内，**不要**丢到 V3 根目录！
+含 Notch、H(s)、DEQ、PID、TEO、Perlin 噪声、机架共振模拟、打杆注入、Mirror's Edge 双主题。
 
 ## 当前状态
 ✅ 模块化完成，7个模块，src/ 架构完整
 ✅ 图层独立 checkbox + solo 按钮（2列紧凑布局）
 ✅ 左侧面板：固定顶区（轴切换/PSD切换/图层显示/主题）+ 可滚参数区（PT1/LKF/Notch/共振/噪声/注入）
 ✅ 全轴 zoom/pan 保留（_saved_views 机制），Home 按钮重置
-✅ 打杆注入 + 正弦注入（周期波_N：t起/t中/t止、f起/f中/f止/幅度/FM频偏/过渡区/局部Perlin&白噪声）
-✅ _compute_sine_total：half-Hann 窗 + param-key 缓存 + Chirp(f起≠f止) + FM(Perlin LFO)
-✅ ⇄ 范围 canvas 交互：3区(左=拖t起/中=拖整体/右=拖t止)，ax5 蓝色3段可视化
-✅ FocusSpin：滚轮=5×精调步(stepBy(5))，方向键=1×精调步(singleStep=step/5)；wheelEvent e.accept()阻止冒泡
-✅ PSD ↔ ASD 切换按钮（√P → dps/√Hz；ylabel 联动）；PSD 显示范围 0-1000 Hz
-✅ 时域自适应抽帧：dec=ceil(t_span*FS/6000)，缩放后 dec→1 消除显示混叠，标题显示当前有效显示频率
-✅ 手动 Cubic 曲线启用 checkbox（chk_stick_en）
-✅ 自定义传递函数 H(s) UI 骨架（后端 pending）
+✅ 打杆注入 + 正弦注入（周期波_N：多峰/梳状/谐波 + Chirp + FM + ⇄范围拖拽）
+✅ FocusSpin + PSD↔ASD切换 + 时域自适应抽帧 + 每图3悬浮按钮(|A/|R/-R)
+✅ 自定义传递函数 H(s) 后端完整（bilinear s→z，5图全接入，状态标签）
+✅ TEO 能量算子（可选信号源，PSD+时域）
+✅ 差分表达式 DEQ 窗口（预设下拉+自由输入，状态标签3行：阶数/H(z)/y[n]，橙色 #e07830）
+✅ Notch-last 信号链（源无Notch→滤波器→Notch最后一次）
+✅ 级联 Bode（实线=总响应，虚线=TF自身，动态标签前缀）
+✅ PID 独立通道（独立系数/信号源/颜色/5图曲线，TOP独立key）
 
 ## 跨 session 提醒
 - 环境：系统级 Python，**运行方式：`cd src && py main.py`**
@@ -27,29 +22,43 @@ PT1 vs 2-state LKF 陀螺滤波器交互式分析仪（多模块版）。
 - 代码有 box-drawing 字符（U+2500 `─`）：用 replace_string_in_file 修改相关行会失败，需写 Python temp 脚本
 - 时域混叠只是"显示混叠"：计算层 FS=2000 Hz 全精度，显示层抽帧；缩放后展示高频细节
 - _spin(lo,hi,val,decs,suffix,step) 中 step=滚轮步长，singleStep=step/5（精调步）；_FocusDSpin._WHEEL_MULT=5
+- 信号链：Raw → [PT1/LKF] → [H(s)/DEQ] → Notch(一次) → PID（PID 输入含源 Notch，输出不再叠加）
 
-## 上次做了什么（2026-04-08 session 3）
-- 频谱图启动默认 ASD（range 0~200），_psd_amp_mode=True，切换时 PSD=ASD×10 ✓
-- 每图左侧 3 个悬浮按钮（|A=Y适应开关 / |R=Y重置 / -R=X重置）
-  - QWidget child of canvas，draw_event 后按 ax.get_position() 自动定位
-  - 各图独立状态（_y_auto[5]），chk_show=False 时对应组自动隐藏
-  - _default_views[5] 记录各图默认坐标范围
-  - 亮色/暗色主题切换时按钮颜色同步更新
-- 多峰注入（每个注入波项独立）：
-  - N峰 spinbox(1~8) + 梳/谐 切换按钮 + Δf 间距（谐波模式时隐藏）
-  - 梳状：f0, f0+Δf, ..., f0+(N-1)Δf；谐波：1×2×3×...N×f0
-  - 幅度 amp/N 平分，各峰 FM seed 独立（+pk×17 偏移）
-  - cache key 包含新字段，复制时完整传递含显隐状态
-- git: af6f09b(ASD默认+3按钮), ecd2469(亮色按钮), 4cb61be+77eb13e(多峰), e290e22(TOP按钮)
+## 上次做了什么（session 3~4 精简）
+- session 3: ASD 默认 + 悬浮按钮 + 多峰注入梳状/谐波 + TOP 按钮
+- session 4: H(s) 后端完整(bilinear→5图) + TEO 能量算子 + 图例 note
+
+## 上次做了什么（2026-04-16 session 5）
+- 差分表达式 DEQ 窗口完整实现：预设下拉（PT1/LKF/Notch/自定义TF/TEO）+ 自由输入 y[n]=…/H(z) 系数
+  - DEQ 状态标签 3 行：阶数/-3dB(+预设设计fc)、H(z) 表达式(poly_z_str)、差分方程(diff_eq_str)
+  - DEQ 颜色橙色 #e07830(dark)/#b06020(light)
+  - dsp.py: `poly_z_str()` 格式化 z⁻ⁿ 多项式为可读字符串
+- Notch-last 信号链修正：
+  - 信号链：Raw → [PT1/LKF] → [H(s)/DEQ] → Notch(最后应用一次) → PID
+  - 源 combo 移除 "+N" 后缀（H(s)/DEQ/TEO 全部）
+  - 新增 `out_pt1_td`/`out_lkf_td`（无 Notch 的完整信号）供级联使用
+- 级联频率响应（Cascade Bode）：
+  - 源≠未过滤时，Bode 实线=总级联响应(源×滤波器×Hn)，虚线=TF 自身
+  - 动态标签前缀如 "PT1→H(s)+N"
+- PID 控制器完全独立：
+  - 不再覆盖 H(s) 的 num/den，独立系数计算 `custom_tf_to_digital([kd,kp,ki],[τd,1,0],fs)`
+  - 独立信号源 combo（未滤波/PT1/LKF），默认 PT1
+  - PID 输入含 Notch(PT1_n/LKF_n)，输出不再叠加 Notch
+  - 5 图全接入：幅频/相频/群延迟/PSD/时域，独立颜色 C_PID=#e0a040
+  - TOP 按钮独立 'pid' key，移除 hs↔pid 同步
 
 ## 下一步（优先级）
-1. 👆 H(s) 后端：`scipy.signal.bilinear(b_s, a_s, fs)` 解析 num/den，接入 _do_update 频响 + 时域
+1. 👆 PID 默认参数调整（P=45 I=60 D=36，主乘数=1.0，D-LP=125Hz，500g 起飞重量）
+2. PID 物理映射：质量→旋转惯量→力→传递函数（5寸机架，20% 悬停油门）
+3. 阶跃响应图（新 subplot）
+4. 极点零点图（新 subplot）
+5. 窗口默认 1920×1080 + 新图默认隐藏
 
 ## 未来可能的大步骤
 - 黑匣子 CSV 导入（Betaflight Blackbox .csv → 直接替代合成信号，做真实数据分析）
-- H(s) 后端完工（用户自定义任意传递函数，接入所有图层）
 - 更多滤波器类型 Selector（Butterworth / BiQuad / 带通 作为并列模块挂入）
 - 导出快照报告（一键截图全五轴 + 导出当前参数 JSON）
+- 采样时间可配置化
 
 ## 宏大远景
 这个 py 只是第一把手术刀。最终目标是 **AkiLabs 动力学与控制论分析平台**：

@@ -128,3 +128,88 @@ def teo(x):
     y[0] = y[1]
     y[-1] = y[-2]
     return y
+
+
+# ─────────────────────────────────────────────────────────────────
+#  工具函数：-3dB / 差分格式化 / 多项式字符串
+# ─────────────────────────────────────────────────────────────────
+def find_3db_freq(b, a, fs=FS):
+    """Find -3dB cutoff frequency of a digital lowpass filter.
+    Returns freq in Hz or None if not found."""
+    w = np.linspace(0, np.pi, 20000)
+    _, H = freqz(b, a, worN=w)
+    mag = np.abs(H)
+    dc = mag[0]
+    if dc < 1e-15:
+        return None
+    target = dc / np.sqrt(2)
+    idx = np.where(np.diff(np.sign(mag - target)))[0]
+    if len(idx) == 0:
+        return None
+    i = idx[0]
+    f0 = w[i] * fs / (2 * np.pi)
+    f1 = w[i + 1] * fs / (2 * np.pi)
+    m0 = mag[i] - target
+    m1 = mag[i + 1] - target
+    return f0 + (f1 - f0) * m0 / (m0 - m1)
+
+
+def diff_eq_str(b, a):
+    """Format z-domain coefficients as a difference equation string.
+    y[n] = b0·x[n] + b1·x[n-1] + ... - a1·y[n-1] - ...
+    Assumes a[0] is normalized to 1."""
+    parts = []
+    for i, bi in enumerate(b):
+        if abs(bi) < 1e-15:
+            continue
+        tag = f"x[n{-i}]" if i > 0 else "x[n]"
+        parts.append(f"{bi:+.4g}·{tag}")
+    for i in range(1, len(a)):
+        ai = a[i]
+        if abs(ai) < 1e-15:
+            continue
+        tag = f"y[n{-i}]"
+        parts.append(f"{-ai:+.4g}·{tag}")
+    if not parts:
+        return "y[n] = 0"
+    s = " ".join(parts)
+    if s.startswith('+'):
+        s = s[1:]
+    return f"y[n] = {s}"
+
+
+def poly_str(coeffs, var='s'):
+    """Format polynomial coefficients (highest power first) as readable string."""
+    parts = []
+    n = len(coeffs) - 1
+    for i, c in enumerate(coeffs):
+        pw = n - i
+        if abs(c) < 1e-15:
+            continue
+        cs = f"{c:g}"
+        if pw == 0:
+            parts.append(cs)
+        elif pw == 1:
+            parts.append(f"{cs}·{var}" if c != 1 else var)
+        else:
+            sup = '²' if pw == 2 else '³' if pw == 3 else f'^{pw}'
+            parts.append(f"{cs}·{var}{sup}" if c != 1 else f"{var}{sup}")
+    return " + ".join(parts) if parts else "0"
+
+
+def poly_z_str(coeffs):
+    """Format z-domain coefficients (z^-n order) as readable string.
+    coeffs[0] → z⁰ term, coeffs[1] → z⁻¹, coeffs[2] → z⁻², etc."""
+    _sup = {2: '⁻²', 3: '⁻³', 4: '⁻⁴', 5: '⁻⁵'}
+    parts = []
+    for i, c in enumerate(coeffs):
+        if abs(c) < 1e-15:
+            continue
+        cs = f"{c:.4g}" if not parts else f"{c:+.4g}"
+        if i == 0:
+            parts.append(cs)
+        elif i == 1:
+            parts.append(f"{cs}·z⁻¹")
+        else:
+            parts.append(f"{cs}·z{_sup.get(i, f'^(-{i})')}")
+    return "".join(parts) if parts else "0"

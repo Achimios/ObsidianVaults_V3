@@ -9,6 +9,7 @@ from dsp import (
     pt1_coeffs, lkf_coeffs, notch_coeffs,
     resonance, resonance_dist, perlin_noise_1d,
     custom_tf_to_digital, teo,
+    find_3db_freq, diff_eq_str, poly_str, poly_z_str,
 )
 
 
@@ -253,18 +254,11 @@ class DrawMixin:
             checked = getattr(self, f'btn_top_{name}').isChecked()
             self._top_filter = name if checked else None
             # 解除其他 TOP 按钮
-            for _n in ('pt1', 'lkf', 'hs', 'pid'):
-                if _n != name and not (_n == 'pid' and name == 'hs') and not (_n == 'hs' and name == 'pid'):
+            for _n in ('pt1', 'lkf', 'hs', 'pid', 'deq'):
+                if _n != name:
                     btn = getattr(self, f'btn_top_{_n}', None)
                     if btn is not None:
                         btn.setChecked(False)
-            # 同步 hs ↔ pid TOP 按钮
-            if name == 'hs':
-                btn_pid = getattr(self, 'btn_top_pid', None)
-                if btn_pid is not None: btn_pid.setChecked(checked)
-            elif name == 'pid':
-                btn_hs = getattr(self, 'btn_top_hs', None)
-                if btn_hs is not None: btn_hs.setChecked(checked)
             self._schedule()
 
         def _sync_lkf_to_pt1(self):
@@ -300,6 +294,17 @@ class DrawMixin:
             b_pt1, a_pt1 = pt1_coeffs(self.fc_pt1.value(), fs)
             b_lkf, a_lkf = lkf_coeffs(
                 self.q_omega.value(), self.q_bias.value(), self.r_meas.value(), fs)
+
+            # PT1 实际 -3dB 标注
+            if hasattr(self, 'pt1_info'):
+                f3 = find_3db_freq(b_pt1, a_pt1, fs)
+                fc_set = self.fc_pt1.value()
+                if f3 is not None:
+                    self.pt1_info.setText(
+                        f"<small style='color:#778'>前向欧拉法 (Betaflight)"
+                        f"<br>实际-3dB: {f3:.1f}Hz (设定{fc_set:.0f}Hz)</small>")
+                else:
+                    self.pt1_info.setText("<small style='color:#778'>前向欧拉法</small>")
             b_n1, a_n1 = notch_coeffs(self.f_n1.value(), self.q_n1.value(), fs)
             b_n2, a_n2 = notch_coeffs(self.f_n2.value(), self.q_n2.value(), fs)
             use_n1 = self.n1_en.isChecked()
@@ -329,35 +334,58 @@ class DrawMixin:
                     use_hs = False
             if hasattr(self, 'hs_status_label'):
                 if hs_err:
-                    self.hs_status_label.setText(f"<small style='color:#e44'>\u26a0 {hs_err}</small>")
+                    self.hs_status_label.setText(f"<small style='color:#e44'>⚠ {hs_err}</small>")
                 elif self.chk_hs_en.isChecked() and use_hs:
                     _zd = getattr(self, '_hs_z_direct', None)
+                    f3_hs = find_3db_freq(b_hs_z, a_hs_z, fs)
+                    f3_txt = f"-3dB: {f3_hs:.1f}Hz" if f3_hs else ""
+                    deq = diff_eq_str(b_hs_z, a_hs_z)
                     if _zd is not None:
-                        _mode = "z域直接(Euler)"
                         self.hs_status_label.setText(
-                            f"<small style='color:#7a7'>✓ {_mode} — H(z) {len(b_hs_z)-1}/{len(a_hs_z)-1}阶</small>")
+                            f"<small style='color:#7a7'>✓ z域直接(Euler) {len(b_hs_z)-1}/{len(a_hs_z)-1}阶"
+                            f"{'  ' + f3_txt if f3_txt else ''}"
+                            f"<br>{deq}</small>")
                     else:
-                        def _poly_str(coeffs, var='s'):
-                            parts = []
-                            n = len(coeffs) - 1
-                            for i, c in enumerate(coeffs):
-                                pw = n - i
-                                if abs(c) < 1e-15:
-                                    continue
-                                cs = f"{c:g}"
-                                if pw == 0:
-                                    parts.append(cs)
-                                elif pw == 1:
-                                    parts.append(f"{cs}{var}" if c != 1 else var)
-                                else:
-                                    parts.append(f"{cs}{var}²" if pw == 2 else f"{cs}{var}^{pw}")
-                            return " + ".join(parts) if parts else "0"
-                        expr = f"({_poly_str(num_s)}) / ({_poly_str(den_s)})"
+                        expr = f"({poly_str(num_s)}) / ({poly_str(den_s)})"
                         self.hs_status_label.setText(
                             f"<small style='color:#7a7'>✓ bilinear→H(z) {len(b_hs_z)-1}/{len(a_hs_z)-1}阶"
-                            f"<br>H(s) = {expr}</small>")
+                            f"{'  ' + f3_txt if f3_txt else ''}"
+                            f"<br>H(s) = {expr}"
+                            f"<br>{deq}</small>")
                 else:
-                    self.hs_status_label.setText("<small style='color:#778'>\u672a\u542f\u7528</small>")
+                    self.hs_status_label.setText("<small style='color:#778'>未启用</small>")
+
+            # ── 差分表达式 y[n]=... ──
+            use_deq = getattr(self, 'chk_deq_en', None) and self.chk_deq_en.isChecked()
+            b_deq, a_deq = None, None
+            deq_err = None
+            if use_deq:
+                try:
+                    b_deq = np.array([float(x.strip()) for x in self.deq_b.text().split(',') if x.strip()])
+                    a_deq = np.array([float(x.strip()) for x in self.deq_a.text().split(',') if x.strip()])
+                    if len(b_deq) == 0 or len(a_deq) == 0:
+                        raise ValueError("b/a 至少一个系数")
+                except Exception as e:
+                    deq_err = str(e)
+                    use_deq = False
+            if hasattr(self, 'deq_status_label'):
+                if deq_err:
+                    self.deq_status_label.setText(f"<small style='color:#e44'>⚠ {deq_err}</small>")
+                elif getattr(self, 'chk_deq_en', None) and self.chk_deq_en.isChecked() and use_deq:
+                    f3_deq = find_3db_freq(b_deq, a_deq, fs)
+                    _dfc = getattr(self, '_deq_designed_fc', None)
+                    f3d_txt = f"-3dB: {f3_deq:.1f}Hz" if f3_deq else ""
+                    if _dfc and f3_deq:
+                        f3d_txt += f" (设定{_dfc:.0f}Hz)"
+                    deq_str = diff_eq_str(b_deq, a_deq)
+                    hz_str = f"({poly_z_str(b_deq)}) / ({poly_z_str(a_deq)})"
+                    self.deq_status_label.setText(
+                        f"<small style='color:#7a7'>✓ z域直接 {len(b_deq)-1}/{len(a_deq)-1}阶"
+                        f"{'  ' + f3d_txt if f3d_txt else ''}"
+                        f"<br>H(z) = {hz_str}"
+                        f"<br>{deq_str}</small>")
+                else:
+                    self.deq_status_label.setText("<small style='color:#778'>未启用</small>")
 
             # ── 噪声生成（缓存）──
             nk = (self.chk_noise_en.isChecked(),
@@ -418,12 +446,15 @@ class DrawMixin:
             out_lkf_n = apply_notch(out_lkf.copy())
             out_pt1_n_td = apply_notch(lfilter(b_pt1, a_pt1, signal_ws))
             out_lkf_n_td = apply_notch(lfilter(b_lkf, a_lkf, signal_ws))
+            # 未含Notch版本 — 供H(s)/DEQ级联源使用（Notch最后施加一次）
+            out_pt1_td = lfilter(b_pt1, a_pt1, signal_ws)
+            out_lkf_td = lfilter(b_lkf, a_lkf, signal_ws)
 
-            # ── H(s) 滤波（源选择：0=未滤波, 1=PT1+N, 2=LKF+N）──
+            # ── H(s) 滤波（源：0=未滤波, 1=PT1, 2=LKF → Notch 统一最后施加）──
             if use_hs:
                 hs_src_idx = self.cmb_hs_src.currentIndex() if hasattr(self, 'cmb_hs_src') else 0
-                if hs_src_idx == 1:    hs_td_input = out_pt1_n_td
-                elif hs_src_idx == 2:  hs_td_input = out_lkf_n_td
+                if hs_src_idx == 1:    hs_td_input = out_pt1_td
+                elif hs_src_idx == 2:  hs_td_input = out_lkf_td
                 else:                  hs_td_input = signal_ws
                 out_hs   = lfilter(b_hs_z, a_hs_z, signal)
                 out_hs_n = apply_notch(out_hs.copy())
@@ -431,7 +462,41 @@ class DrawMixin:
             else:
                 out_hs_n_td = np.zeros(N_SIG)
 
-            # ── 频响 ──
+            # ── 差分表达式 滤波（Notch 统一最后施加）──
+            if use_deq:
+                deq_src_idx = self.cmb_deq_src.currentIndex() if hasattr(self, 'cmb_deq_src') else 0
+                if deq_src_idx == 1:    deq_td_input = out_pt1_td
+                elif deq_src_idx == 2:  deq_td_input = out_lkf_td
+                else:                   deq_td_input = signal_ws
+                out_deq   = lfilter(b_deq, a_deq, signal)
+                out_deq_n = apply_notch(out_deq.copy())
+                out_deq_n_td = apply_notch(lfilter(b_deq, a_deq, deq_td_input))
+            else:
+                out_deq_n_td = np.zeros(N_SIG)
+
+            # ── PID 控制器（独立通道：非未过滤源含Notch, PID后不再Notch）──
+            use_pid = hasattr(self, 'chk_pid_en') and self.chk_pid_en.isChecked()
+            b_pid_z, a_pid_z = None, None
+            if use_pid:
+                import math
+                try:
+                    kp = self.pid_kp.value()
+                    ki = self.pid_ki.value()
+                    kd = self.pid_kd.value()
+                    df = self.pid_df.value()
+                    tau_d = 1.0 / (2.0 * math.pi * max(df, 1.0))
+                    b_pid_z, a_pid_z = custom_tf_to_digital([kd, kp, ki], [tau_d, 1, 0], fs)
+                except Exception:
+                    use_pid = False
+            if use_pid:
+                pid_src_idx = self.cmb_pid_src.currentIndex() if hasattr(self, 'cmb_pid_src') else 1
+                if pid_src_idx == 1:    pid_td_input = out_pt1_n_td
+                elif pid_src_idx == 2:  pid_td_input = out_lkf_n_td
+                else:                   pid_td_input = signal_ws
+                out_pid_ref = lfilter(b_pid_z, a_pid_z, signal)
+                out_pid_td  = lfilter(b_pid_z, a_pid_z, pid_td_input)
+            else:
+                out_pid_td = np.zeros(N_SIG)
             f_ax = (np.logspace(0, np.log10(fs / 2), 1200) if self._log_xaxis
                     else np.linspace(1, fs / 2, 2400))
             w_ax = 2 * np.pi * f_ax / fs
@@ -447,10 +512,16 @@ class DrawMixin:
             H_pt1_n = H_pt1 * Hn
             H_lkf_n = H_lkf * Hn
 
-            # H(s) 频响
+            # H(s) 频响（级联 + Notch统一最后）
+            _hs_src_pfx = ''
             if use_hs:
                 _, H_hs = freqz(b_hs_z, a_hs_z, worN=w_ax)
-                H_hs_n = H_hs * Hn
+                if hs_src_idx == 1:
+                    H_hs_n = H_pt1 * H_hs * Hn; _hs_src_pfx = 'PT1→'
+                elif hs_src_idx == 2:
+                    H_hs_n = H_lkf * H_hs * Hn; _hs_src_pfx = 'LKF→'
+                else:
+                    H_hs_n = H_hs * Hn
 
             def gd_ms(H):
                 ph = -np.unwrap(np.angle(H))
@@ -461,6 +532,30 @@ class DrawMixin:
             gd_pt1n = gd_ms(H_pt1_n); gd_lkfn = gd_ms(H_lkf_n)
             if use_hs:
                 gd_hs = gd_ms(H_hs); gd_hsn = gd_ms(H_hs_n)
+
+            # DEQ 频响 + 群延迟（级联 + Notch统一最后）
+            _deq_src_pfx = ''
+            if use_deq:
+                _, H_deq = freqz(b_deq, a_deq, worN=w_ax)
+                if deq_src_idx == 1:
+                    H_deq_n = H_pt1 * H_deq * Hn; _deq_src_pfx = 'PT1→'
+                elif deq_src_idx == 2:
+                    H_deq_n = H_lkf * H_deq * Hn; _deq_src_pfx = 'LKF→'
+                else:
+                    H_deq_n = H_deq * Hn
+                gd_deq = gd_ms(H_deq); gd_deqn = gd_ms(H_deq_n)
+
+            # PID 频响（独立, 非未过滤时含源+Notch级联, PID后无Notch）
+            _pid_src_pfx = ''
+            if use_pid:
+                _, H_pid = freqz(b_pid_z, a_pid_z, worN=w_ax)
+                if pid_src_idx == 1:
+                    H_pid_n = H_pt1_n * H_pid; _pid_src_pfx = 'PT1→'
+                elif pid_src_idx == 2:
+                    H_pid_n = H_lkf_n * H_pid; _pid_src_pfx = 'LKF→'
+                else:
+                    H_pid_n = H_pid
+                gd_pid = gd_ms(H_pid); gd_pidn = gd_ms(H_pid_n)
 
             # ── PSD ──
             nperseg = min(4096, N_SIG // 8)
@@ -474,6 +569,14 @@ class DrawMixin:
             if use_hs:
                 _, P_hs_ref = welch(out_hs_n, fs, nperseg=nperseg)
                 _, P_hsn    = welch(out_hs_n_td, fs, nperseg=nperseg)
+            # DEQ PSD
+            if use_deq:
+                _, P_deq_ref = welch(out_deq_n, fs, nperseg=nperseg)
+                _, P_deqn    = welch(out_deq_n_td, fs, nperseg=nperseg)
+            # PID PSD
+            if use_pid:
+                _, P_pid_ref = welch(out_pid_ref, fs, nperseg=nperseg)
+                _, P_pid     = welch(out_pid_td,  fs, nperseg=nperseg)
             # TEO
             use_teo = getattr(self, 'chk_teo_en', None) and self.chk_teo_en.isChecked()
             if use_teo:
@@ -481,6 +584,7 @@ class DrawMixin:
                 if src_idx == 1:    teo_input = out_pt1_n_td
                 elif src_idx == 2:  teo_input = out_lkf_n_td
                 elif src_idx == 3 and use_hs: teo_input = out_hs_n_td  # 已含Notch
+                elif src_idx == 4 and use_deq: teo_input = out_deq_n_td
                 else:               teo_input = signal_ws
                 teo_out = teo(teo_input)
                 teo_sc = getattr(self, 'teo_scale', None)
@@ -502,6 +606,8 @@ class DrawMixin:
             pp  = out_pt1_n_td[::dec]       # PT1 响应
             lp  = out_lkf_n_td[::dec]       # LKF 响应
             hp  = out_hs_n_td[::dec]  if use_hs  else None   # H(s) 响应
+            dp  = out_deq_n_td[::dec] if use_deq else None   # 差分表达式响应
+            pidp = out_pid_td[::dec]  if use_pid else None   # PID 响应
             tp_ = teo_out[::dec]      if use_teo else None   # TEO 输出
 
             # ══════════════════════════════════════════════
@@ -538,9 +644,9 @@ class DrawMixin:
             ax1, ax2, ax3, ax4, ax5 = _axes
 
             C_PT1 = T['pt1']; C_LKF = T['lkf']; C_TEO = T['teo']; C_GRID = T['grid']
-            _pid_on = hasattr(self, 'chk_pid_en') and self.chk_pid_en.isChecked()
-            C_HS = T.get('pid', T['hs']) if _pid_on else T['hs']
-            _hs_lbl = 'PID' if _pid_on else 'H(s)'
+            C_DEQ = T.get('deq', '#e07830')
+            C_HS = T['hs']
+            C_PID = T.get('pid', '#e0a040')
 
             for ax in filter(None, (ax1, ax2, ax3, ax4, ax5)):
                 ax.set_facecolor(T['ax'])
@@ -572,8 +678,14 @@ class DrawMixin:
                 if use_pt1: ax1.plot(f_ax, mg(H_pt1_n), color=C_PT1, lw=1.3, label="PT1+Notch")
                 if use_lkf: ax1.plot(f_ax, mg(H_lkf_n), color=C_LKF, lw=1.3, label="LKF+Notch")
                 if use_hs:
-                    ax1.plot(f_ax, mg(H_hs),   color=C_HS, lw=0.6, ls="--", alpha=0.55, label=_hs_lbl)
-                    ax1.plot(f_ax, mg(H_hs_n), color=C_HS, lw=1.3, label=f"{_hs_lbl}+Notch")
+                    ax1.plot(f_ax, mg(H_hs),   color=C_HS, lw=0.6, ls="--", alpha=0.55, label='H(s)')
+                    ax1.plot(f_ax, mg(H_hs_n), color=C_HS, lw=1.3, label=f"{_hs_src_pfx}H(s)+N")
+                if use_deq:
+                    ax1.plot(f_ax, mg(H_deq),   color=C_DEQ, lw=0.6, ls="--", alpha=0.55, label="DEQ")
+                    ax1.plot(f_ax, mg(H_deq_n), color=C_DEQ, lw=1.3, label=f"{_deq_src_pfx}DEQ+N")
+                if use_pid:
+                    ax1.plot(f_ax, mg(H_pid),   color=C_PID, lw=0.6, ls="--", alpha=0.55, label="PID")
+                    ax1.plot(f_ax, mg(H_pid_n), color=C_PID, lw=1.3, label=f"{_pid_src_pfx}PID")
                 bands(ax1); ax1.set_xscale(xsc); ax1.set_xlim(*xlim)
                 ax1.set_ylabel(ylabel_mag, color=T['label'], fontsize=8)
                 ax1.set_title("陀螺滤波器分析仪  PT1 vs 2-state LKF (+Notch)  |  fs=2kHz",
@@ -589,7 +701,13 @@ class DrawMixin:
                 if use_lkf: ax2.plot(f_ax, np.angle(H_lkf_n, deg=True), color=C_LKF, lw=1.2, label="LKF+N")
                 if use_hs:
                     ax2.plot(f_ax, np.angle(H_hs,   deg=True), color=C_HS, lw=0.6, ls="--", alpha=0.55)
-                    ax2.plot(f_ax, np.angle(H_hs_n, deg=True), color=C_HS, lw=1.2, label=f"{_hs_lbl}+N")
+                    ax2.plot(f_ax, np.angle(H_hs_n, deg=True), color=C_HS, lw=1.2, label=f"{_hs_src_pfx}H(s)+N")
+                if use_deq:
+                    ax2.plot(f_ax, np.angle(H_deq,   deg=True), color=C_DEQ, lw=0.6, ls="--", alpha=0.55)
+                    ax2.plot(f_ax, np.angle(H_deq_n, deg=True), color=C_DEQ, lw=1.2, label=f"{_deq_src_pfx}DEQ+N")
+                if use_pid:
+                    ax2.plot(f_ax, np.angle(H_pid,   deg=True), color=C_PID, lw=0.6, ls="--", alpha=0.55)
+                    ax2.plot(f_ax, np.angle(H_pid_n, deg=True), color=C_PID, lw=1.2, label=f"{_pid_src_pfx}PID")
                 bands(ax2); ax2.axhline(0, color=T['href'], lw=0.7)
                 for deg in (-90, -180): ax2.axhline(deg, color=T['href2'], lw=0.5, ls=":")
                 ax2.set_xscale(xsc); ax2.set_xlim(*xlim)
@@ -607,7 +725,13 @@ class DrawMixin:
                 if use_lkf: ax3.plot(f_ax, np.clip(gd_lkfn, -clip, clip), color=C_LKF, lw=0.6, label="LKF+N")
                 if use_hs:
                     ax3.plot(f_ax, np.clip(gd_hs,  -clip, clip), color=C_HS, lw=0.75, ls="--", alpha=0.55)
-                    ax3.plot(f_ax, np.clip(gd_hsn, -clip, clip), color=C_HS, lw=0.6, label=f"{_hs_lbl}+N")
+                    ax3.plot(f_ax, np.clip(gd_hsn, -clip, clip), color=C_HS, lw=0.6, label=f"{_hs_src_pfx}H(s)+N")
+                if use_deq:
+                    ax3.plot(f_ax, np.clip(gd_deq,  -clip, clip), color=C_DEQ, lw=0.75, ls="--", alpha=0.55)
+                    ax3.plot(f_ax, np.clip(gd_deqn, -clip, clip), color=C_DEQ, lw=0.6, label=f"{_deq_src_pfx}DEQ+N")
+                if use_pid:
+                    ax3.plot(f_ax, np.clip(gd_pid,  -clip, clip), color=C_PID, lw=0.75, ls="--", alpha=0.55)
+                    ax3.plot(f_ax, np.clip(gd_pidn, -clip, clip), color=C_PID, lw=0.6, label=f"{_pid_src_pfx}PID")
                 bands(ax3); ax3.axhline(0, color=T['href'], lw=0.7)
                 ax3.set_xscale(xsc); ax3.set_xlim(*xlim)
                 ax3.set_ylabel("Grp Dly (ms)", color=T['label'], fontsize=8)
@@ -627,7 +751,13 @@ class DrawMixin:
                 if use_lkf: psd_plot(f_w[mask], _cvt(P_lkfn[mask]),   color=C_LKF, lw=1.2,  label="LKF+N")
                 if use_hs:
                     psd_plot(f_w[mask], _cvt(P_hs_ref[mask]), color=C_HS, lw=0.5, ls="--", alpha=0.35)
-                    psd_plot(f_w[mask], _cvt(P_hsn[mask]),    color=C_HS, lw=1.2, label=f"{_hs_lbl}+N")
+                    psd_plot(f_w[mask], _cvt(P_hsn[mask]),    color=C_HS, lw=1.2, label=f"{_hs_src_pfx}H(s)+N")
+                if use_deq:
+                    psd_plot(f_w[mask], _cvt(P_deq_ref[mask]), color=C_DEQ, lw=0.5, ls="--", alpha=0.35)
+                    psd_plot(f_w[mask], _cvt(P_deqn[mask]),    color=C_DEQ, lw=1.2, label=f"{_deq_src_pfx}DEQ+N")
+                if use_pid:
+                    psd_plot(f_w[mask], _cvt(P_pid_ref[mask]), color=C_PID, lw=0.5, ls="--", alpha=0.35)
+                    psd_plot(f_w[mask], _cvt(P_pid[mask]),     color=C_PID, lw=1.2, label=f"{_pid_src_pfx}PID")
                 if use_teo:
                     psd_plot(f_w[mask], _cvt(P_teo[mask]),    color=C_TEO, lw=1.0, label="TEO")
                 for fr, col in [(self.fr1.value(), T['lkf']), (self.fr2.value(), T['pt1'])]:  # fr1=lkf color, fr2=pt1 color
@@ -686,7 +816,11 @@ class DrawMixin:
                 if use_pt1: ax5.plot(t, pp, color=C_PT1, lw=0.65, label="PT1+N")
                 if use_lkf: ax5.plot(t, lp, color=C_LKF, lw=0.65, label="LKF+N")
                 if use_hs and hp is not None:
-                    ax5.plot(t, hp, color=C_HS, lw=0.65, label=f"{_hs_lbl}+N")
+                    ax5.plot(t, hp, color=C_HS, lw=0.65, label=f"{_hs_src_pfx}H(s)+N")
+                if use_deq and dp is not None:
+                    ax5.plot(t, dp, color=C_DEQ, lw=0.65, label=f"{_deq_src_pfx}DEQ+N")
+                if use_pid and pidp is not None:
+                    ax5.plot(t, pidp, color=C_PID, lw=0.65, label=f"{_pid_src_pfx}PID")
                 if use_teo and tp_ is not None:
                     ax5.plot(t, tp_, color=C_TEO, lw=0.55, alpha=0.75, label="TEO")
                 # 模式提示
@@ -713,7 +847,7 @@ class DrawMixin:
             # 置顶处理：将 _top_filter 对应滤波器的所有 label 匹配线提升 zorder
             _top = getattr(self, '_top_filter', None)
             if _top is not None:
-                _top_kw = {'pt1': 'PT1', 'lkf': 'LKF', 'hs': _hs_lbl}.get(_top, '')
+                _top_kw = {'pt1': 'PT1', 'lkf': 'LKF', 'hs': 'H(s)', 'pid': 'PID', 'deq': 'DEQ'}.get(_top, '')
                 for _ax in filter(None, [ax1, ax2, ax3, ax4, ax5]):
                     for _ln in _ax.get_lines():
                         if _top_kw in (_ln.get_label() or ''):

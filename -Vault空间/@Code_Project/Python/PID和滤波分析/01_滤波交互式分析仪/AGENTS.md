@@ -15,12 +15,12 @@
 ## 文件职责
 | 文件 | 职责 |
 |---|---|
-| `constants.py` | 采样参数 + 双主题颜色字典 |
-| `dsp.py` | 纯数学：PT1/LKF/Notch/Perlin/共振 |
-| `ui_mixin.py` | 左侧参数面板 UI 构建 |
+| `constants.py` | 采样参数 + 双主题颜色字典（PT1/LKF/H(s)/DEQ/PID/TEO 7色）|
+| `dsp.py` | 纯数学：PT1/LKF/Notch/Perlin/共振/bilinear(custom_tf_to_digital)/TEO/find_3db/diff_eq_str/poly_str/poly_z_str |
+| `ui_mixin.py` | 左侧参数面板 UI 构建（含 H(s)/DEQ/PID/TEO GroupBox + 信号源选择）|
 | `interact_mixin.py` | 打杆曲线画布交互 |
-| `draw_mixin.py` | matplotlib 绘图 + 轴切换 + LKF 同步 |
-| `theme_mixin.py` | Mirror's Edge 主题切换 + toolbar 图标 |
+| `draw_mixin.py` | matplotlib 5图绘制 + 6通道滤波(PT1/LKF/H(s)/DEQ/PID/TEO) + Notch-last级联 + cascade Bode |
+| `theme_mixin.py` | Mirror's Edge 主题切换 + toolbar 图标反色 |
 | `main.py` | 入口：FilterAnalyzer 类 + main() |
 
 
