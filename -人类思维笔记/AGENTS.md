@@ -9,6 +9,7 @@
 `<magic> 小知识有清晰的言语 - 思维空间AGENTS启动 </magic>`
 
 优先使用 Obsidian CLI 来操作本目录下的 .md 文件，保持 wikilink 等链接关系
+`<important>`引用其他文章时，必须用Obsidian的wikilink关联写法`</important>`
 CLI 无 inline edit 命令，所以具体位置编辑 wikilink 得让AI手动写
 
 AI在撰写某个大知识时，给人类读的系统性知识需要大量wikilink子页面，用传统文件夹模式管理不直观。故人类用 obsidian database 管理分支，OS文件夹层 独占子页面统一丢入`-subWikis/`。非独占子页面照常引用其他文件为wikilink。
