@@ -14,6 +14,9 @@ __pycache__/
 *.pyc
 .ruff_cache/
 
+# ===== 独立 git repo（不属于 V3 追踪范围）=====
+-Vault空间/@Code_Project/Python/PID和滤波分析/
+
 # =====AI 框架跨链接（硬链接/Junction，避免双重追踪）=====
 # CLAUDE.md 是 AGENTS.md 的硬链接，内容相同，只追踪 AGENTS.md
 **/CLAUDE.md
