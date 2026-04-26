@@ -8,49 +8,51 @@
         "type": "tabs",
         "children": [
           {
-            "id": "a6c4603544eec910",
+            "id": "5ac1cd3f4de08d61",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "-人类思维笔记/L_AkiDynamic/a_上古草稿/自动PID与滤波分析.md",
+                "file": "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_0.md",
                 "mode": "source",
-                "source": false
+                "source": false,
+                "backlinks": false
               },
               "icon": "lucide-file",
-              "title": "自动PID与滤波分析"
+              "title": "IMAGINE_0"
             }
           },
           {
-            "id": "2f0fd2b1513e557d",
+            "id": "49dd965f50e125c3",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "-人类思维笔记/L_AkiDynamic/z_动力学系统/0.0_Doubao_AkiDynamic_和宇宙.md",
+                "file": "z_临时AI回复位置_方便阅读.md",
                 "mode": "source",
-                "source": false
+                "source": false,
+                "backlinks": false
               },
               "icon": "lucide-file",
-              "title": "0.0_Doubao_AkiDynamic_和宇宙"
+              "title": "z_临时AI回复位置_方便阅读"
             }
           },
           {
-            "id": "dd0d5e32ca772244",
+            "id": "f348c4516799324f",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "-人类思维笔记/L_AkiDynamic/1_设计参考/0.1_Copilot_可执行方案.md",
+                "file": "z_临时提问位置_方便打字.md",
                 "mode": "source",
-                "source": false
+                "source": false,
+                "backlinks": false
               },
               "icon": "lucide-file",
-              "title": "0.1_Copilot_可执行方案"
+              "title": "z_临时提问位置_方便打字"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -82,7 +84,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "file:PRD",
+                "query": "",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -123,17 +125,17 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "z_临时提问位置_方便打字.md",
+                "file": "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_0.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
                 "showSearch": false,
                 "searchQuery": "",
                 "backlinkCollapsed": false,
-                "unlinkedCollapsed": true
+                "unlinkedCollapsed": false
               },
               "icon": "links-coming-in",
-              "title": "z_临时提问位置_方便打字 的反向链接列表"
+              "title": "IMAGINE_0 的反向链接列表"
             }
           },
           {
@@ -142,12 +144,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "z_临时提问位置_方便打字.md",
+                "file": "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_0.md",
                 "linksCollapsed": false,
-                "unlinkedCollapsed": true
+                "unlinkedCollapsed": false
               },
               "icon": "links-going-out",
-              "title": "z_临时提问位置_方便打字 的出链列表"
+              "title": "IMAGINE_0 的出链列表"
             }
           },
           {
@@ -185,22 +187,20 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md",
+                "file": "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_0.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "-CONTEXT 的大纲"
+              "title": "IMAGINE_0 的大纲"
             }
           }
-        ],
-        "currentTab": 4
+        ]
       }
     ],
     "direction": "horizontal",
-    "width": 289.5,
-    "collapsed": true
+    "width": 326.5
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -213,54 +213,54 @@
       "bases:新建数据库": false
     }
   },
-  "active": "c693318721dd317a",
+  "active": "5ac1cd3f4de08d61",
   "lastOpenFiles": [
-    "-人类思维笔记/L_AkiDynamic/1_设计参考/0.0_Gemini_浅层NN自动PID.md",
-    "-人类思维笔记/L_AkiDynamic/0_理论数学/0.1_Copilot_Lp范数核心提炼.md",
-    "-人类思维笔记/L_AkiDynamic/0_理论数学/0.0_豆包_Lp范数与稀疏性_原文.md",
-    "-人类思维笔记/L_AkiDynamic/z_动力学系统/0.0_Doubao_AkiDynamic_和宇宙.md",
-    "-人类思维笔记/L_AkiDynamic/a_上古草稿/自动PID与滤波分析.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-🛒PRD.md",
-    "-Vault空间/@Code_Project/-架构方法演示/-局部指令表&注释码表系统_演示/-🛒PRD.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426175237.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426113356.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426113331.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426181056.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426180932.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426180422.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426175758.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426175552.png",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/AGENTS.md",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/扭矩-转速-效率 绘制须知.png",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/__attatch/Pasted image 20260425055349.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_0.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_3.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426180748.png",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/尚未確認的 508445.crdownload",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/尚未確認的 649516.crdownload",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_2.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_1.md",
+    "-人类思维笔记/● Aesthetics/零碎的.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/-CONTEXT.md",
+    "z_临时AI回复位置_方便阅读.md",
     "z_临时提问位置_方便打字.md",
-    "__attatch/3d22befa-6549-4d2d-b43e-d042c2cb7ca6.png",
-    "__attatch",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-📇索引码表.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/src/__pycache__/ui_mixin.cpython-310.pyc.22669872",
-    "-人类思维笔记/L_AkiDynamic/a_上古草稿",
-    "-人类思维笔记/L_AkiDynamic/2_可落地意图控制层.md",
-    "-人类思维笔记/L_AkiDynamic/1_可落地自动PID系统.md",
-    "-人类思维笔记/L_AkiDynamic/1_设计参考/1.1_Gemini_MLflow整合方案.md",
-    "-人类思维笔记/L_AkiDynamic/z_理论数学/-CONTEXT.md",
-    "-人类思维笔记/z_范数空间/0.0_Doubao_关于宇宙.md",
-    "-人类思维笔记/z_范数空间/0.0_Doubao_范数空间_短.md",
-    "-人类思维笔记/z_范数空间/0.0_Doubao_范数空间.md",
-    "-人类思维笔记/z_范数空间/0.1_Copilot_Thinking.md",
-    "-人类思维笔记/L_AkiDynamic/z_动力学系统",
-    "-人类思维笔记/-CONTEXT.md",
-    "-人类思维笔记/z_文本格式的讨论/0.1_Copilot_Gemini方案审阅与V3实践.md",
-    "-人类思维笔记/z_文本格式的讨论/0.0_Gemini_二进制码表注入&高熵断句符.md",
-    "-人类思维笔记/z_非线性Chirp解调/00_Gemini_.md",
-    "-人类思维笔记/z_范数空间/0.2_Copilot_可执行操作.md",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/4_L3旋转.py",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/4_.py",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/新建文本文档.txt",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/来自豆包/src/新建文件夹",
-    "-人类思维笔记/B_一些思考/关于宇宙和数学本质",
-    "-人类思维笔记/B_一些思考",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/AGENTS.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/__trash/PT1和LKF/-CONTEXT.md",
-    "_TEMP/_ScreenShots/abb647d9-9bf3-4052-bf47-22771a448cde.png",
-    "_TEMP/_ScreenShots/ScreenShot_2026-04-04_224725_088.png",
-    "-人类思维笔记/L_AkiDynamic/未命名.canvas",
-    "-人类思维笔记/__trash/ai_Copilot_SKILL/__attatch/Pasted image 20260404032510.png",
-    "_attatch/Pasted image 20260404025406.png",
-    "-人类思维笔记/z_非线性Chirp解调/_attatch/Pasted image 20260403035944.png",
-    "-人类思维笔记/z_非线性Chirp解调/attatch/Pasted image 20260403035913.png",
-    "Pasted image 20260403035822.png",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/lora_snr_curve.png",
-    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/lora-dechirp-verify/lora_demod_viz.png"
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch",
+    "-Vault空间/@Code_Project/Python/-CONTEXT.md",
+    "-人类思维笔记/1_给人类看的.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎",
+    "-人类思维笔记/Y_从他人的AI工作流学习/ai_OpenClaw_workspace/memory/2026-04-25-deepseek-config-discussion.md",
+    "-人类思维笔记/Y_从他人的AI工作流学习/ai_OpenClaw_workspace/state",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/LISENCE.md",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/README.md",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/新建文本文档.txt",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md",
+    "-人类思维笔记/L_AkiDynamic/1-1_可落地自动PID系统.md",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/__attatch",
+    "-人类思维笔记/L_AkiDynamic/Hey, something bout SLAM.md",
+    "-人类思维笔记/● Aesthetics/__attatch",
+    "-人类思维笔记/● Aesthetics",
+    "-人类思维笔记/L_AkiDynamic/1-0_可落地自动PID系统.md",
+    "-人类思维笔记/L_AkiDynamic/z_动力学系统/Universe_Copilot_可执行操作.md",
+    "-人类思维笔记/L_AkiDynamic/z_动力学系统/AkiDynamics_Copilot_思考.md",
+    "-人类思维笔记/L_AkiDynamic/3-1？_软件运动学与意图路由_界面革命的第一性原理.md",
+    "-人类思维笔记/L_AkiDynamic/2-1_可落地意图控制层.md",
+    "-人类思维笔记/L_AkiDynamic/2-0_可落地意图控制层.md",
+    "-人类思维笔记/L_AkiDynamic/z_动力学系统/Universe_Copilot_思考.md",
+    "-人类思维笔记/L_AkiDynamic/2_具体算法/1_0_多旋翼飞行器仿真系统.md",
+    "-Vault空间/@Code_Project/Python/PID和滤波分析/nzpA14B.tmp",
+    "-人类思维笔记/L_AkiDynamic/未命名.canvas"
   ]
 }

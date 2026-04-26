@@ -2,5 +2,6 @@
   "alwaysUpdateLinks": true,
   "readableLineLength": true,
   "autoPairMarkdown": false,
-  "attachmentFolderPath": "./__attatch"
+  "attachmentFolderPath": "./__attatch",
+  "showLineNumber": false
 }

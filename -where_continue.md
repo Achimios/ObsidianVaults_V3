@@ -5,7 +5,7 @@
 ## 📍 最近编辑（按时间倒序）
 
 1. **PT1vsLKF 分析仪** — `./-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md`  
-   → 已完成：1_给人类解释.md 全16节完成（代码锚点+误解纠正），参考LoRa/MagCal风格  
+   → 已完成：1_给人类解释.md 大幅扩写（PID物理类比+电机加速+Betaflight源码实证+FF差分实证+RC Smoothing软升采样）  
    → 下一步：👆 ODE连续时间仿真 + 固定群延迟 + 极零点图 + 阶跃响应图
 
 2. **根目录 + .github/** — `./-CONTEXT.md`  
