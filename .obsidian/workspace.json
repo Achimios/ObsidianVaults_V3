@@ -8,7 +8,7 @@
         "type": "tabs",
         "children": [
           {
-            "id": "5ac1cd3f4de08d61",
+            "id": "0a97e7904c03b37e",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -20,21 +20,6 @@
               },
               "icon": "lucide-file",
               "title": "IMAGINE_0"
-            }
-          },
-          {
-            "id": "49dd965f50e125c3",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "z_临时AI回复位置_方便阅读.md",
-                "mode": "source",
-                "source": false,
-                "backlinks": false
-              },
-              "icon": "lucide-file",
-              "title": "z_临时AI回复位置_方便阅读"
             }
           },
           {
@@ -51,8 +36,24 @@
               "icon": "lucide-file",
               "title": "z_临时提问位置_方便打字"
             }
+          },
+          {
+            "id": "73723b5f30ef7533",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/IMAGINE_TW_机制规格.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": false
+              },
+              "icon": "lucide-file",
+              "title": "IMAGINE_TW_机制规格"
+            }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -109,7 +110,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 424.51103591918945
   },
   "right": {
     "id": "9705c8ff6ccb3c8d",
@@ -125,7 +126,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_0.md",
+                "file": "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Plans/1_给人类介绍.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -135,7 +136,7 @@
                 "unlinkedCollapsed": false
               },
               "icon": "links-coming-in",
-              "title": "IMAGINE_0 的反向链接列表"
+              "title": "1_给人类介绍 的反向链接列表"
             }
           },
           {
@@ -187,16 +188,17 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_0.md",
+                "file": "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/IMAGINE_TW_机制规格.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "IMAGINE_0 的大纲"
+              "title": "IMAGINE_TW_机制规格 的大纲"
             }
           }
-        ]
+        ],
+        "currentTab": 4
       }
     ],
     "direction": "horizontal",
@@ -210,57 +212,59 @@
       "daily-notes:打开/创建今天的日记": false,
       "templates:插入模板": false,
       "command-palette:打开命令面板": false,
-      "bases:新建数据库": false
+      "bases:新建数据库": false,
+      "media-extended:Open media library": false,
+      "media-extended:Open media quick switcher": false
     }
   },
-  "active": "5ac1cd3f4de08d61",
+  "active": "73723b5f30ef7533",
   "lastOpenFiles": [
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426175237.png",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426113356.png",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426113331.png",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426181056.png",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426180932.png",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426180422.png",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426175758.png",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426175552.png",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/AGENTS.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/扭矩-转速-效率 绘制须知.png",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/__attatch/Pasted image 20260425055349.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Fields/1.0 炮弹动力学.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/IMAGINE_TW_机制规格.md",
     "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_0.md",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_3.md",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426180748.png",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/尚未確認的 508445.crdownload",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/尚未確認的 649516.crdownload",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_2.md",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_1.md",
-    "-人类思维笔记/● Aesthetics/零碎的.md",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/-CONTEXT.md",
-    "z_临时AI回复位置_方便阅读.md",
     "z_临时提问位置_方便打字.md",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch",
-    "-Vault空间/@Code_Project/Python/-CONTEXT.md",
-    "-人类思维笔记/1_给人类看的.md",
-    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎",
-    "-人类思维笔记/Y_从他人的AI工作流学习/ai_OpenClaw_workspace/memory/2026-04-25-deepseek-config-discussion.md",
-    "-人类思维笔记/Y_从他人的AI工作流学习/ai_OpenClaw_workspace/state",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/LISENCE.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/README.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/新建文本文档.txt",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md",
-    "-人类思维笔记/L_AkiDynamic/1-1_可落地自动PID系统.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/__attatch",
-    "-人类思维笔记/L_AkiDynamic/Hey, something bout SLAM.md",
-    "-人类思维笔记/● Aesthetics/__attatch",
-    "-人类思维笔记/● Aesthetics",
-    "-人类思维笔记/L_AkiDynamic/1-0_可落地自动PID系统.md",
-    "-人类思维笔记/L_AkiDynamic/z_动力学系统/Universe_Copilot_可执行操作.md",
-    "-人类思维笔记/L_AkiDynamic/z_动力学系统/AkiDynamics_Copilot_思考.md",
-    "-人类思维笔记/L_AkiDynamic/3-1？_软件运动学与意图路由_界面革命的第一性原理.md",
-    "-人类思维笔记/L_AkiDynamic/2-1_可落地意图控制层.md",
-    "-人类思维笔记/L_AkiDynamic/2-0_可落地意图控制层.md",
-    "-人类思维笔记/L_AkiDynamic/z_动力学系统/Universe_Copilot_思考.md",
-    "-人类思维笔记/L_AkiDynamic/2_具体算法/1_0_多旋翼飞行器仿真系统.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/nzpA14B.tmp",
+    "-Vault空间/@Code_Project/Python/🌒Moonshot_Algorithms/beginFrom豆包_非L2范数/Copilot的代码/1_给人类解释.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/src/1_给人类看的.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/src/维度_5_堆积球.py",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/src/维度_4_内切球.py",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/src/维度_4_堆积球.py",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/src/维度_4_SDF原型.py",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/src",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/新建文件夹",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/IMAGINE_MVP规划.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/IMAGINE_多维世界构建_1.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/IMAGINE_多维世界构建_0_1.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/IMAGINE_多维世界构建_0.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/1_给人类看的.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Fields/0.1 场控制_子代理总结.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Fields/0.1 场控制_TARS总结.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Fields/0.1_天才图谱_你在哪条线上.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/_patch_light_theme.py",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/_patch_shape_selector.py",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/_patch_sdf_main.py",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/_patch_fixes.py",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Space and Geo/1_给人类解释.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/-CONTEXT.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Fields/0.0 场控制.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Fields/0.1 场控制_总结.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Stories/IMAGINE_TimeWanderer_完整剧本.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Stories/IMAGINE_TimeWanderer.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Stories/IMAGINE_TimeWanderer_玩法桥接.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Stories/IMAGINE_TimeWanderer_故事碎片.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Stories/IMAGINE_TimeWanderer_故事碎片_II.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Stories/IMAGINE_TimeWanderer_世界志.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/IMAGINE_TimeWanderer_玩法桥接.md",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/ff3284df728036ee808e2eea212ae021.gif",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426175552.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426113331.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426113356.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426204423.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/24c6ba27f4bce6bc435c71e912b7905e.jpg",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426202107.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426201610.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426200129.png",
+    "-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426193537.png",
     "-人类思维笔记/L_AkiDynamic/未命名.canvas"
   ]
 }

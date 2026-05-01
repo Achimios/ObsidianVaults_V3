@@ -4,9 +4,9 @@
 
 ## 📍 最近编辑（按时间倒序）
 
-1. **PT1vsLKF 分析仪** — `./-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md`  
-   → 已完成：1_给人类解释.md 大幅扩写（PID物理类比+电机加速+Betaflight源码实证+FF差分实证+RC Smoothing软升采样）  
-   → 下一步：👆 ODE连续时间仿真 + 固定群延迟 + 极零点图 + 阶跃响应图
+1. **Time Wanderer 机制规格 + 完整剧本** — `./-Vault空间/@Code_Project/Python/z_AkiWorld_异世界引擎/Labs/-CONTEXT.md`  
+   → 已完成：Gemini 物理框架落地（时空晶体/长丝/坡印廷）+ 指示器UI + 极光着色器草稿 + m_w GDScript + 完整剧本（废都物语风格，6章+4结局）  
+   → 下一步：👆 Godot MVP，从 WAxisComponent 开始实装 m_w 弹簧
 
 2. **根目录 + .github/** — `./-CONTEXT.md`  
    → 已完成：AGENTS.md内联session流程 + 听觉接口精简 + instructions.md去重 + Skills迁移至.claude/skills/ + 人类接入手册恢复+补Skills行+Magic节  

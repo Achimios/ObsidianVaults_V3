@@ -43,3 +43,28 @@
 - 🔄 Boss Σ-0 战斗数值设计（Phase 血量曲线/伤害平衡）
 - 🔄 IMAGINE_3 插入 PIC_ 占位图
 - 🔄 PIC_ 占位图填充（grep PIC_ 找到所有位置，约20+个待填）
+
+---
+
+## Time Wanderer 设计文档状态 (2026-04-29)
+
+所有 TW 文件位于 `Stories/` 子目录，剧本在主目录。
+
+### 文件索引
+- `Stories/IMAGINE_TimeWanderer.md` — 核心设计文档（Side A 世界观 + Side B 数学机制）
+- `Stories/IMAGINE_TimeWanderer_世界志.md` — 世界圣经（w 层生态、政治结构、真实历史）
+- `Stories/IMAGINE_TimeWanderer_故事碎片.md` — 文学碎片 I（星之声/沙丘/图书馆员记录）
+- `Stories/IMAGINE_TimeWanderer_故事碎片_II.md` — 文学碎片 II（Princess POV/牧师档案/边界行者对话）
+- `Stories/IMAGINE_TimeWanderer_玩法桥接.md` — 世界观↔机制映射（m_w弹簧/SDF/4个结局）
+- `Stories/IMAGINE_TimeWanderer_完整剧本.md` — **✅ 完整RPG剧本**（废都物语风格，6章+序章+4结局）
+
+### TW 剧本已完成内容
+- ✅ 序章（霍尔姆镇，父亲线，欧哈拉对话）
+- ✅ 5个主要NPC：诺埃尔/马林/萨奇/菲尼斯/Seven
+- ✅ 5个核心选择节点
+- ✅ 4个结局：停留/重建/释放C1/释放C2
+- ✅ 机制教学自然嵌入（w轴移动/感知扫描/跨维度攻击/称号SP）
+
+### TW 下一步
+- 🔄 Godot MVP 实装（m_w 弹簧系统优先）
+- 🔄 剧本 → 实际游戏场景设计（关卡图）
