@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>LoRa De-chirp 共轭相乘原理</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: -apple-system, "Segoe UI", sans-serif; background: #0a0a0a; color: #e0e0e0; }
+.container { display: flex; height: 100vh; }
+.left { width: 360px; padding: 16px; background: #141414; overflow-y: auto; border-right: 1px solid #2a2a2a; flex-shrink: 0; }
+.right { flex: 1; padding: 16px; overflow-y: auto; }
+h2 { color: #5ab8ff; font-size: 15px; margin-bottom: 10px; }
+h3 { color: #ffb84a; font-size: 13px; margin: 14px 0 6px; }
+.param { margin-bottom: 12px; }
+.param label { display: flex; justify-content: space-between; font-size: 12px; color: #bbb; margin-bottom: 4px; }
+.param input[type="range"] { width: 100%; accent-color: #5ab8ff; }
+.val { color: #5ab8ff; font-weight: 700; font-variant-numeric: tabular-nums; }
+.val.warn { color: #ff5e94; }
+.box { background: #1c1c1c; border: 1px solid #2a2a2a; padding: 10px; border-radius: 6px; font-size: 12px; line-height: 1.65; color: #ccc; }
+.box code { color: #ffb84a; font-family: 'SF Mono', Consolas, monospace; }
+.box.alias { background: #2a1414; border-color: #5a1a1a; }
+.plot { background: #141414; border: 1px solid #2a2a2a; border-radius: 8px; padding: 10px 14px 14px; margin-bottom: 12px; }
+.plot .ttl { color: #5ab8ff; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.plot .sub { color: #888; font-size: 11px; margin-bottom: 8px; line-height: 1.5; }
+canvas { display: block; width: 100%; height: 200px; background: #000; border-radius: 4px; }
+.legend { display: flex; gap: 14px; font-size: 11px; margin-top: 6px; color: #aaa; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 4px; border-radius: 2px; }
+.legend i.dot { width: 8px; height: 8px; border-radius: 50%; }
+.kbd { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; font-family: monospace; color: #ffb84a; font-size: 11px; }
+.note { color: #888; font-size: 11px; margin-top: 6px; font-style: italic; }
+.seg { display: flex; gap: 2px; margin-bottom: 10px; }
+.seg button { flex: 1; padding: 6px 4px; font-size: 12px; background: #1c1c1c; color: #888; border: 1px solid #2a2a2a; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+.seg button.active { background: #5ab8ff; color: #000; border-color: #5ab8ff; font-weight: 600; }
+.formula { background: #0d1a26; border: 1px solid #1a3550; padding: 10px; border-radius: 6px; font-family: 'SF Mono', Consolas, monospace; font-size: 11px; color: #9cd; line-height: 1.7; overflow-x: auto; }
+.formula .hl { color: #ffb84a; }
+.formula .var { color: #4cd964; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="left">
+  <h2>📡 LoRa De-chirp 参数</h2>
+
+  <div class="param">
+    <label>符号 s（循环移位） <span class="val" id="sVal">0</span></label>
+    <input type="range" id="symbol" min="0" max="23" step="1" value="0">
+  </div>
+
+  <div class="param">
+    <label>采样率 F<sub>s</sub> <span class="val" id="fsVal">200 Hz</span></label>
+    <div class="seg">
+      <button id="fs200" class="active" data-fs="200">200 Hz（混叠）</button>
+      <button id="fs400" data-fs="400">400 Hz（正常）</button>
+    </div>
+  </div>
+
+  <div class="param">
+    <label>接收相位偏移 φ₀ <span class="val" id="phVal">0°</span></label>
+    <input type="range" id="phase" min="-180" max="180" step="5" value="0">
+  </div>
+
+  <div class="param">
+    <label>频偏 Δf<sub>CFO</sub> <span class="val" id="cfoVal">0 Hz</span></label>
+    <input type="range" id="cfo" min="-30" max="30" step="0.5" value="0">
+  </div>
+
+  <div class="param">
+    <label>SNR <span class="val" id="snrVal">∞ dB</span></label>
+    <input type="range" id="snr" min="-10" max="40" step="1" value="40">
+  </div>
+
+  <h3>固定参数</h3>
+  <div class="box">
+    BW = 120 Hz，T = 0.2 s<br>
+    F<sub>c</sub> = 100 Hz（载波）<br>
+    通带范围 = <b style="color:#ffb84a">40 ~ 160 Hz</b><br>
+    基带瞬时频率 = <b style="color:#5ab8ff">−60 ~ +60 Hz</b><br>
+    N = BW·T = 24 chips，Δf = 5 Hz
+  </div>
+
+  <h3>当前状态</h3>
+  <div class="box">
+    f<sub>symbol</sub> = s × 5 Hz = <span class="val" id="fsymVal">0</span> Hz<br>
+    采样点数 N<sub>samp</sub> = <span class="val" id="nsVal">40</span><br>
+    基带 Nyquist = F<sub>s</sub>/2 = <span class="val" id="nyqVal">100</span> Hz<br>
+    <span id="aliasInd">混叠：<b class="val warn">是</b>（|f|>Nyq 部分会折叠）</span>
+  </div>
+
+  <h3 style="color:#ff5e94">⚠️ 关于通带波形的诚实说明</h3>
+  <div class="box alias" style="font-size:11px">
+    图②④⑥ 的"连续通带波形"是用 2400 点画的<b>模拟参考</b>，不是真正以 F<sub>s</sub> 采样的离散信号。<br>
+    真正的接收机<b>只有基带 I/Q 采样点</b>（图③⑤⑦），DSP 全程在基带域运算，从来不处理通带信号。<br>
+    通带图仅供你看清"扫频"是怎么回事；要看混叠对实际算法的影响，请看 ③⑤⑦。
+  </div>
+
+  <h3>颜色对照</h3>
+  <div class="box">
+    <span style="color:#5ab8ff">■ 蓝</span> 接收 r(t) / I 路<br>
+    <span style="color:#ffb84a">■ 橙</span> 共轭 down-chirp c*(t)<br>
+    <span style="color:#4cd964">■ 绿</span> 乘积 r·c*<br>
+    <span style="color:#ff5e94">■ 粉</span> Q 路<br>
+    实线 = 连续参考波形，圆点 = 实际采样点
+  </div>
+</div>
+
+<div class="right">
+
+  <div class="plot">
+    <div class="ttl">① 时频图（基带瞬时频率）</div>
+    <div class="sub">
+      蓝线斜向上（接收 up-chirp，s>0 时绕回）；橙线斜向下（共轭 down-chirp）；
+      两者瞬时频率相加 = 绿色水平直线 = 单一频率正弦。
+      <b style="color:#ff5e94">虚线 = ±F<sub>s</sub>/2（Nyquist）</b>，
+      超出虚线的频率分量在采样后会折叠到内部 → 混叠！
+    </div>
+    <canvas id="cvTF" height="240"></canvas>
+    <div class="legend">
+      <span><i style="background:#5ab8ff"></i>r(t) 瞬时频率</span>
+      <span><i style="background:#ffb84a"></i>c*(t) 瞬时频率</span>
+      <span><i style="background:#4cd964"></i>乘积瞬时频率</span>
+      <span><i style="background:#ff5e94;height:1.5px;border-top:1.5px dashed #ff5e94;background:none"></i>Nyquist 限</span>
+    </div>
+  </div>
+
+  <div class="plot">
+    <div class="ttl">② 接收信号 r(t)：通带参考波形</div>
+    <div class="sub">射频侧"真实"波形 Re{r<sub>BB</sub>(t)·e<sup>j2πF<sub>c</sub>t</sup>}，瞬时频率 40→160 Hz 扫频。<b>这是模拟信号</b>，DSP 看不到。</div>
+    <canvas id="cvRxPb"></canvas>
+  </div>
+
+  <div class="plot">
+    <div class="ttl">③ 接收信号 r(t)：基带 I/Q ★（DSP 真正看到的）</div>
+    <div class="sub">硬件正交下变频后通过两个 ADC 同时采样 I 和 Q。每个时刻得到一个<b>复数 r[n] = I[n] + jQ[n]</b>。圆点之间的线只是视觉辅助，DSP 只有圆点。</div>
+    <canvas id="cvRxIQ"></canvas>
+    <div class="legend">
+      <span><i style="background:#5ab8ff"></i>I = cos(φ<sub>r</sub>+φ₀)（连续参考）</span>
+      <span><i style="background:#ff5e94"></i>Q = sin(φ<sub>r</sub>+φ₀)（连续参考）</span>
+      <span><i class="dot" style="background:#5ab8ff"></i>I[n]</span>
+      <span><i class="dot" style="background:#ff5e94"></i>Q[n]</span>
+    </div>
+  </div>
+
+  <div class="plot">
+    <div class="ttl">④ 共轭 down-chirp c*(t)：通带参考波形</div>
+    <div class="sub">由本地 up-chirp 取共轭得到。瞬时频率 <b>160→40 Hz</b>（高到低），与 up-chirp 相反 — 这就是"共轭"在时域的物理含义。</div>
+    <canvas id="cvDnPb"></canvas>
+  </div>
+
+  <div class="plot">
+    <div class="ttl">⑤ 共轭 down-chirp c*(t)：基带 I/Q ★</div>
+    <div class="sub">本地预存的复数序列 c*[n]。注意 I 与 up-chirp 相同，Q 取负号 → 这就是数学上的共轭。</div>
+    <canvas id="cvDnIQ"></canvas>
+    <div class="legend">
+      <span><i style="background:#ffb84a"></i>I = cos(φ<sub>up</sub>)</span>
+      <span><i style="background:#ff5e94"></i>Q = −sin(φ<sub>up</sub>)</span>
+      <span><i class="dot" style="background:#ffb84a"></i>I[n]</span>
+      <span><i class="dot" style="background:#ff5e94"></i>Q[n]</span>
+    </div>
+  </div>
+
+  <div class="plot">
+    <div class="ttl">⑥ 乘积 r(t)·c*(t)：通带参考波形</div>
+    <div class="sub">连续域上两个扫频信号相乘，频率不再变化 → 通带为 F<sub>c</sub>+s·Δf 的纯余弦。<b style="color:#ff5e94">注意：此图为连续参考，DSP 见不到此信号。</b></div>
+    <canvas id="cvPrdPb"></canvas>
+  </div>
+
+  <div class="plot">
+    <div class="ttl">⑦ 乘积 r·c* ：基带 I/Q ★（FFT 的输入）</div>
+    <div class="sub">DSP 真正算出的复数序列 y[n] = r[n]·c*[n]。理想情况下 I/Q 都是频率 = s·Δf 的纯正弦。FFT 一打就找到符号 s。<b>这是 LoRa 解调的核心。</b></div>
+    <canvas id="cvPrdIQ"></canvas>
+    <div class="legend">
+      <span><i style="background:#4cd964"></i>I = Re{y[n]}</span>
+      <span><i style="background:#ff5e94"></i>Q = Im{y[n]}</span>
+      <span><i class="dot" style="background:#4cd964"></i>I[n]</span>
+      <span><i class="dot" style="background:#ff5e94"></i>Q[n]</span>
+    </div>
+  </div>
+
+  <div class="plot">
+    <div class="ttl">📐 离散域具体运算步骤（DSP 实际做的事）</div>
+    <div class="sub">下面是 LoRa 接收机 de-chirp 的真实流程，全部在<b>采样点</b>层面操作。</div>
+    <div class="formula">
+<b style="color:#5ab8ff">Step 0  ▸ 硬件 IQ 下变频 + ADC（不是软件做的）</b>
+  天线信号 s_RF(t) = Re{r_BB(t)·e^{j2π F<sub>c</sub> t}}
+  混频器 1： s_RF(t) ·  cos(2π F<sub>c</sub> t)  → LPF → I_analog(t)
+  混频器 2： s_RF(t) · (−sin(2π F<sub>c</sub> t)) → LPF → Q_analog(t)
+  两路 ADC 同时采样 →  <span class="hl">r[n] = I[n] + j·Q[n]</span>     n = 0,1,…,N<sub>samp</sub>−1
+
+<b style="color:#ffb84a">Step 1  ▸ 本地预生成共轭 down-chirp（一次性，存表）</b>
+  φ<sub>up</sub>[n] = 2π·(−BW/2 · n/F<sub>s</sub>  +  BW/(2T) · (n/F<sub>s</sub>)²)
+  <span class="hl">c*[n] = cos(φ<sub>up</sub>[n]) − j·sin(φ<sub>up</sub>[n])</span>     ← 注意 Q 取负
+
+<b style="color:#4cd964">Step 2  ▸ 逐点复数乘法（de-chirp 的核心，仅 N<sub>samp</sub> 次复乘）</b>
+  对每个 n：
+    r[n]  = a + j·b      (a = I_r[n],  b = Q_r[n])
+    c*[n] = c + j·d      (c = I_c[n],  d = −sin(φ<sub>up</sub>[n]))
+    <span class="hl">y[n] = r[n]·c*[n] = (a·c − b·d) + j·(a·d + b·c)</span>
+
+<b style="color:#5ab8ff">Step 3  ▸ FFT (N<sub>samp</sub> 点)</b>
+  <span class="hl">Y[k] = FFT{ y[n] }</span>，  k = 0,…,N<sub>samp</sub>−1
+  峰值 bin k* 对应频率 k*·F<sub>s</sub>/N<sub>samp</sub>，即 <span class="hl">解出符号 ŝ = k*</span>。
+
+<span style="color:#888">— 例（s=3, N<sub>samp</sub>=40）—</span>
+  y[0] = (0.999 + j·0.044)·(1.000 − j·0.000) ≈  0.999 + j·0.044
+  y[1] = ( ... )·( ... )                    ≈  0.985 + j·0.171   <span class="var">→ 相位增量 ≈ 2π·15/200 = s·Δf/F<sub>s</sub>·2π</span>
+  y[2] ≈ 0.940 + j·0.342
+  y[3] ≈ 0.866 + j·0.500
+   ⋮
+  → 相位线性增长 → 单频复正弦 → FFT 峰值 bin = 3 = s ✓
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+'use strict';
+
+// ============ 固定参数 ============
+const BW = 120, T = 0.2, Fc = 100;
+const N = Math.round(BW * T);          // 24
+const NDENSE = 2400;                   // 用于画通带连续波形
+
+// ============ 可调参数 ============
+let symbol = 0;
+let Fs = 200;
+let phaseOffsetDeg = 0;     // 接收基带相位偏移 (deg)
+let cfoHz = 0;              // CFO (Hz)
+let snrDb = 40;             // SNR (dB)，40 视为无噪
+
+// ============ 信号生成（基带，无混叠的解析模型） ============
+function phiUp(t) {
+  // 基带 up-chirp 瞬时相位 (t∈[0,T])
+  return 2 * Math.PI * (-BW / 2 * t + BW / (2 * T) * t * t);
+}
+function freqUp(t) {
+  return -BW / 2 + (BW / T) * t;
+}
+
+// 接收：循环移位的 up-chirp + 相位偏移 + CFO
+function rxBB(t) {
+  const tau = symbol * T / N;
+  const u = ((t + tau) % T + T) % T;
+  const baseP = phiUp(u) + (phaseOffsetDeg * Math.PI / 180) + 2 * Math.PI * cfoHz * t;
+  return {
+    i: Math.cos(baseP),
+    q: Math.sin(baseP),
+    f: freqUp(u) + cfoHz
+  };
+}
+
+// 共轭 down-chirp = conj(up-chirp)（本地理想）
+function dnBB(t) {
+  const p = phiUp(t);
+  return { i: Math.cos(p), q: -Math.sin(p), f: -freqUp(t) };
+}
+
+// 复数乘法
+function prdBB(t) {
+  const r = rxBB(t), d = dnBB(t);
+  return {
+    i: r.i * d.i - r.q * d.q,
+    q: r.i * d.q + r.q * d.i,
+    f: r.f + d.f
+  };
+}
+
+// 上变频到通带（连续参考）
+function passband(bb, t) {
+  const c = Math.cos(2 * Math.PI * Fc * t);
+  const s = Math.sin(2 * Math.PI * Fc * t);
+  return bb.i * c - bb.q * s;
+}
+
+// 高斯白噪声 (Box-Muller)
+function gauss() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function noiseSigma() {
+  // 信号功率 = 1（|e^jφ|² = 1），SNR = 1/σ²  →  σ² = 10^(−SNR/10)
+  // 复信号 I/Q 各占一半 → 每路 σ_iq² = σ²/2
+  if (snrDb >= 40) return 0;
+  return Math.sqrt(Math.pow(10, -snrDb / 10) / 2);
+}
+
+// ============ 绘图工具 ============
+function setup(cv) {
+  const dpr = window.devicePixelRatio || 1;
+  const r = cv.getBoundingClientRect();
+  cv.width = r.width * dpr;
+  cv.height = r.height * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, w: r.width, h: r.height };
+}
+
+function drawPlot(cv, traces, opts) {
+  const { ctx, w, h } = setup(cv);
+  const PL = 50, PR = 10, PT = 10, PB = 28;
+  const pw = w - PL - PR, ph = h - PT - PB;
+  const [x0, x1] = opts.xRange, [y0, y1] = opts.yRange;
+  const X = x => PL + (x - x0) / (x1 - x0) * pw;
+  const Y = y => PT + (y1 - y) / (y1 - y0) * ph;
+
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(PL, PT, pw, ph);
+
+  // 网格
+  ctx.strokeStyle = '#1f1f1f';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (const x of opts.xTicks) { ctx.moveTo(X(x), PT); ctx.lineTo(X(x), PT + ph); }
+  for (const y of opts.yTicks) { ctx.moveTo(PL, Y(y)); ctx.lineTo(PL + pw, Y(y)); }
+  ctx.stroke();
+
+  if (y0 < 0 && y1 > 0) {
+    ctx.strokeStyle = '#3a3a3a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(PL, Y(0)); ctx.lineTo(PL + pw, Y(0));
+    ctx.stroke();
+  }
+
+  // Nyquist 虚线（仅时频图）
+  if (opts.nyquist) {
+    ctx.strokeStyle = '#ff5e94';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(PL, Y(opts.nyquist));  ctx.lineTo(PL + pw, Y(opts.nyquist));
+    ctx.moveTo(PL, Y(-opts.nyquist)); ctx.lineTo(PL + pw, Y(-opts.nyquist));
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  ctx.fillStyle = '#888';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (const x of opts.xTicks) ctx.fillText(opts.xFmt ? opts.xFmt(x) : x, X(x), PT + ph + 4);
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const y of opts.yTicks) ctx.fillText(opts.yFmt ? opts.yFmt(y) : y, PL - 4, Y(y));
+
+  ctx.strokeStyle = '#3a3a3a';
+  ctx.strokeRect(PL, PT, pw, ph);
+
+  for (const t of traces) {
+    if (t.kind === 'line') {
+      ctx.strokeStyle = t.color;
+      ctx.lineWidth = t.w || 1.5;
+      if (t.dash) ctx.setLineDash(t.dash);
+      ctx.beginPath();
+      let first = true;
+      for (const [x, y] of t.data) {
+        if (y === null || isNaN(y)) { first = true; continue; }
+        const px = X(x), py = Y(y);
+        if (first) { ctx.moveTo(px, py); first = false; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      if (t.dash) ctx.setLineDash([]);
+    } else if (t.kind === 'segments') {
+      ctx.strokeStyle = t.color;
+      ctx.lineWidth = t.w || 1.5;
+      for (const seg of t.data) {
+        ctx.beginPath();
+        let first = true;
+        for (const [x, y] of seg) {
+          const px = X(x), py = Y(y);
+          if (first) { ctx.moveTo(px, py); first = false; }
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+    } else if (t.kind === 'points') {
+      ctx.fillStyle = t.color;
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      const r = t.r || 2.8;
+      for (const [x, y] of t.data) {
+        ctx.beginPath();
+        ctx.arc(X(x), Y(y), r, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+      }
+    } else if (t.kind === 'stems') {
+      // 采样点 + 到 0 轴的细茎，更像离散信号图
+      ctx.strokeStyle = t.color;
+      ctx.fillStyle = t.color;
+      ctx.lineWidth = 1;
+      const r = t.r || 2.8;
+      for (const [x, y] of t.data) {
+        const px = X(x), py = Y(y), p0 = Y(0);
+        ctx.globalAlpha = 0.35;
+        ctx.beginPath();
+        ctx.moveTo(px, p0); ctx.lineTo(px, py);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.arc(px, py, r, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    }
+  }
+
+  if (opts.xLabel) {
+    ctx.fillStyle = '#aaa';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(opts.xLabel, PL + pw / 2, PT + ph + 18);
+  }
+  if (opts.yLabel) {
+    ctx.save();
+    ctx.translate(11, PT + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#aaa';
+    ctx.fillText(opts.yLabel, 0, 0);
+    ctx.restore();
+  }
+}
+
+// ============ 数据生成 ============
+function denseT() {
+  const a = [];
+  for (let i = 0; i <= NDENSE; i++) a.push(i * T / NDENSE);
+  return a;
+}
+function sampT() {
+  const NSAMP = Math.round(Fs * T);
+  const a = [];
+  for (let n = 0; n < NSAMP; n++) a.push(n / Fs);
+  return a;
+}
+
+const xTicks = [0, 0.05, 0.10, 0.15, 0.20];
+const xFmt = x => x.toFixed(2);
+
+// 给采样点加噪（每次调用都重新生成噪声实现可视化抖动）
+function addNoiseToSamples(samples) {
+  const sigma = noiseSigma();
+  if (sigma === 0) return samples;
+  return samples.map(s => ({
+    t: s.t,
+    i: s.i + sigma * gauss(),
+    q: s.q + sigma * gauss()
+  }));
+}
+
+function update() {
+  document.getElementById('sVal').textContent = symbol;
+  document.getElementById('fsymVal').textContent = symbol * (BW / N);
+  document.getElementById('fsVal').textContent = Fs + ' Hz';
+  document.getElementById('phVal').textContent = phaseOffsetDeg + '°';
+  document.getElementById('cfoVal').textContent = cfoHz.toFixed(1) + ' Hz';
+  document.getElementById('snrVal').textContent = snrDb >= 40 ? '∞ dB' : snrDb + ' dB';
+  document.getElementById('nsVal').textContent = Math.round(Fs * T);
+  document.getElementById('nyqVal').textContent = (Fs / 2);
+
+  // 混叠提示
+  const aliasInd = document.getElementById('aliasInd');
+  const willAlias = (BW / 2) > (Fs / 2);
+  aliasInd.innerHTML = willAlias
+    ? '混叠：<b class="val warn">是</b>（基带 ±60 Hz 超出 Nyquist ±' + (Fs/2) + ' Hz）'
+    : '混叠：<b class="val" style="color:#4cd964">否</b>（Nyquist 足够）';
+
+  const dT = denseT(), sT = sampT();
+  const tWrap = (1 - symbol / N) * T;
+
+  // ---------- ① TF ----------
+  const rxSeg1 = [], rxSeg2 = [];
+  for (const t of dT) {
+    const f = rxBB(t).f;
+    (t < tWrap ? rxSeg1 : rxSeg2).push([t, f]);
+  }
+  const dnLine = dT.map(t => [t, dnBB(t).f]);
+  const prdSeg1 = [], prdSeg2 = [];
+  for (const t of dT) {
+    const f = prdBB(t).f;
+    (t < tWrap ? prdSeg1 : prdSeg2).push([t, f]);
+  }
+  drawPlot(document.getElementById('cvTF'), [
+    { kind: 'segments', data: [rxSeg1, rxSeg2].filter(s => s.length), color: '#5ab8ff', w: 2 },
+    { kind: 'line', data: dnLine, color: '#ffb84a', w: 2 },
+    { kind: 'segments', data: [prdSeg1, prdSeg2].filter(s => s.length), color: '#4cd964', w: 2.5 },
+  ], {
+    xRange: [0, T], yRange: [-100, 100],
+    xTicks, yTicks: [-100, -60, -30, 0, 30, 60, 100],
+    xLabel: '时间 t (s)', yLabel: '基带瞬时频率 (Hz)',
+    xFmt, nyquist: Fs / 2
+  });
+
+  // ---------- ② 接收 通带 ----------
+  const rxPbLine = dT.map(t => [t, passband(rxBB(t), t)]);
+  drawPlot(document.getElementById('cvRxPb'), [
+    { kind: 'line', data: rxPbLine, color: '#5ab8ff', w: 1.4 },
+  ], {
+    xRange: [0, T], yRange: [-1.5, 1.5],
+    xTicks, yTicks: [-1, 0, 1],
+    xLabel: '时间 t (s)', yLabel: '通带幅值',
+    xFmt
+  });
+
+  // ---------- ③ 接收 I/Q（连续参考 + 采样点） ----------
+  const rxILine = dT.map(t => [t, rxBB(t).i]);
+  const rxQLine = dT.map(t => [t, rxBB(t).q]);
+  const rxSampRaw = sT.map(t => { const v = rxBB(t); return { t, i: v.i, q: v.q }; });
+  const rxSamp = addNoiseToSamples(rxSampRaw);
+  const rxIPts = rxSamp.map(s => [s.t, s.i]);
+  const rxQPts = rxSamp.map(s => [s.t, s.q]);
+  drawPlot(document.getElementById('cvRxIQ'), [
+    { kind: 'line', data: rxILine, color: '#5ab8ff', w: 1.2 },
+    { kind: 'line', data: rxQLine, color: '#ff5e94', w: 1.2 },
+    { kind: 'stems', data: rxIPts, color: '#5ab8ff' },
+    { kind: 'stems', data: rxQPts, color: '#ff5e94' },
+  ], {
+    xRange: [0, T], yRange: [-1.8, 1.8],
+    xTicks, yTicks: [-1, 0, 1],
+    xLabel: '时间 t (s)', yLabel: '基带幅值',
+    xFmt
+  });
+
+  // ---------- ④ Down 通带 ----------
+  const dnPbLine = dT.map(t => [t, passband(dnBB(t), t)]);
+  drawPlot(document.getElementById('cvDnPb'), [
+    { kind: 'line', data: dnPbLine, color: '#ffb84a', w: 1.4 },
+  ], {
+    xRange: [0, T], yRange: [-1.5, 1.5],
+    xTicks, yTicks: [-1, 0, 1],
+    xLabel: '时间 t (s)', yLabel: '通带幅值',
+    xFmt
+  });
+
+  // ---------- ⑤ Down I/Q ----------
+  const dnILine = dT.map(t => [t, dnBB(t).i]);
+  const dnQLine = dT.map(t => [t, dnBB(t).q]);
+  const dnIPts = sT.map(t => [t, dnBB(t).i]);
+  const dnQPts = sT.map(t => [t, dnBB(t).q]);
+  drawPlot(document.getElementById('cvDnIQ'), [
+    { kind: 'line', data: dnILine, color: '#ffb84a', w: 1.2 },
+    { kind: 'line', data: dnQLine, color: '#ff5e94', w: 1.2 },
+    { kind: 'stems', data: dnIPts, color: '#ffb84a' },
+    { kind: 'stems', data: dnQPts, color: '#ff5e94' },
+  ], {
+    xRange: [0, T], yRange: [-1.5, 1.5],
+    xTicks, yTicks: [-1, 0, 1],
+    xLabel: '时间 t (s)', yLabel: '基带幅值',
+    xFmt
+  });
+
+  // ---------- ⑥ 乘积 通带 ----------
+  const prdPbLine = dT.map(t => [t, passband(prdBB(t), t)]);
+  drawPlot(document.getElementById('cvPrdPb'), [
+    { kind: 'line', data: prdPbLine, color: '#4cd964', w: 1.6 },
+  ], {
+    xRange: [0, T], yRange: [-1.5, 1.5],
+    xTicks, yTicks: [-1, 0, 1],
+    xLabel: '时间 t (s)', yLabel: '通带幅值',
+    xFmt
+  });
+
+  // ---------- ⑦ 乘积 I/Q（用加噪的接收采样×理想 down 计算） ----------
+  // 关键：连续参考 = 理想（无噪），采样点 = 加噪，符合 DSP 实际场景
+  const prdILine = dT.map(t => [t, prdBB(t).i]);
+  const prdQLine = dT.map(t => [t, prdBB(t).q]);
+  // 离散乘积：用同一组带噪的接收采样点
+  const prdSamp = rxSamp.map(s => {
+    const d = dnBB(s.t);
+    return {
+      t: s.t,
+      i: s.i * d.i - s.q * d.q,
+      q: s.i * d.q + s.q * d.i
+    };
+  });
+  const prdIPts = prdSamp.map(s => [s.t, s.i]);
+  const prdQPts = prdSamp.map(s => [s.t, s.q]);
+  drawPlot(document.getElementById('cvPrdIQ'), [
+    { kind: 'line', data: prdILine, color: '#4cd964', w: 1.2 },
+    { kind: 'line', data: prdQLine, color: '#ff5e94', w: 1.2 },
+    { kind: 'stems', data: prdIPts, color: '#4cd964' },
+    { kind: 'stems', data: prdQPts, color: '#ff5e94' },
+  ], {
+    xRange: [0, T], yRange: [-1.8, 1.8],
+    xTicks, yTicks: [-1, 0, 1],
+    xLabel: '时间 t (s)', yLabel: '基带幅值',
+    xFmt
+  });
+}
+
+// ============ 事件 ============
+document.getElementById('symbol').addEventListener('input', e => { symbol = parseInt(e.target.value); update(); });
+document.getElementById('phase').addEventListener('input', e => { phaseOffsetDeg = parseInt(e.target.value); update(); });
+document.getElementById('cfo').addEventListener('input', e => { cfoHz = parseFloat(e.target.value); update(); });
+document.getElementById('snr').addEventListener('input', e => { snrDb = parseInt(e.target.value); update(); });
+
+document.querySelectorAll('.seg button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.seg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    Fs = parseInt(b.dataset.fs);
+    update();
+  });
+});
+
+window.addEventListener('resize', update);
+update();
+</script>
+</body>
+</html>

@@ -1,4 +1,9 @@
 {
   "cssTheme": "PLN",
-  "theme": "moonstone"
+  "theme": "moonstone",
+  "enabledCssSnippets": [
+    "更小的标题"
+  ],
+  "baseFontSizeAction": true,
+  "baseFontSize": 17
 }

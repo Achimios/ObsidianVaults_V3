@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弹簧谐振子李雅普诺夫稳定性演示</title>
+<style>
+:root{
+  --bg:#ffffff;--bg2:#f5f5f4;--tx:#1e1e1c;--tx2:#6b6a64;
+  --dbg:#ffebee;--dtx:#d73a4a;--wbg:#fff3cd;--wtx:#d97706;
+  --obg:#e6ffed;--otx:#22863a;
+  --mono:Consolas,Monaco,"Courier New",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1e1e1c;--bg2:#2d2d2a;--tx:#f9f9f8;--tx2:#888780;
+        --dbg:#381b1e;--wbg:#37301b;--obg:#143a20;}
+}
+*{box-sizing:border-box;}
+body{font-family:var(--sans);background:var(--bg);color:var(--tx);
+     max-width:1450px;margin:20px auto;padding:0 15px;line-height:1.5;}
+.layout{display:flex;gap:20px;align-items:flex-start;}
+.sidebar{width:390px;min-width:280px;flex-shrink:0;position:sticky;top:10px;
+         max-height:calc(100vh - 20px);overflow-y:auto;padding-right:2px;}
+.main{flex:1;min-width:0;}
+.top-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.phase-wrap{width:100%;}
+.phase-wrap canvas{width:100%;height:auto;border-radius:8px;display:block;}
+.pole-ph{background:var(--bg2);border-radius:8px;
+         border:1.5px dashed rgba(128,128,128,.35);
+         display:flex;flex-direction:column;align-items:center;justify-content:center;
+         color:var(--tx2);font-size:12px;text-align:center;
+         aspect-ratio:1;gap:8px;padding:20px;}
+.pole-ph .ph-t{font-size:13px;font-weight:600;color:var(--tx);}
+.ts-sec{margin-bottom:10px;}
+.ts-sec canvas{width:100%;height:auto;border-radius:8px;display:block;}
+.clb{font-size:12px;color:var(--tx2);margin-bottom:4px;}
+.ci{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx2);}
+.ci span{white-space:nowrap;}.ci input{flex:1;min-width:60px;}
+.vd{min-width:76px;text-align:right;font-family:var(--mono);font-size:12px;line-height:1.3;}
+.cgrid{display:flex;flex-direction:column;gap:8px;margin:10px 0;}
+.cgrid-section{margin-top:8px;}
+.cgrid-label{font-size:11px;font-weight:600;color:var(--tx2);
+              text-transform:uppercase;letter-spacing:.05em;
+              margin-bottom:4px;padding:0 2px;}
+.leg{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0;font-size:12px;color:var(--tx2);}
+.fbox{font-size:12px;font-family:var(--mono);color:var(--tx2);
+      margin:8px 0;padding:6px 10px;background:var(--bg2);border-radius:6px;
+      white-space:nowrap;overflow-x:auto;}
+.brow{display:flex;flex-direction:column;gap:4px;margin:8px 0;}
+#badge{font-size:12px;padding:3px 10px;border-radius:4px;font-weight:500;display:inline-block;}
+#itxt{font-size:12px;color:var(--tx2);}
+.mts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0;font-size:12px;}
+.mi{padding:5px 8px;background:var(--bg2);border-radius:4px;}
+.ml{font-weight:500;color:var(--tx);}
+h2{font-size:15px;font-weight:700;margin:0 0 6px;line-height:1.3;}
+details{margin:10px 0;}
+summary{cursor:pointer;font-size:13px;font-weight:600;padding:8px 10px;
+        background:var(--bg2);border-radius:6px;list-style:none;user-select:none;}
+summary::-webkit-details-marker{display:none;}
+summary::before{content:"▶ ";font-size:10px;}
+details[open] summary::before{content:"▼ ";}
+.dc{padding:12px 14px;background:var(--bg2);border-radius:0 0 6px 6px;
+    margin-top:2px;font-size:12px;color:var(--tx2);line-height:1.75;}
+.dc h4{color:var(--tx);margin:10px 0 4px;font-size:12px;}
+.dc .m{font-family:var(--mono);}
+.ct{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;}
+.ct th{text-align:left;padding:4px 8px;background:var(--bg);color:var(--tx);
+       font-weight:600;border-bottom:1px solid rgba(128,128,128,.25);}
+.ct td{padding:4px 8px;border-bottom:1px solid rgba(128,128,128,.1);vertical-align:top;}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+<h2>弹簧谐振子<br>李雅普诺夫稳定性演示</h2>
+
+<div class="brow"><span id="badge"></span><span id="itxt"></span></div>
+
+<div class="fbox">
+  ẍ + b·ẋ + k·x = F₀·cos(ωt)<br>
+  V = ½kx²+½ẋ²&nbsp;|&nbsp;<span id="vdf">V̇ = −b·ẋ²+F₀ẋcos(ωt)</span><br>
+  ω₀ = √k = <span id="vw0">1.00</span> rad/s
+</div>
+
+<div class="mts">
+  <div class="mi"><span class="ml">稳态振幅 A_ss：</span><span id="mss">0.000</span></div>
+  <div class="mi"><span class="ml">时间常数 τ=2/b：</span><span id="mta">∞</span></div>
+  <div class="mi"><span class="ml">Lyapunov指数 λ：</span><span id="mlm">0.000</span></div>
+  <div class="mi"><span class="ml">相位滞后 φ：</span><span id="mph">0.0°</span></div>
+  <div class="mi"><span class="ml">阻尼频率 ω_d：</span><span id="mwd">1.000</span></div>
+  <div class="mi"><span class="ml">⟨V̇⟩ 均值：</span><span id="mvd">0.000</span></div>
+  <div class="mi"><span class="ml">共振峰频率 ω_r：</span><span id="mwr">1.000</span></div>
+  <div class="mi"><span class="ml">峰值振幅 A_max：</span><span id="mamx">∞</span></div>
+</div>
+
+<div class="cgrid">
+  <div class="cgrid-section">
+    <div class="cgrid-label">系统参数</div>
+    <div class="ci"><span>阻尼 b (s⁻¹)</span>
+      <input type="range" min="0" max="2" step="0.05" value="0.3" id="sb">
+      <span class="vd" id="lb">0.30</span></div>
+    <div class="ci"><span>弹力系数 k</span>
+      <input type="range" min="0.25" max="4.0" step="0.05" value="1.0" id="sk">
+      <span class="vd" id="lk">k=1.00<br>ω₀=1.00</span></div>
+    <div class="ci"><span>激励频率 ω</span>
+      <input type="range" min="0.2" max="2.0" step="0.05" value="1.5" id="sw">
+      <span class="vd" id="lw">1.50 rad/s<br>85.9°/s</span></div>
+    <div class="ci"><span>激励幅值 F₀</span>
+      <input type="range" min="0" max="1.0" step="0.05" value="0.5" id="sf">
+      <span class="vd" id="lf">0.50</span></div>
+  </div>
+  <div class="cgrid-section">
+    <div class="cgrid-label">初始条件</div>
+    <div class="ci"><span>初始位移 x₀</span>
+      <input type="range" min="-2" max="2" step="0.1" value="1.0" id="sx0">
+      <span class="vd" id="lx0">1.00</span></div>
+    <div class="ci"><span>初始速度 ẋ₀</span>
+      <input type="range" min="-2" max="2" step="0.1" value="0.0" id="sv0">
+      <span class="vd" id="lv0">0.00</span></div>
+  </div>
+  <div class="cgrid-section">
+    <div class="cgrid-label">视图控制</div>
+    <div class="ci"><span>播放速度</span>
+      <input type="range" min="0" max="1" step="0.01" value="1.0" id="sspd">
+      <span class="vd" id="lspd">1.0x</span></div>
+    <div class="ci"><span>Y轴范围 ±R</span>
+      <input type="range" min="1" max="7" step="0.5" value="4" id="syr">
+      <span class="vd" id="lyr">±4.0</span></div>
+  </div>
+</div>
+
+<div class="leg">
+  <span id="lx"  style="font-weight:500;">— x 总响应</span>
+  <span id="lxh" style="font-weight:500;">-- x_h 瞬态</span>
+  <span id="lxp" style="font-weight:500;">-- x_p 稳态</span>
+  <span id="lex" style="font-weight:500;">— 激励</span>
+  <span id="lv"  style="font-weight:500;">— V(t)</span>
+  <span id="lvd" style="font-weight:500;">— V̇(t)</span>
+  <span id="lph" style="font-weight:500;">— 相轨迹</span>
+</div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+
+<div class="top-row">
+  <div class="phase-wrap">
+    <div class="clb">相空间 (x, ẋ)｜虚线圆 = V等值线（V=½r²，r=到原点距离）</div>
+    <canvas id="pc"></canvas>
+  </div>
+  <div>
+    <div class="clb">s平面极点图（待实现）</div>
+    <div class="pole-ph">
+      <div class="ph-t">极点图 (s-plane) · 待实现</div>
+      <div style="font-size:11px;line-height:1.85;text-align:left;width:100%;padding:0 4px">
+        <b>极点：</b>s = −b/2 ± j·ω_d<br>
+        <b>实部</b> = −b/2 = λ（负 = 稳定）<br>
+        <b>虚部 Im(s) = ω_d</b>（有阻尼固有频率）<br>
+        <b>模长 |s| = ω₀ = 1</b>（极点在单位圆弧上！）<br>
+        <b>阻尼比</b> ζ = b/2ω₀ = b/2<br>
+        <b>共振频率</b> ω_r = √(1−b²/2)<br>
+        <span style="opacity:.65">三者：ω_r &lt; ω_d &lt; ω₀ = 1</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ts-sec">
+  <div class="clb">x(t)：总响应 / 瞬态 / 稳态 / 激励（±R 固定范围）</div>
+  <canvas id="xc"></canvas>
+</div>
+
+<div class="ts-sec">
+  <div class="clb">V(t) ±yR（青绿）和 V̇(t)（金色）叠展在同一坐标系</div>
+  <canvas id="vc"></canvas>
+</div>
+
+<div class="ts-sec">
+  <div class="clb">幅频响应 H(ω)：频率响应增益（已除以 F₀，与激励幅度无关）。<span id="fc-lbl" style="font-size:11px;"></span></div>
+  <canvas id="fc"></canvas>
+</div>
+
+<details open>
+<summary>📐 系统响应数学解释</summary>
+<div class="dc">
+
+<h4>▍一般解 = 瞬态响应 + 稳态响应</h4>
+<div class="m">
+x(t) = x_h(t) + x_p(t)<br><br>
+x_h(t) = e<sup>−b/2·t</sup>·[C₁cos(ω_d·t) + C₂sin(ω_d·t)]，ω_d = √(1−b²/4)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ 瞬态/自由响应，由初始条件 x₀, ẋ₀ 决定系数 C₁, C₂<br><br>
+x_p(t) = A_ss·cos(ωt−φ)，A_ss = F₀/√((1−ω²)²+(bω)²)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ 稳态/强迫响应，由外界激励的频率和幅值决定
+</div>
+
+<h4>▍三个频率，含义各不相同（工程常混淆！）</h4>
+<table class="ct" style="margin-top:4px">
+<tr><th>符号</th><th>名称</th><th>数值（本系统ω₀=1）</th><th>物理意义与极点关系</th></tr>
+<tr><td><b>ω₀ = √k</b></td><td>无阻尼固有频率（自然频率）</td><td>本演示 √k rad/s</td>
+    <td>弹簧刚度与质量之比决定的"固有节拍"——如果没有阻尼也没有外力，系统会永远以这个频率振荡。<br>
+    <b>极点模长 |s| = ω₀ 恒成立</b>：极点坐标是 (−b/2, ±ω_d)，模长 = √((b/2)²+ω_d²) = √(b²/4 + k − b²/4) = √k = ω₀。<br>
+    几何直觉：不管阻尼 b 多大，两个极点始终在 s 平面上以 ω₀ 为<b>半径的圆弧</b>上滑动——阻尼增大时极点沿圆弧从虚轴向负实轴靠拢，但绝不会"跑出"这个圆。</td></tr>
+<tr><td><b>ω_d = √(k − b²/4)</b></td><td>有阻尼固有频率（衰减振荡频率）</td><td>√(k − b²/4) ≤ ω₀</td>
+    <td>断开激励后，实际观测到的振荡快慢就是 ω_d——阻尼"压低"了振荡节奏。<br>
+    <b>= 极点虚部 Im(s)</b>：b=0 时退化为 ω₀；b 很大时 ω_d→0，系统从"振荡衰减"变成"单调衰减"（过阻尼）。<br>
+    直觉：想象弹簧悬挂重物，松开后在水里（高阻尼）vs 在空气中（低阻尼）——水中振荡明显更慢。</td></tr>
+<tr><td><b>ω_r = √(k − b²/2)</b></td><td>共振频率（幅频响应峰值频率）</td><td>√(k − b²/2) ≤ ω_d</td>
+    <td>外力以这个频率驱动时，稳态振幅最大——是工程设计中<b>最危险的激励频率</b>。<br>
+    注意：ω_r 比 ω_d 还低，比 ω₀ 更低！三者不相等，不能混用。<br>
+    b ≥ √(2k) 时 ω_r 消失（无共振峰，高度阻尼），幅频响应从 ω=0 就开始单调下降。</td></tr>
+</table>
+<div style="margin:6px 0;padding:6px 10px;background:rgba(128,128,255,0.08);border-radius:4px;font-size:11px;">
+💡 <b>三者大小关系：ω_r &lt; ω_d &lt; ω₀</b>（阻尼越大，差距越大；b=0 时三者完全相等）<br>
+类比音乐：ω₀ 是乐器的"理论音高"，ω_d 是加了弱音器后的"实际音高"，ω_r 是"最容易被震得嗡嗡响的频率"。<br><br>
+⚠️ <b>极点虚部 = ω_d（有阻尼固有频率），不是 ω_r（共振频率）！</b><br>
+极点虚部决定的是自由衰减振荡的速度；共振频率 ω_r 是另一回事——它是幅频曲线的峰值位置，比 ω_d 还低。<br><br>
+🔄 <b>增大阻尼时，极点在旋转，不是线性左移：</b><br>
+实部 σ = −b/2 确实线性左移，虚部 ω_d = √(k−b²/4) 同步减小，但模长始终 = ω₀ = √k。<br>
+合成效果：极点沿<b>半径 ω₀ 的圆弧顺时针旋转</b>——从虚轴（纯振荡，b=0）转向负实轴（纯衰减，临界/过阻尼），而不是横向平移。
+</div>
+
+<h4>▍共振峰值推导（工程危险地带）</h4>
+<div class="m">
+A_ss(ω) = F₀ / √((1−ω²)² + (bω)²)　← 幅频响应曲线<br><br>
+令 dA/dω = 0 → ω_r = √(1 − b²/2)　（b &lt; √2 ≈ 1.414 时有解）<br>
+A_max = F₀ / (b · √(1 − b²/4))　← 共振峰幅值
+</div>
+<b>b→0：</b>A_max → ∞，无阻尼共振时振幅<i>随时间线性增长</i>（非指数），无稳态可言。<br>
+<b>b ≥ √2：</b>A_ss 关于 ω 单调递减，无共振峰，激励频率越高响应越弱。<br><br>
+<b>工程案例 — 塔科马海峡大桥垮塌（1940）：</b>风激励频率约 0.2 Hz 逼近桥身扭转固有频率，
+结构气动阻尼极低（等效 b≪0.1），A_max 极高，振幅按 t 增长直至结构失效。
+此后桥梁设计强制要求气动弹性分析，通过合理断面形状和附加阻尼使 ω_r 远离常见风激励区间。
+
+<h4>▍特征方程与极点（s 平面基础）</h4>
+<div class="m">
+特征方程：s² + b·s + 1 = 0<br>
+极点：s₁,₂ = −b/2 ± j·ω_d<br>
+模长 |s| = ω₀ = 1　实部 σ = −b/2 = λ　虚部 = ω_d　阻尼比 ζ = b/2
+</div>
+极点位置决定系统行为（极点图右侧待实现可视化）：<br>
+• <b>左半平面（b&gt;0）</b>→ 指数衰减 → 渐近稳定<br>
+• <b>虚轴（b=0）</b>→ 等幅振荡 → Lyapunov 稳定（非渐近）<br>
+• <b>右半平面（b&lt;0，负阻尼）</b>→ 指数发散 → 不稳定<br><br>
+<b>工程案例 — 等效负阻尼：</b>航空发动机叶片颤振、输电线风激励舞动（Aeolian vibration）、
+麦克风对扬声器的声学啸叫——正反馈使等效阻尼变负，极点越过虚轴进入右半平面。
+控制工程的核心目标之一正是通过反馈将极点推入左半平面，并保持足够的稳定裕度（Gain Margin / Phase Margin）。
+
+<h4>▍瞬态消逝（指数渐近与工程时间尺度）</h4>
+<b>b &gt; 0：</b>x_h 以时间常数 τ=2/b 衰减（5τ 后误差 &lt;0.7%），类比 RC 充电 1−e<sup>−t/RC</sup>。<br>
+理论上永远不"精确"到达稳态，但工程取 5τ 为"已稳定"。<br><br>
+<b>工程意义（汽车悬架举例）：</b>阻尼太小（欠阻尼，ζ&lt;0.5）→ 路面冲击后车身长时间摇晃；
+阻尼太大（过阻尼，ζ&gt;1）→ 响应迟钝，操控感差。最优取 ζ≈0.6~0.7（本演示 b≈1.2~1.4），
+兼顾快速收敛和抑制超调——这也是大多数工业控制器默认的阻尼比设计目标。<br><br>
+<b>b = 0：</b>x_h 不衰减，ω≠ω₀ 时两频率叠加出现拍频（beat），有界不收敛——相轨迹不封闭，
+Lyapunov 稳定但<b>非</b>渐近稳定。
+
+<h4>▍V 和 V̇ 的相空间几何意义（李雅普诺夫第二法）</h4>
+<b>V 是什么？</b><br>
+V = ½kx² + ½ẋ²，正好等于系统的<b>总机械能</b>：前半是弹性势能（弹簧压缩/拉伸储存的能量），后半是动能（质量运动的能量）。<br>
+在相平面 (x, ẋ) 上，V = C 的曲线是<b>椭圆等高线</b>（右侧相图的虚线圆），每条椭圆代表一个"能量等高面"。
+V 越大 = 离原点越远 = 系统蕴含的能量越多。<br><br>
+<b>V̇ 是什么？</b><br>
+V̇ = dV/dt = kx·ẋ + ẋ·ẍ = ẋ·(kx + ẍ) = ẋ·(−bẋ + F(t)) = <b>−bẋ² + F(t)·ẋ</b><br>
+这是系统的<b>瞬时功率平衡方程</b>：<br>
+&nbsp;&nbsp;• <code>−bẋ²</code> = 阻尼耗散功率（永远 ≤ 0，能量只出不进）<br>
+&nbsp;&nbsp;• <code>F(t)·ẋ</code> = 外力对系统做功的功率（可正可负，取决于力与速度方向是否相同）<br>
+V̇ &lt; 0：阻尼耗散 &gt; 外力输入 → 系统在<b>净失能</b>，轨迹向内穿越等值椭圆，朝原点靠拢<br>
+V̇ &gt; 0：外力输入 &gt; 耗散 → 系统在<b>净得能</b>，轨迹向外穿越等值椭圆，远离原点<br>
+V̇ = 0：瞬时功率平衡，轨迹<b>沿等值椭圆切向运动</b>（既不进也不出）<br><br>
+<b>李雅普诺夫第二法的核心洞见：</b><br>
+• <b>F₀=0，b&gt;0：</b>V̇ = −bẋ² ≤ 0 <i>恒成立</i>，不管轨迹在哪里，总在失能 → 轨迹只能向内穿越椭圆 → <b>全局渐近稳定</b>。<br>
+&nbsp;&nbsp;关键在于：<b>我们完全不需要解出 x(t) 的表达式</b>，只凭"能量函数的导数为负"这一事实就能断言稳定性。<br>
+• <b>有激励时（F₀&gt;0）：</b>稳定性由一个周期内 V̇ 的平均值 ⟨V̇⟩ 决定：<br>
+&nbsp;&nbsp;⟨V̇⟩ &lt; 0 → 阻尼耗散占优，系统仍收敛到有界稳态（渐近稳定）<br>
+&nbsp;&nbsp;⟨V̇⟩ ≈ 0 → 激励补偿了耗散，系统在某条椭圆附近周期振荡（稳态）<br>
+&nbsp;&nbsp;⟨V̇⟩ &gt; 0 → 外力持续注入能量，轨迹螺旋外扩（b=0, ω=ω₀ 的无阻尼共振即如此）<br><br>
+<b>工程场景 — 电力系统暂态稳定性：</b>发电机甩负荷后，用与动/势能类比的 Lyapunov 函数判断
+系统轨迹是否始终在稳定域（某条 V 等值线）内侧，可在毫秒级给出"这次扰动会不会导致失步"的判断，
+比全时域仿真快几个数量级，是大电网实时安全分析的核心数学工具。
+
+</div>
+</details>
+
+<details open>
+<summary>📋 振动情况分类</summary>
+<div class="dc">
+<table class="ct">
+<tr><th>初始条件 / 激励</th><th>名称</th><th>工程/数学意义</th><th>稳定性</th></tr>
+<tr><td>F₀=0, x₀≠0, ẋ₀=0</td><td>自由振动（位移激励）</td>
+    <td>b&gt;0时相轨迹螺旋收缩至原点；响应 x_h = e<sup>−b/2t</sup>(C₁cosω_d t + C₂sinω_d t)，此时 C₁=x₀, C₂=bx₀/(2ω_d)</td><td>渐近稳定(b&gt;0)</td></tr>
+<tr><td>F₀=0, x₀=0, ẋ₀≠0</td><td>自由振动（速度激励）</td>
+    <td>此时 C₁=0, C₂=ẋ₀/ω_d，响应同为指数衰减正弦，仅与位移激励相差一个<b>初相角和幅值</b>。<br>
+    因此 x_h 始终可写成 A_h·e<sup>−b/2t</sup>·cos(ω_d t−ψ) 的形式，(x₀,ẋ₀) 只决定 A_h 和 ψ，<b>行为本质相同</b>。</td><td>同上</td></tr>
+<tr><td>F₀&gt;0, x₀=0, ẋ₀=0</td><td>纯强迫振动（零初始条件）</td>
+    <td>x(t) = x_h(t) + x_p(t)，x_h 由 x_p(0) 和 ẋ_p(0) 倒推出 C₁, C₂ 使初值为零；瞬态按 τ 衰减后剩 x_p</td><td>渐近稳定(b&gt;0)</td></tr>
+<tr><td>F₀&gt;0, x₀≠0 或 ẋ₀≠0</td><td>强迫振动 + 非零瞬态</td>
+    <td>初始条件产生额外 x_h，其 C₁, C₂ 相对零初始情况有<b>偏移量</b>。<br>
+    此时 (x₀=1,ẋ₀=0) 与 (x₀=0,ẋ₀=1) 不再"等效"——瞬态幅值和初相不同，视觉上轨迹起点和初期曲线不同，但 t≫τ 后均收敛到同一稳态 x_p。</td><td>渐近稳定(b&gt;0)</td></tr>
+<tr><td>b&gt;0, ω≈ω₀</td><td>受迫共振（有阻尼）</td>
+    <td>A_ss = F₀/(bω₀) 有限峰（可拖动 ω 滑块靠近 1.0 观察）；稳态频率 = 激励频率 ≠ ω_d</td><td>渐近稳定</td></tr>
+<tr><td>b=0, ω≠ω₀</td><td>Lyapunov 稳定（非渐近）</td>
+    <td>两频率 ω₀ 和 ω 叠加产生拍频（beat），振幅周期性起伏；⟨V̇⟩=0，有界不收敛，相轨迹不封闭</td><td>Lyapunov 稳定</td></tr>
+<tr><td style="color:var(--dtx)">b=0, ω=ω₀</td>
+    <td style="color:var(--dtx)">无阻尼共振（发散）</td>
+    <td>振幅随时间<b>线性增长</b>（非指数），无稳态，⟨V̇⟩&gt;0 持续注入能量</td><td style="color:var(--dtx)">不稳定</td></tr>
+</table>
+<div style="margin-top:8px;padding:6px 10px;background:rgba(128,128,255,0.08);border-radius:4px;font-size:11px;">
+💡 <b>何时 x₀≠0 与 ẋ₀≠0 "等效"？何时不等效？</b><br>
+F₀=0（自由振动）：两者均产生 A_h·e<sup>−b/2t</sup>·cos(ω_d t−ψ) 形式，(x₀,ẋ₀) 只决定振幅 A_h 和初相 ψ，<b>稳定性行为完全相同</b>（等效）。<br>
+F₀&gt;0（强迫振动）：稳态 x_p 固定，不同 (x₀,ẋ₀) 给 x_h 施加不同的初始"偏置"，C₁, C₂ 各不相同。虽然最终都收敛到 x_p，但瞬态过程（幅值、持续时长、相轨迹起点）<b>因初始条件各不相同</b>——此时不能说"等效于某相位"。
+</div>
+</div>
+</details>
+</main>
+</div><!-- .layout -->
+
+<script>
+(function(){
+  const dk=matchMedia("(prefers-color-scheme:dark)").matches;
+  const bg    =dk?"#1e1e1c":"#f9f9f8";
+  const gc    =dk?"rgba(210,210,200,0.07)":"rgba(0,0,0,0.05)";
+  const axc   =dk?"rgba(210,210,200,0.28)":"rgba(0,0,0,0.22)";
+  const labC  =dk?"#888780":"#6b6a64";
+  const cline =dk?"rgba(180,175,160,0.22)":"rgba(60,60,50,0.14)";
+  const purple=dk?"#7F77DD":"#534AB7";
+  const teal  =dk?"#1D9E75":"#0F6E56";
+  const coral =dk?"#E8593C":"#D85A30";
+  const gold  =dk?"#F0B95E":"#C8920A";
+  const lime  =dk?"#8DD56A":"#5BAD2E";
+  const sky   =dk?"#5AB4E8":"#2A8BBF";
+
+  document.getElementById("lx").style.color  =coral;
+  document.getElementById("lxh").style.color =lime;
+  document.getElementById("lxp").style.color =sky;
+  document.getElementById("lex").style.color =purple;
+  document.getElementById("lv").style.color  =teal;
+  document.getElementById("lvd").style.color =gold;
+  document.getElementById("lph").style.color =purple;
+
+  const PR=Math.min(window.devicePixelRatio||1,2);
+  const SZP=500;   // phase portrait logical px
+  const SZW=950;   // wide canvas width
+  const SZX=215;   // x-canvas height
+  const SZV=190;   // V-canvas height (combined V + V̇)
+  const SZF=170;   // frequency response canvas height
+  const OZ =165;   // oscillator/gauge zone width (right edge of time-series canvases)
+  function mkC(id,w,h){
+    const c=document.getElementById(id);
+    c.width=w*PR;c.height=h*PR;
+    const ctx=c.getContext("2d");ctx.scale(PR,PR);return ctx;
+  }
+  const pctx=mkC("pc",SZP,SZP);
+  const xctx=mkC("xc",SZW,SZX);
+  const fctx=mkC("fc",SZW,SZF);
+  const vctx=mkC("vc",SZW,SZV);
+
+  const TRAIL=800,TSLEN=600;
+  let sx,sv,st;
+  let trX=[],trV=[];
+  let tsX=[],tsV=[],tsVd=[],tsXh=[],tsXp=[],tsEx=[];
+  let vdH=[];
+  let bP=0.3,wP=1.5,f0P=0.5,x0P=1.0,v0P=0.0,speedP=1.0,yR=4,kP=1.0;
+  let stepsAccum=0;
+  let C1=0,C2=0,Ass=0,phi=0,wd=1;
+
+  function computeIC(){
+    const b=bP,w=wP,f0=f0P,x0=x0P,v0=v0P,k=kP;
+    const w0=Math.sqrt(k);
+    const disc=k-b*b/4;
+    wd=disc>1e-8?Math.sqrt(disc):1e-4;
+    const isRes=b<0.05&&Math.abs(w-w0)<0.12*w0;
+    if(isRes||f0<1e-9){
+      Ass=0;phi=0;
+      C1=x0;C2=(wd>1e-6)?(v0+b/2*x0)/wd:0;
+    } else {
+      const d2=Math.pow(k-w*w,2)+Math.pow(b*w,2);
+      Ass=f0/Math.sqrt(d2);
+      phi=Math.atan2(b*w,k-w*w);
+      const xp0=Ass*Math.cos(phi);
+      const vp0=Ass*w*Math.sin(phi);
+      if(disc<=0){C1=x0-xp0;C2=v0-vp0+C1;}
+      else{C1=x0-xp0;C2=(v0+b/2*C1-vp0)/wd;}
+    }
+  }
+
+  function xhAt(t){
+    if(bP>=2-1e-6)return(C1+C2*t)*Math.exp(-bP/2*t);
+    return Math.exp(-bP/2*t)*(C1*Math.cos(wd*t)+C2*Math.sin(wd*t));
+  }
+  function xpAt(t){return Ass*Math.cos(wP*t-phi);}
+
+  function rk(x,v,t){
+    const dt=0.025;
+    const f=(x,v,t)=>[v,-bP*v-kP*x+f0P*Math.cos(wP*t)];
+    const[a1,b1]=f(x,v,t);
+    const[a2,b2]=f(x+dt/2*a1,v+dt/2*b1,t+dt/2);
+    const[a3,b3]=f(x+dt/2*a2,v+dt/2*b2,t+dt/2);
+    const[a4,b4]=f(x+dt*a3,v+dt*b3,t+dt);
+    return[x+dt/6*(a1+2*a2+2*a3+a4),v+dt/6*(b1+2*b2+2*b3+b4),t+dt];
+  }
+
+  function reset(){
+    sx=x0P;sv=v0P;st=0;stepsAccum=0;
+    trX=[];trV=[];
+    tsX=[];tsV=[];tsVd=[];tsXh=[];tsXp=[];tsEx=[];
+    vdH=[];computeIC();
+  }
+
+  /* helpers shared by all plot canvases */
+  function plotToY(d,mn,mx,y0,ph){
+    return y0+ph-(d-mn)/Math.max(mx-mn,1e-6)*ph*0.84-ph*0.08;
+  }
+  function drawLine(ctx,W,data,mn,mx,y0,ph,col,lw,dash){
+    if(data.length<2)return;
+    const len=data.length,denom=Math.max(TSLEN-1,1);
+    ctx.strokeStyle=col;ctx.lineWidth=lw||1.5;ctx.setLineDash(dash||[]);
+    ctx.beginPath();
+    data.forEach((d,i)=>{
+      const px=6+(i+TSLEN-len)/denom*(W-12);
+      i===0?ctx.moveTo(px,plotToY(d,mn,mx,y0,ph)):ctx.lineTo(px,plotToY(d,mn,mx,y0,ph));
+    });
+    ctx.stroke();ctx.setLineDash([]);
+  }
+  function drawZero(ctx,W,mn,mx,y0,ph){
+    if(mn>=0||mx<=0)return;
+    const zy=plotToY(0,mn,mx,y0,ph);
+    ctx.strokeStyle=gc;ctx.lineWidth=0.5;ctx.setLineDash([2,4]);
+    ctx.beginPath();ctx.moveTo(6,zy);ctx.lineTo(W-6,zy);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  function drawTicks(ctx,W,mn,mx,y0,ph){
+    ctx.font="11px sans-serif";ctx.fillStyle=labC;ctx.textAlign="right";
+    const fmt=v=>Math.abs(v)<10?v.toFixed(1):v.toFixed(0);
+    const yTop=plotToY(mx,mn,mx,y0,ph);
+    const yBot=plotToY(mn,mn,mx,y0,ph);
+    const yZ  =plotToY(0,mn,mx,y0,ph);
+    ctx.fillText(fmt(mx),W-2,yTop+9);
+    ctx.fillText(fmt(mn),W-2,yBot-1);
+    if(Math.abs(yZ-yTop)>10&&Math.abs(yZ-yBot)>10)
+      ctx.fillText("0",W-2,yZ+3);
+  }
+
+  /* ---- HELPERS: arrow, spring, oscillator zone, gauge zone ---- */
+  function drawArrowC(c,x1,y1,x2,y2,col,lw){
+    const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+    if(len<2)return;
+    const hs=Math.min(10,len*0.38),ang=Math.atan2(dy,dx);
+    c.strokeStyle=col;c.lineWidth=lw||1.8;c.setLineDash([]);
+    c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();
+    c.fillStyle=col;
+    c.beginPath();
+    c.moveTo(x2,y2);
+    c.lineTo(x2-hs*Math.cos(ang-0.45),y2-hs*Math.sin(ang-0.45));
+    c.lineTo(x2-hs*Math.cos(ang+0.45),y2-hs*Math.sin(ang+0.45));
+    c.closePath();c.fill();
+  }
+  function drawSpring(c,cx,yTop,yBot,col){
+    if(yBot<=yTop+4)return;
+    const n=7,r=12,segs=n*2+2,segH=(yBot-yTop)/segs;
+    c.strokeStyle=col||axc;c.lineWidth=1.2;c.setLineDash([]);
+    c.beginPath();c.moveTo(cx,yTop);
+    c.lineTo(cx,yTop+segH*0.6);
+    for(let i=0;i<n*2;i++){
+      c.lineTo(cx+(i%2===0?r:-r),yTop+segH*(i+1.3));
+    }
+    c.lineTo(cx,yTop+segH*(n*2+1.4));
+    c.lineTo(cx,yBot);c.stroke();
+  }
+  function drawOscZone(c,W,H,OZ){
+    const xz=W-OZ,cx=xz+OZ*0.4;
+    c.fillStyle=dk?'rgba(30,30,28,0.90)':'rgba(250,250,248,0.90)';
+    c.fillRect(xz,0,OZ,H);
+    c.strokeStyle=gc;c.lineWidth=0.8;
+    c.beginPath();c.moveTo(xz,0);c.lineTo(xz,H);c.stroke();
+    // ceiling
+    c.strokeStyle=axc;c.lineWidth=1.5;
+    c.beginPath();c.moveTo(xz+6,8);c.lineTo(W-6,8);c.stroke();
+    c.lineWidth=0.7;c.strokeStyle=gc;
+    for(let i=0;i<6;i++){c.beginPath();c.moveTo(xz+10+i*10,8);c.lineTo(xz+18+i*10,0);c.stroke();}
+    // equilibrium dashed
+    const yEq=H/2;
+    c.strokeStyle=gc;c.lineWidth=0.6;c.setLineDash([3,4]);
+    c.beginPath();c.moveTo(xz+4,yEq);c.lineTo(W-4,yEq);c.stroke();
+    c.setLineDash([]);
+    // mass position: +x = upward = smaller canvas y (matches waveform y-axis)
+    const scale=Math.min((H*0.38)/Math.max(yR,1),38);
+    const massY=Math.max(14,Math.min(H-18,yEq-sx*scale));
+    // spring
+    drawSpring(c,cx,12,massY-13,axc);
+    // mass block
+    const mw=44,mh=22;
+    c.fillStyle=coral;
+    if(c.roundRect){c.beginPath();c.roundRect(cx-mw/2,massY-mh/2,mw,mh,4);c.fill();}
+    else{c.fillRect(cx-mw/2,massY-mh/2,mw,mh);}
+    c.strokeStyle=bg;c.lineWidth=0.8;c.strokeRect(cx-mw/2,massY-mh/2,mw,mh);
+    // velocity arrow: +ẋ = moving up = canvas y decreases (drawn at mass center)
+    if(Math.abs(sv)>0.04){
+      const vEndY=Math.max(massY-195,Math.min(massY+195,massY-sv*scale*2.1));
+      drawArrowC(c,cx,massY,cx,vEndY,teal,2.2);
+    }
+    // excitation force: vertical, purple, drawn right of mass block
+    const fNow=f0P>1e-9?f0P*Math.cos(wP*st):0;
+    if(f0P>1e-9){
+      const fEndY=Math.max(massY-165,Math.min(massY+165,massY-fNow*scale*2.1));
+      const fx=cx+mw/2+8;
+      if(Math.abs(fEndY-massY)>2){
+        drawArrowC(c,fx,massY,fx,fEndY,purple,2);
+      }
+    }
+    // spring acceleration: aS = -k·x  (left of mass)
+    const aS=-kP*sx;
+    const asx=cx-mw/2-14;
+    if(Math.abs(aS)>0.04){
+      const asEndY=Math.max(massY-165,Math.min(massY+165,massY-aS*scale*2.1));
+      drawArrowC(c,asx,massY,asx,asEndY,lime,2);
+    }
+    // sum: aSum = -k·x + F  (further left)
+    const aSum=aS+fNow;
+    const sumx=cx-mw/2-30;
+    if(Math.abs(aSum)>0.04){
+      const sumEndY=Math.max(massY-165,Math.min(massY+165,massY-aSum*scale*2.1));
+      drawArrowC(c,sumx,massY,sumx,sumEndY,gold,2);
+    }
+    // fixed labels at canvas bottom — same x as each arrow, absolute y
+    const fx2=cx+mw/2+8;
+    c.font='10px sans-serif';
+    c.fillStyle=lime;  c.textAlign='center'; c.fillText('−kx='+aS.toFixed(2),  asx,  H-26);
+    c.fillStyle=gold;  c.textAlign='center'; c.fillText('Σ='+aSum.toFixed(2),  sumx, H-14);
+    c.fillStyle=coral; c.textAlign='center'; c.fillText('x='+sx.toFixed(3),    cx,   H-26);
+    c.fillStyle=teal;  c.textAlign='center'; c.fillText('ẋ='+sv.toFixed(2),    cx,   H-14);
+    c.fillStyle=purple;c.textAlign='center'; c.fillText('F='+fNow.toFixed(2),  fx2,  H-14);
+  }
+  function drawGaugeZone(c,W,H,OZ){
+    const xz=W-OZ;
+    c.fillStyle=dk?'rgba(30,30,28,0.90)':'rgba(250,250,248,0.90)';
+    c.fillRect(xz,0,OZ,H);
+    c.strokeStyle=gc;c.lineWidth=0.6;
+    c.beginPath();c.moveTo(xz,0);c.lineTo(xz,H);c.stroke();
+    const mn=-yR,mx=yR;
+    const zeroY=plotToY(0,mn,mx,0,H);
+    const topY=plotToY(mx,mn,mx,0,H);
+    const botY=plotToY(mn,mn,mx,0,H);
+    const curV=tsV.length?tsV[tsV.length-1]:0;
+    const curVd=tsVd.length?tsVd[tsVd.length-1]:0;
+    const barW=20,bx1=xz+OZ*0.4-barW-8,bx2=xz+OZ*0.4+8;
+    // V bar: 0 to min(curV,yR) shown above zero line
+    const vY=plotToY(Math.min(curV,mx),mn,mx,0,H);
+    c.fillStyle=dk?'rgba(50,50,48,0.5)':'rgba(200,200,200,0.5)';
+    c.fillRect(bx1,topY,barW,zeroY-topY);
+    c.fillStyle=teal+'aa';
+    if(zeroY>vY)c.fillRect(bx1,vY,barW,zeroY-vY);
+    c.strokeStyle=teal;c.lineWidth=0.8;c.strokeRect(bx1,topY,barW,zeroY-topY);
+    // V̇ bar: bipolar ±yR
+    const vdClamp=Math.max(mn,Math.min(mx,curVd));
+    const vdY=plotToY(vdClamp,mn,mx,0,H);
+    c.fillStyle=dk?'rgba(50,50,48,0.5)':'rgba(200,200,200,0.5)';
+    c.fillRect(bx2,topY,barW,botY-topY);
+    if(curVd>0){c.fillStyle=coral+'aa';c.fillRect(bx2,vdY,barW,zeroY-vdY);}
+    else{c.fillStyle=sky+'aa';c.fillRect(bx2,zeroY,barW,vdY-zeroY);}
+    c.strokeStyle=gold;c.lineWidth=0.8;c.strokeRect(bx2,topY,barW,botY-topY);
+    c.strokeStyle=gc;c.lineWidth=0.5;
+    c.beginPath();c.moveTo(bx2,zeroY);c.lineTo(bx2+barW,zeroY);c.stroke();
+    // labels
+    c.font='10px sans-serif';c.textAlign='center';
+    c.fillStyle=teal;c.fillText('V',bx1+barW/2,topY-2);
+    c.fillText(curV.toFixed(2),bx1+barW/2,botY+12);
+    c.fillStyle=gold;c.fillText('V̇',bx2+barW/2,topY-2);
+    c.fillText(curVd.toFixed(2),bx2+barW/2,botY+12);
+  }
+
+  /* ---- PHASE PORTRAIT ---- */
+  function drawPhase(){
+    const c=pctx,N=SZP,XR=4.0;
+    c.fillStyle=bg;c.fillRect(0,0,N,N);
+    const p=(x,v)=>[(x+XR)/(2*XR)*N,(XR-v)/(2*XR)*N];
+    const[ox,oy]=p(0,0);
+    // grid
+    c.strokeStyle=gc;c.lineWidth=0.5;
+    for(let g=-3;g<=3;g++){
+      const[gx]=p(g,0);const[,gy]=p(0,g);
+      c.beginPath();c.moveTo(gx,0);c.lineTo(gx,N);c.stroke();
+      c.beginPath();c.moveTo(0,gy);c.lineTo(N,gy);c.stroke();
+    }
+    // V contours: V=½kx²+½ẋ²=½r²  → ellipse semi-axes r/√k (x) and r (ẋ)
+    c.strokeStyle=cline;c.lineWidth=0.8;c.setLineDash([4,5]);
+    const sqk=Math.sqrt(kP);
+    [0.5,1,1.5,2,2.5,3].forEach(r=>{
+      const ax=(r/sqk)/(2*XR)*N;
+      const ay=r/(2*XR)*N;
+      c.beginPath();c.ellipse(ox,oy,ax,ay,0,0,2*Math.PI);c.stroke();
+    });
+    c.setLineDash([]);
+    // axes
+    c.strokeStyle=axc;c.lineWidth=0.9;
+    c.beginPath();c.moveTo(ox,0);c.lineTo(ox,N);c.stroke();
+    c.beginPath();c.moveTo(0,oy);c.lineTo(N,oy);c.stroke();
+    // tick marks + numeric labels
+    c.font="11px sans-serif";
+    for(let t=-3;t<=3;t++){
+      if(t===0)continue;
+      const[tx]=p(t,0);const[,ty]=p(0,t);
+      c.fillStyle=axc;c.fillRect(tx-0.5,oy-3,1,6);
+      c.fillStyle=labC;c.textAlign="center";c.fillText(t,tx,oy+13);
+      c.fillStyle=axc;c.fillRect(ox-3,ty-0.5,6,1);
+      c.fillStyle=labC;c.textAlign="right";c.fillText(t,ox-5,ty+3);
+    }
+    // axis arrow tips + labels
+    c.fillStyle=labC;c.font="14px sans-serif";
+    c.textAlign="left";c.fillText("x",N-14,oy-5);    // right end of x-axis
+    c.textAlign="left";c.fillText("ẋ",ox+6,12);      // top of ẋ-axis
+    // V contour label at top of r=1 ellipse (x=0, ẋ=1)
+    c.font="10px sans-serif";
+    c.fillStyle=dk?"rgba(180,175,160,0.55)":"rgba(60,60,50,0.45)";
+    c.textAlign="left";
+    const r1=1/(2*XR)*N;
+    c.fillText("V=½",ox+4,oy-r1-2);
+    // λ annotation
+    c.fillStyle=labC;c.font="11px sans-serif";c.textAlign="right";
+    c.fillText("λ=−b/2="+(-bP/2).toFixed(2),N-4,N-4);
+    const vdNow=-bP*sv*sv+f0P*sv*Math.cos(wP*st);
+    c.fillStyle=vdNow<-0.01?sky:(vdNow>0.01?coral:labC);
+    c.fillText("V̇="+vdNow.toFixed(3),N-4,N-14);
+    // trajectory
+    if(trX.length>1){
+      for(let i=1;i<trX.length;i++){
+        const a=i/trX.length;
+        const[x1,y1]=p(trX[i-1],trV[i-1]);
+        const[x2,y2]=p(trX[i],trV[i]);
+        c.strokeStyle=dk?`rgba(127,119,221,${a*0.82})`:`rgba(83,74,183,${a*0.78})`;
+        c.lineWidth=1.3;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();
+      }
+      const[cx,cy]=p(trX[trX.length-1],trV[trV.length-1]);
+      c.fillStyle=purple;c.beginPath();c.arc(cx,cy,4,0,2*Math.PI);c.fill();
+      c.fillStyle=bg;c.beginPath();c.arc(cx,cy,1.5,0,2*Math.PI);c.fill();
+      // system velocity vector (ẋ, ẍ) — tangent to trajectory in phase space
+      const scl=N/(2*XR),maxPx=65;
+      const xdd=-bP*sv-kP*sx+f0P*Math.cos(wP*st);
+      const vmag=Math.sqrt(sv*sv+xdd*xdd);
+      if(vmag>0.01){const vs=Math.min(scl,maxPx/vmag);drawArrowC(c,cx,cy,cx+sv*vs,cy-xdd*vs,teal,2.2);}
+      // ∇V = (kP·x, ẋ) — gradient of Lyapunov function
+      const gvx=kP*sx,gvy=sv;
+      const gmag=Math.sqrt(gvx*gvx+gvy*gvy);
+      if(gmag>0.01){const gs=Math.min(scl,maxPx/gmag);drawArrowC(c,cx,cy,cx+gvx*gs,cy-gvy*gs,lime,1.8);}
+      // vector legend
+      c.font='9px sans-serif';c.textAlign='right';
+      c.fillStyle=teal;c.fillText('→ (ẋ,ẍ) 相速度',N-4,N-26);
+      c.fillStyle=lime;c.fillText('→ ∇V=(kx,ẋ)',N-4,N-38);
+    }
+  }
+
+  /* ---- X TIME SERIES (with excitation overlay) ---- */
+  function drawXC(){
+    const c=xctx,W=SZW,H=SZX,WL=W-OZ;
+    c.fillStyle=bg;c.fillRect(0,0,W,H);
+    const mn=-yR,mx=yR;
+    drawZero(c,WL,mn,mx,0,H);
+    drawTicks(c,WL,mn,mx,0,H);
+    drawLine(c,WL,tsEx, mn,mx,0,H,purple,  1.2);
+    drawLine(c,WL,tsXh, mn,mx,0,H,lime,    1.0,[4,4]);
+    drawLine(c,WL,tsXp, mn,mx,0,H,sky,     1.0,[4,4]);
+    drawLine(c,WL,tsX,  mn,mx,0,H,coral,   1.8);
+    // horizontal gridlines
+    c.strokeStyle=gc;c.lineWidth=0.5;
+    [-2,-1,0,1,2].forEach(v=>{
+      if(v===0)return;
+      const y=plotToY(v,mn,mx,0,H);
+      c.beginPath();c.moveTo(6,y);c.lineTo(WL-6,y);c.stroke();
+    });
+    // labels
+    c.font="12px sans-serif";c.textAlign="left";
+    c.fillStyle=coral; c.fillText("x(t) 总",4,14);
+    c.fillStyle=lime;  c.fillText("x_h 瞬态",4,28);
+    c.fillStyle=sky;   c.fillText("x_p 稳态",4,42);
+    c.fillStyle=purple;c.fillText("激励",4,56);
+    // oscillator animation zone (right)
+    drawOscZone(c,W,H,OZ);
+  }
+
+  /* ---- FREQUENCY RESPONSE CURVE ---- */
+  function drawFC(){
+    const c=fctx,W=SZW,H=SZF;
+    c.fillStyle=bg;c.fillRect(0,0,W,H);
+    const b=bP,k=kP;
+    const w0=Math.sqrt(k),b2=b*b;
+    const hasRes=k-b2/2>0;
+    const wr=hasRes?Math.sqrt(k-b2/2):NaN;
+    const noDamp=b<0.01;
+    // Normalize by F₀: show H(ω) = 1/|Δ(jω)| — independent of F₀
+    const hMax=(!noDamp&&hasRes)?(1/(b*Math.sqrt(k-b2/4))):1/k;
+    let Ym;
+    if(noDamp) Ym=5;
+    else        Ym=Math.min(Math.max(hMax*1.25,2),12);
+    const WMAX=Math.max(3.5,w0*2.4);
+    const ml=34,mr=8,mt=8,mb=22;
+    const PW=W-ml-mr,PH=H-mt-mb;
+    const wx=w=>ml+w/WMAX*PW;
+    const wy=h=>mt+PH-Math.max(0,Math.min(h,Ym*1.05))/Ym*PH;
+    // grid
+    c.strokeStyle=gc;c.lineWidth=0.5;
+    const ws=WMAX>3?0.5:0.25;
+    for(let wi=ws;wi<WMAX-0.05;wi+=ws){
+      c.beginPath();c.moveTo(wx(wi),mt);c.lineTo(wx(wi),mt+PH);c.stroke();
+    }
+    const hStep=Ym>4?(Ym>8?4:2):1;
+    for(let hi=hStep;hi<=Math.ceil(Ym);hi+=hStep){
+      const y=wy(hi);
+      if(y>mt&&y<mt+PH){c.beginPath();c.moveTo(ml,y);c.lineTo(ml+PW,y);c.stroke();}
+    }
+    // ω₀ vertical dashed line
+    c.strokeStyle=axc;c.lineWidth=0.9;c.setLineDash([3,5]);
+    c.beginPath();c.moveTo(wx(w0),mt);c.lineTo(wx(w0),mt+PH);c.stroke();
+    c.setLineDash([]);
+    c.font="11px sans-serif";c.fillStyle=labC;c.textAlign="left";
+    c.fillText("ω₀="+w0.toFixed(2),wx(w0)+2,mt+12);
+    // ω_r vertical dashed line
+    if(hasRes&&!noDamp){
+      c.strokeStyle=gold;c.lineWidth=0.8;c.setLineDash([2,3]);
+      c.beginPath();c.moveTo(wx(wr),mt);c.lineTo(wx(wr),mt+PH);c.stroke();
+      c.setLineDash([]);
+      c.fillStyle=gold;c.textAlign="right";
+      c.fillText("ω_r="+wr.toFixed(2),wx(wr)-2,mt+12);
+    }
+    // H(ω) = 1/√((k-ω²)²+(bω)²) curve — always drawn (F₀-independent)
+    c.strokeStyle=teal;c.lineWidth=1.5;c.beginPath();
+    let first=true;
+    for(let i=0;i<=400;i++){
+      const w=i/400*WMAX;
+      const d2=(k-w*w)*(k-w*w)+(b*w)*(b*w);
+      const h=d2>1e-12?1/Math.sqrt(d2):Ym*3;
+      const px=wx(w),py=wy(h);
+      if(first){c.moveTo(px,py);first=false;}else{c.lineTo(px,py);}
+    }
+    c.stroke();
+    // peak label
+    if(hasRes&&!noDamp&&hMax<=Ym){
+      c.fillStyle=teal;c.font="11px sans-serif";c.textAlign="left";
+      c.fillText("H_max="+hMax.toFixed(2),wx(wr)+3,wy(hMax)-2);
+    }
+    // current operating point dot — H(wP) and actual A=F₀·H(wP)
+    const d2c=(k-wP*wP)*(k-wP*wP)+(b*wP)*(b*wP);
+    const hc=d2c>1e-12?1/Math.sqrt(d2c):Ym;
+    const ac=f0P*hc;
+    const dot_y=wy(Math.min(hc,Ym));
+    c.fillStyle=coral;
+    c.beginPath();c.arc(wx(wP),dot_y,4.5,0,2*Math.PI);c.fill();
+    c.fillStyle=bg;c.beginPath();c.arc(wx(wP),dot_y,1.8,0,2*Math.PI);c.fill();
+    c.fillStyle=coral;c.font="11px sans-serif";c.textAlign="left";
+    const hLbl=hc>Ym*0.98?"(削顶)":hc.toFixed(3);
+    c.fillText("H="+hLbl+"  A=F₀·H="+ac.toFixed(3),wx(wP)+6,dot_y-3);
+    // axes
+    c.strokeStyle=axc;c.lineWidth=0.8;
+    c.beginPath();c.moveTo(ml,mt+PH);c.lineTo(ml+PW+mr,mt+PH);c.stroke();
+    c.beginPath();c.moveTo(ml,mt);c.lineTo(ml,mt+PH);c.stroke();
+    // x tick labels
+    c.font="11px sans-serif";c.fillStyle=labC;c.textAlign="center";
+    for(let wi=0;wi<=WMAX+0.01;wi+=ws){
+      c.fillText(wi.toFixed(1),wx(wi),mt+PH+13);
+    }
+    c.fillText("ω (rad/s)",ml+PW/2,mt+PH+22);
+    // y tick labels
+    c.textAlign="right";c.font="11px sans-serif";
+    for(let hi=0;hi<=Math.ceil(Ym)+1;hi+=hStep){
+      const y=wy(hi);
+      if(y>=mt-2&&y<=mt+PH+2)c.fillText(hi,ml-4,y+3);
+    }
+    c.fillStyle=teal;c.textAlign="right";c.font="11px sans-serif";
+    c.fillText("H(ω)",ml-4,mt+10);
+    // update subtitle
+    const lbl=document.getElementById("fc-lbl");
+    if(lbl){
+      const hmaxTxt=hasRes&&!noDamp?"H_max="+hMax.toFixed(3)+"（ω_r="+wr.toFixed(3)+"）":"无共振峰（b≥√(2k)）";
+      lbl.textContent="ω₀="+w0.toFixed(3)+" ｜ "+hmaxTxt+" ｜ 当前 A=F₀·H="+ac.toFixed(3);
+    }
+  }
+
+  /* ---- V / VDOT CANVAS ---- */
+  function drawVC(){
+    const c=vctx,W=SZW,H=SZV,WL=W-OZ;
+    c.fillStyle=bg;c.fillRect(0,0,W,H);
+    // combined ±yR for both V and V̇
+    const mn=-yR,mx=yR;
+    drawZero(c,WL,mn,mx,0,H);
+    drawTicks(c,WL,mn,mx,0,H);
+    // horizontal gridlines
+    c.strokeStyle=gc;c.lineWidth=0.5;
+    [-3,-2,-1,0,1,2,3].forEach(v=>{
+      if(v===0)return;
+      const y=plotToY(v,mn,mx,0,H);
+      if(y>0&&y<H){c.beginPath();c.moveTo(6,y);c.lineTo(WL-6,y);c.stroke();}
+    });
+    // draw V̇ first (underneath)
+    drawLine(c,WL,tsVd,mn,mx,0,H,gold,1.5);
+    // draw V on top
+    drawLine(c,WL,tsV,mn,mx,0,H,teal,1.5);
+    // legend
+    c.font="12px sans-serif";c.textAlign="left";
+    c.fillStyle=teal; c.fillText("V(t) = ½kx²+½ẋ²",4,16);
+    c.fillStyle=gold; c.fillText("V̇(t) = −b·ẋ²+F₀ẋcos(ωt)",4,31);
+    // V and V̇ gauge zone (right)
+    drawGaugeZone(c,W,H,OZ);
+  }
+
+  function updateMetrics(){
+    const tau=bP>0.01?(2/bP).toFixed(2)+"s":"∞";
+    const vda=vdH.length?vdH.reduce((a,b)=>a+b,0)/vdH.length:0;
+    // resonance: ω_r=√(k−b²/2) exists only when k > b²/2
+    const b2=bP*bP;
+    const hasRes=kP-b2/2>0;
+    const wr=hasRes?Math.sqrt(kP-b2/2):NaN;
+    let amaxStr;
+    if(bP<1e-4)       amaxStr="∞（无阻尼）";
+    else if(!hasRes)  amaxStr="无峰（b≥√(2k)）";
+    else              amaxStr=(f0P<1e-9?"—":(f0P/(bP*Math.sqrt(kP-b2/4))).toFixed(3));
+    const w0disp=Math.sqrt(kP);
+    document.getElementById("mss").textContent=Ass.toFixed(3);
+    document.getElementById("mta").textContent=tau;
+    document.getElementById("mlm").textContent=(-bP/2).toFixed(3);
+    document.getElementById("mph").textContent=(phi*180/Math.PI).toFixed(1)+"°";
+    document.getElementById("mwd").textContent=wd.toFixed(3)+" rad/s";
+    document.getElementById("mvd").textContent=vda.toFixed(3);
+    document.getElementById("mwr").textContent=hasRes?wr.toFixed(3)+" rad/s":"无共振峰(b≥√(2k))";
+    document.getElementById("mamx").textContent=amaxStr;
+    document.getElementById("vw0").textContent=w0disp.toFixed(3);
+  }
+
+  function updateBadge(){
+    const b=document.getElementById("badge");
+    const it=document.getElementById("itxt");
+    const w0=Math.sqrt(kP);
+    const isRes=Math.abs(wP-w0)<0.12*w0,noDamp=bP<0.05;
+    const lam=-bP/2;
+    if(noDamp&&isRes){
+      b.style.cssText="background:var(--dbg);color:var(--dtx)";
+      b.textContent="⚠ 共振失稳（无阻尼+ω≈ω₀）";
+      it.textContent="振幅无界线性增长，V̇>0 持续注入能量";
+    } else if(noDamp){
+      b.style.cssText="background:var(--wbg);color:var(--wtx)";
+      b.textContent="◎ Lyapunov 稳定（非渐近，b=0）";
+      it.textContent="⟨V̇⟩=0，拍频/准周期，有界不收敛。λ="+lam.toFixed(2);
+    } else {
+      b.style.cssText="background:var(--obg);color:var(--otx)";
+      b.textContent="✓ 渐近稳定（b>0）";
+      it.textContent="A_ss≈"+Ass.toFixed(3)+"，τ="+(2/bP).toFixed(2)+"s，瞬态以 e^("+lam.toFixed(2)+"t) 衰减。λ="+lam.toFixed(2);
+    }
+    document.getElementById("vdf").textContent=
+      "V̇ = −"+bP.toFixed(2)+"·ẋ² + "+f0P.toFixed(2)+"·ẋ·cos("+wP.toFixed(2)+"t)";
+    updateMetrics();
+  }
+
+  function doStep(){
+    if(Math.abs(sx)>12||Math.abs(sv)>12){reset();return;}
+    const[nx,nv,nt]=rk(sx,sv,st);
+    sx=nx;sv=nv;st=nt;
+    trX.push(sx);trV.push(sv);
+    if(trX.length>TRAIL){trX.shift();trV.shift();}
+    const vd=-bP*sv*sv+f0P*sv*Math.cos(wP*st);
+    tsX.push(sx);tsV.push(0.5*kP*sx*sx+0.5*sv*sv);tsVd.push(vd);
+    tsXh.push(xhAt(st));tsXp.push(xpAt(st));
+    tsEx.push(f0P*Math.cos(wP*st));
+    vdH.push(vd);if(vdH.length>200)vdH.shift();
+    if(tsX.length>TSLEN){
+      tsX.shift();tsV.shift();tsVd.shift();
+      tsXh.shift();tsXp.shift();tsEx.shift();
+    }
+  }
+
+  let fc=0;
+  (function loop(){
+    requestAnimationFrame(loop);
+    if(speedP>0){
+      stepsAccum+=6*speedP;
+      while(stepsAccum>=1){doStep();stepsAccum--;}
+    }
+    if(++fc%3===0){drawPhase();drawXC();drawVC();}
+    if(fc%30===0){updateBadge();drawFC();}
+  })();
+
+  function setOmLbl(){
+    document.getElementById("lw").innerHTML=
+      wP.toFixed(2)+" rad/s<br>"+(wP*180/Math.PI).toFixed(1)+"°/s";
+  }
+  function setSpdLbl(){
+    const s=speedP;
+    document.getElementById("lspd").textContent=s===0?"0x (暂停)":s.toFixed(2)+"x";
+  }
+
+  document.getElementById("sb").oninput=function(){bP=+this.value;document.getElementById("lb").textContent=bP.toFixed(2);reset();updateBadge();drawFC();};
+  document.getElementById("sk").oninput=function(){kP=+this.value;const w0=Math.sqrt(kP);document.getElementById("lk").innerHTML="k="+kP.toFixed(2)+"<br>ω₀="+w0.toFixed(2);reset();updateBadge();drawFC();};
+  document.getElementById("sw").oninput=function(){wP=+this.value;setOmLbl();reset();updateBadge();drawFC();};
+  document.getElementById("sf").oninput=function(){f0P=+this.value;document.getElementById("lf").textContent=f0P.toFixed(2);reset();updateBadge();drawFC();};
+  document.getElementById("sx0").oninput=function(){x0P=+this.value;document.getElementById("lx0").textContent=x0P.toFixed(2);reset();};
+  document.getElementById("sv0").oninput=function(){v0P=+this.value;document.getElementById("lv0").textContent=v0P.toFixed(2);reset();};
+  document.getElementById("sspd").oninput=function(){speedP=+this.value;setSpdLbl();};
+  document.getElementById("syr").oninput=function(){yR=+this.value;document.getElementById("lyr").textContent="±"+yR.toFixed(1);};
+
+  reset();updateBadge();setOmLbl();setSpdLbl();drawFC();
+})();
+</script>
+</body>
+</html>

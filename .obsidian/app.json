@@ -2,6 +2,7 @@
   "alwaysUpdateLinks": true,
   "readableLineLength": true,
   "autoPairMarkdown": false,
-  "attachmentFolderPath": "./__attatch",
-  "showLineNumber": false
+  "attachmentFolderPath": "./__attach",
+  "showLineNumber": false,
+  "showInlineTitle": true
 }

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LoRa De-chirp Conjugate Multiply Principle v4</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: -apple-system, "Segoe UI", sans-serif; background: #0a0a0a; color: #e0e0e0; }
+.container { display: flex; height: 100vh; }
+.left { width: 380px; padding: 16px; background: #141414; overflow-y: auto; border-right: 1px solid #2a2a2a; flex-shrink: 0; }
+.right { flex: 1; padding: 16px; overflow-y: auto; }
+h2 { color: #5ab8ff; font-size: 15px; margin-bottom: 10px; }
+h3 { color: #ffb84a; font-size: 13px; margin: 14px 0 6px; }
+.param { margin-bottom: 12px; }
+.param label { display: flex; justify-content: space-between; font-size: 12px; color: #bbb; margin-bottom: 4px; }
+.param input[type="range"] { width: 100%; accent-color: #5ab8ff; }
+.val { color: #5ab8ff; font-weight: 700; font-variant-numeric: tabular-nums; }
+.val.warn { color: #ff5e94; }
+.val.ok { color: #4cd964; }
+.box { background: #1c1c1c; border: 1px solid #2a2a2a; padding: 10px; border-radius: 6px; font-size: 12px; line-height: 1.65; color: #ccc; }
+.box code { color: #ffb84a; font-family: 'SF Mono', Consolas, monospace; }
+.box.alias { background: #2a1414; border-color: #5a1a1a; }
+.box.info { background: #0d1a0d; border-color: #1a3a1a; }
+.plot { background: #141414; border: 1px solid #2a2a2a; border-radius: 8px; padding: 10px 14px 14px; margin-bottom: 12px; }
+.plot .ttl { color: #5ab8ff; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.plot .sub { color: #888; font-size: 11px; margin-bottom: 8px; line-height: 1.5; }
+canvas { display: block; width: 100%; height: 200px; background: #000; border-radius: 4px; }
+canvas.tall { height: 240px; }
+canvas.polar-cv { height: 240px; }
+.polar-row { display: flex; gap: 8px; }
+.polar-row .polar-wrap { flex: 1; }
+.polar-row .polar-wrap .polar-lbl { color: #888; font-size: 11px; text-align: center; margin-bottom: 4px; }
+.polar-row .polar-wrap canvas { height: 200px; }
+.legend { display: flex; gap: 14px; font-size: 11px; margin-top: 6px; color: #aaa; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 4px; border-radius: 2px; }
+.legend i.dot { width: 8px; height: 8px; border-radius: 50%; }
+.seg { display: flex; gap: 2px; margin-bottom: 10px; }
+.seg button { flex: 1; padding: 6px 4px; font-size: 11px; background: #1c1c1c; color: #888; border: 1px solid #2a2a2a; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+.seg button.active { background: #5ab8ff; color: #000; border-color: #5ab8ff; font-weight: 600; }
+.formula { background: #0d1a26; border: 1px solid #1a3550; padding: 10px; border-radius: 6px; font-family: 'SF Mono', Consolas, monospace; font-size: 11px; color: #9cd; line-height: 1.7; overflow-x: auto; }
+.formula .hl { color: #ffb84a; }
+.formula .var { color: #4cd964; }
+
+/* Wide screen (>1600px) side-by-side layout */
+.pair-row { display: flex; flex-direction: column; gap: 0; margin-bottom: 0; }
+.pair-row .plot { flex: 1; }
+@media (min-width: 1600px) {
+  .pair-row { flex-direction: row; gap: 12px; margin-bottom: 12px; }
+  .pair-row .plot { margin-bottom: 0; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="left">
+  <h2>📡 LoRa De-chirp Parameters v4</h2>
+
+  <div class="param">
+    <label>Symbol s (cyclic shift) <span class="val" id="sVal">0</span></label>
+    <input type="range" id="symbol" min="0" max="23" step="1" value="0">
+  </div>
+
+  <div class="param">
+    <label>Sample Rate F<sub>s</sub> <span class="val" id="fsVal">200 Hz</span></label>
+    <div class="seg">
+      <button data-fs="100">100 Hz (severe aliasing)</button>
+      <button data-fs="200" class="active">200 Hz (mild)</button>
+      <button data-fs="400">400 Hz (no aliasing)</button>
+    </div>
+    <div class="box alias" style="font-size:11px;margin-top:6px" id="aliasBox">
+      <span id="aliasInd">—</span>
+    </div>
+  </div>
+
+  <div class="param">
+    <label>RX Phase Offset φ₀ <span class="val" id="phVal">0°</span></label>
+    <input type="range" id="phase" min="-180" max="180" step="5" value="0">
+  </div>
+
+  <div class="param">
+    <label>Freq Offset Δf<sub>CFO</sub> <span class="val" id="cfoVal">0 Hz</span></label>
+    <input type="range" id="cfo" min="-30" max="30" step="0.5" value="0">
+  </div>
+
+  <div class="param">
+    <label>SNR <span class="val" id="snrVal">∞ dB</span></label>
+    <input type="range" id="snr" min="-10" max="40" step="1" value="40">
+  </div>
+
+  <div class="param">
+    <label>Chirp BW (determines symbol count N &amp; sweep range) <span class="val" id="bwVal">120 Hz</span></label>
+    <input type="range" id="bwSlider" min="20" max="200" step="5" value="120">
+  </div>
+
+  <div class="param">
+    <label>Carrier F<sub>c</sub> (only affects ②④⑥ passband demo, not DSP) <span class="val" id="fcVal">250 Hz</span></label>
+    <input type="range" id="fcSlider" min="100" max="500" step="10" value="250">
+  </div>
+
+  <div class="param">
+    <label>Line Width <span class="val" id="lwVal">1.0×</span></label>
+    <input type="range" id="lwSlider" min="0.3" max="2.5" step="0.1" value="1.0">
+  </div>
+
+  <h3>Signal Parameters (BW / F<sub>c</sub> adjustable)</h3>
+  <div class="box">
+    <b>BW = <span id="bwDispVal">120</span> Hz</b>, T = 0.2 s (fixed)<br>
+    F<sub>c</sub> = <span id="fcDispVal">250</span> Hz (teaching carrier, real LoRa at GHz)<br>
+    Passband = <b id="pbRangeVal" style="color:#ffb84a">40 ~ 160</b> Hz<br>
+    Baseband = <b id="bbRangeVal" style="color:#5ab8ff">−60 ~ +60</b> Hz<br>
+    <b style="color:#4cd964">N = BW·T = <span id="nsymVal">24</span> chips, Δf = 1/T = 5 Hz (fixed!)</b>
+  </div>
+
+  <h3>Current State</h3>
+  <div class="box">
+    f<sub>symbol</sub> = s × 5 Hz = <span class="val" id="fsymVal">0</span> Hz<br>
+    Sample count N<sub>samp</sub> = <span class="val" id="nsVal">40</span><br>
+    Baseband Nyquist = F<sub>s</sub>/2 = <span class="val" id="nyqVal">100</span> Hz<br>
+    Signal max baseband freq = ±60 Hz
+  </div>
+
+  <h3>Why symbols 0 ~ N−1?</h3>
+  <div class="box info" style="font-size:11px">
+    N = BW × T = 120 × 0.2 = <b style="color:#4cd964">24</b> chips<br>
+    Each symbol = cyclic shift 0~N-1; 24 possible values<br>
+    Real LoRa SF7: BW=125kHz, T=1.024ms → N=128<br>
+    <b style="color:#5ab8ff">More symbols = more bits/symbol, but demodulation costs more CPU</b>
+  </div>
+
+  <h3>Aliasing Explained</h3>
+  <div class="box info" style="font-size:11px">
+    Baseband signal: instantaneous freq range <b>−60 ~ +60 Hz</b><br>
+    Fs=400Hz: Nyquist=200Hz &gt; 60Hz → <b style="color:#4cd964">No aliasing</b><br>
+    Fs=200Hz: Nyquist=100Hz &gt; 60Hz → <b style="color:#4cd964">Also no aliasing</b><br>
+    Fs=100Hz: Nyquist=50Hz &lt; 60Hz → <b style="color:#ff5e94">Aliased!</b><br>
+    <b>Continuous lines are the theoretical formula (no folding shown); stems are actual ADC-sampled values (already aliased)</b>
+  </div>
+
+  <h3 style="color:#ff5e94">⚠️ Why must FFT use N_SYM chip samples?</h3>
+  <div class="box alias" style="font-size:11px">
+    Real LoRa: Fs = BW = chip rate, N_samp = N_SYM = 24<br>
+    The two segments of the cyclic-shifted chirp (s·Δf and (s-N)·Δf) in a 24-pt DFT<br>
+    align perfectly because e^{-j2πn}=1, so they <b style="color:#4cd964">add up to the same bin s</b><br>
+    Using Nsamp=40 (Fs=200Hz) misaligns the two segments on the DFT grid<br>
+    → <b style="color:#ff5e94">Spectral leakage! False correlation peaks on both sides</b><br>
+    ⑨ FFT plot always uses N_SYM=24 chip-rate samples
+  </div>
+
+  <h3>Color Legend</h3>
+  <div class="box">
+    <span style="color:#5ab8ff">■ Blue</span> Received r(t) / I channel<br>
+    <span style="color:#ffb84a">■ Orange</span> Conjugate down-chirp c*(t)<br>
+    <span style="color:#4cd964">■ Green</span> Product r·c*<br>
+    <span style="color:#ff5e94">■ Pink</span> Q channel / aliased freq<br>    <span style="color:rgba(180,180,220,0.9)">■ Light blue-gray / pink-gray</span> Noisy sinc reconstruction (when SNR &lt; ∞)<br>    Solid = continuous reference, dots = actual ADC samples
+  </div>
+</div>
+
+<div class="right">
+
+  <!-- ① + ①.① 并排 -->
+  <div class="pair-row">
+  <div class="plot">
+    <div class="ttl">① Time-Frequency Plot (baseband instantaneous freq)</div>
+    <div class="sub">
+      Blue=received up-chirp, orange=conjugate down-chirp, green=product (flat line=single freq).
+      <b style="color:#ff5e94">Dashed = ±Nyquist (±Fs/2)</b>, frequencies beyond will alias after sampling.
+    </div>
+    <canvas id="cvTF" class="tall"></canvas>
+    <div class="legend">
+      <span><i style="background:#5ab8ff"></i>r(t)</span>
+      <span><i style="background:#ffb84a"></i>c*(t)</span>
+      <span><i style="background:#4cd964"></i>Product</span>
+      <span><i style="background:#ff5e94;height:0;border-top:2px dashed #ff5e94;background:none;width:18px"></i>Nyquist</span>
+    </div>
+  </div>
+
+  <!-- ①.① 混叠折叠图（同行）-->
+  <div class="plot">
+    <div class="ttl">①.① Aliased Discrete Frequency After Sampling</div>
+    <div class="sub">
+      After ADC sampling, any component beyond Nyquist <b>folds (aliasing)</b> back to [−Fs/2, Fs/2].
+      Formula: <code>f_alias = f − round(f/Fs)·Fs</code>.
+      At 200Hz the baseband ±60Hz is within Nyquist 100Hz, so the alias plot matches the original → <b style="color:#4cd964">no aliasing</b>.
+      Switch to 100Hz sampling: ±60Hz exceeds Nyquist 50Hz, and you can see components folding!
+    </div>
+    <canvas id="cvAlias" class="tall"></canvas>
+    <div class="legend">
+      <span><i style="background:#5ab8ff"></i>r(t) aliased freq</span>
+      <span><i style="background:#ffb84a"></i>c*(t) aliased freq</span>
+      <span><i style="background:#4cd964"></i>Product aliased freq</span>
+      <span><i style="background:#ff5e94;height:0;border-top:2px dashed #ff5e94;background:none;width:18px"></i>Nyquist limit</span>
+    </div>
+  </div>
+  </div><!-- /pair-row ①+①.① -->
+
+  <!-- ② + ③ 并排 -->
+  <div class="pair-row">
+  <!-- ② ③ 接收信号 -->
+  <div class="plot">
+    <div class="ttl">② Received r(t): Passband Reference Waveform</div>
+    <div class="sub">RF-side "true" waveform Re{r<sub>BB</sub>(t)·e<sup>j2πF<sub>c</sub>t</sup>}, sweep 40→160 Hz. <b>This is an analog signal</b>, DSP never sees it.</div>
+    <canvas id="cvRxPb"></canvas>
+  </div>
+
+  <div class="plot">
+    <div class="ttl">③ Received r(t): Baseband I/Q ★ (what DSP actually sees)</div>
+    <div class="sub">Hardware IQ downconversion + ADC yields complex sequence r[n] = I[n] + jQ[n]. Dots = ADC samples (with noise). <b>When aliasing</b>: dashed=true continuous signal, colored solid=clean sinc reconstruction (shows aliasing shape). <b style="color:rgba(180,180,220,0.9)">SNR&lt;∞: gray solid = noisy sinc reconstruction</b>, shows how noise alters the waveform (sinc weighting averages and partially smooths noise).</div>
+    <canvas id="cvRxIQ"></canvas>
+    <div class="legend">
+      <span><i style="background:#5ab8ff"></i>I (continuous ref)</span>
+      <span><i style="background:#ff5e94"></i>Q (continuous ref)</span>
+      <span><i class="dot" style="background:#5ab8ff"></i>I[n]</span>
+      <span><i class="dot" style="background:#ff5e94"></i>Q[n]</span>
+    </div>
+  </div>
+  </div><!-- /pair-row ②+③ -->
+
+  <!-- ④ + ⑤ 并排 -->
+  <div class="pair-row">
+  <!-- ④ ⑤ 共轭 down-chirp -->
+  <div class="plot">
+    <div class="ttl">④ Conjugate down-chirp c*(t): Passband Reference Waveform</div>
+    <div class="sub">Instantaneous freq <b>160→40 Hz</b> (high to low), opposite of up-chirp. Analog signal, DSP never sees it.</div>
+    <canvas id="cvDnPb"></canvas>
+  </div>
+
+  <div class="plot">
+    <div class="ttl">⑤ Conjugate down-chirp c*(t): Baseband I/Q ★</div>
+    <div class="sub">Locally stored complex sequence c*[n]. I is same as up-chirp, Q is negated = mathematical conjugate (phase inversion). c* bandwidth is also ±BW/2; <b>when aliasing</b>: dashed=exact c*(t), solid=sinc reconstruction (undersampled aliased version), which is what the multiplier actually operates on.</div>
+    <canvas id="cvDnIQ"></canvas>
+    <div class="legend">
+      <span><i style="background:#ffb84a"></i>I = cos(φ<sub>up</sub>)</span>
+      <span><i style="background:#ff5e94"></i>Q = −sin(φ<sub>up</sub>)</span>
+      <span><i class="dot" style="background:#ffb84a"></i>I[n]</span>
+      <span><i class="dot" style="background:#ff5e94"></i>Q[n]</span>
+    </div>
+  </div>
+  </div><!-- /pair-row ④+⑤ -->
+
+  <!-- ⑥ + ⑦ 并排 -->
+  <div class="pair-row">
+  <!-- ⑥ ⑦ 乘积 -->
+  <div class="plot">
+    <div class="ttl">⑥ Product r(t)·c*(t): Passband Reference Waveform</div>
+    <div class="sub">Continuous-domain product, frequency no longer varies → passband pure cosine. <b style="color:#ff5e94">Continuous reference, DSP never sees it.</b></div>
+    <canvas id="cvPrdPb"></canvas>
+  </div>
+
+  <div class="plot">
+    <div class="ttl">⑦ Product y[n] = r·c*: Baseband I/Q ★ (FFT input)</div>
+    <div class="sub">When s≠0 there are actually <b>two different frequencies</b> (s·Δf and (s−N)·Δf) — that's why FFT must use N_SYM=24 chip samples for DFT: the two segments resonate on the 24-pt grid = single peak. <b>When aliasing</b>: dashed=true continuous signal, colored solid=clean sinc reconstruction. <b style="color:rgba(160,210,160,0.9)">SNR&lt;∞: gray solid=noisy reconstruction</b>, shows how noise distorts the FFT input.</div>
+    <canvas id="cvPrdIQ"></canvas>
+    <div class="legend">
+      <span><i style="background:#4cd964"></i>I = Re{y[n]}</span>
+      <span><i style="background:#ff5e94"></i>Q = Im{y[n]}</span>
+      <span><i class="dot" style="background:#4cd964"></i>I[n]</span>
+      <span><i class="dot" style="background:#ff5e94"></i>Q[n]</span>
+    </div>
+  </div>
+  </div><!-- /pair-row ⑥+⑦ -->
+
+  <!-- ⑧ + ⑨ 并排 -->
+  <div class="pair-row">
+  <!-- ⑧ 极坐标图 -->
+  <div class="plot">
+    <div class="ttl">⑧ Polar Complex Plane (phasor trajectory)</div>
+    <div class="sub">
+      Sample trajectory on the complex plane (I=horizontal, Q=vertical axis).
+      r[n] and c*[n] both rotate on the unit circle at <b>varying speed</b> (chirp = angular velocity changing).
+      <b style="color:#4cd964">y[n]=r·c* traces uniform rotation</b> (sinusoid!) — displayed using over-sampled prdSamp (for visualization).
+      Time order: light→dark.
+    </div>
+    <div class="polar-row">
+      <div class="polar-wrap">
+        <div class="polar-lbl" style="color:#5ab8ff">Received r[n] (variable-rate chirp)</div>
+        <canvas id="cvPolR" class="polar-cv"></canvas>
+      </div>
+      <div class="polar-wrap">
+        <div class="polar-lbl" style="color:#ffb84a">Conjugate c*[n] (reverse variable-rate chirp)</div>
+        <canvas id="cvPolD" class="polar-cv"></canvas>
+      </div>
+      <div class="polar-wrap">
+        <div class="polar-lbl" style="color:#4cd964">Product y[n] (uniform rotation!)</div>
+        <canvas id="cvPolY" class="polar-cv"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑨ FFT 幅度谱 -->
+  <div class="plot">
+    <div class="ttl">⑨ FFT Magnitude |Y[k]| (demodulation result)</div>
+    <div class="sub">
+      DFT on y[n]: <b>N_SYM=24 points at chip rate (t_n = n·T/24)</b>, same as real LoRa.
+      Key: <b style="color:#5ab8ff">N_samp must = N_SYM = 24</b>, otherwise the cyclic chirp's two segments can't cancel the phase jump → spectral leakage (false correlation peaks on both sides).
+      Fs=200/400Hz is only for time-domain visualization oversampling; DFT always uses 24 chip-rate points.
+      <b style="color:#ffb84a">Peak bin = symbol s</b>, may decode incorrectly at low SNR.
+      <span id="fftResult" style="color:#4cd964;font-weight:bold"></span>
+    </div>
+    <canvas id="cvFFT" style="height:180px"></canvas>
+    <div class="legend">
+      <span><i style="background:#ffb84a"></i>Peak bin (detected symbol)</span>
+      <span><i style="background:#5ab8ff"></i>Other bins</span>
+      <span><i style="background:#4cd964"></i>True symbol s</span>
+    </div>
+  </div>
+  </div><!-- /pair-row ⑧+⑨ -->
+
+  <!-- ⑩ 离散运算步骤 -->
+  <div class="plot">
+    <div class="ttl">📐 Discrete-Domain Step-by-Step (what DSP actually does)</div>
+    <div class="formula">
+<b style="color:#5ab8ff">Step 0  ▸ Hardware IQ Downconversion + ADC (not done in software)</b>
+  Antenna s_RF(t) = Re{r_BB(t)·e^{j2πF_c·t}}
+  Mixer 1: s_RF × cos(2πF_c·t) → LPF → I_analog(t)
+  Mixer 2: s_RF × (−sin(2πF_c·t)) → LPF → Q_analog(t)
+  Dual-channel ADC → <span class="hl">r[n] = I[n] + j·Q[n]</span>    n = 0,1,…,N_samp−1
+
+<b style="color:#ffb84a">Step 1  ▸ Pre-generate conjugate down-chirp (lookup table, not real-time)</b>
+  φ_up[n] = 2π·(−BW/2·n/Fs + BW/(2T)·(n/Fs)²)
+  <span class="hl">c*[n] = cos(φ_up[n]) − j·sin(φ_up[n])</span>    ← Q negated = mathematical conjugate
+
+<b style="color:#4cd964">Step 2  ▸ Point-wise complex multiply (de-chirp core, only N_samp complex multiplications)</b>
+  r[n]  = a + j·b    c*[n] = c − j·d    (d = sin(φ_up[n]))
+  <span class="hl">y[n] = r[n]·c*[n] = (ac+bd) + j·(bc−ad)</span>    ← phase subtraction
+
+<b style="color:#5ab8ff">Step 3  ▸ DFT (N = BW·T points, one per symbol)</b>
+  <span class="hl">Y[k] = Σ y[n]·e^{−j2πkn/N}</span>    k = 0,…,N−1
+  Peak bin k* → <span class="hl">decoded symbol ŝ = k*</span>    (N_samp may ≠ N; align via zero-pad/resample)
+
+<b style="color:#ff5e94">Why can't we drop the Q channel? (Negative frequencies &amp; analytic signal)</b>
+  cos(φ) is a real even function: cos(+φ) = cos(−φ), spectrum is two-sided symmetric
+  → Cannot distinguish e^{+jφ} (up-chirp) from e^{−jφ} (down-chirp)
+  I+jQ = e^{jφ} is an <b style="color:#4cd964">analytic signal</b>, single-sided spectrum (no negative-freq aliasing)
+  → After DFT: k=5 (up-chirp) and k=N-5 (down-chirp) are separate, no collision
+
+<b style="color:#ff5e94">About IQ Hardware (real LoRa chip)</b>
+  RF = 868 MHz, BW = 125 kHz → baseband ±62.5 kHz
+  Inside chip: analog IQ mixing (868MHz × cos/sin) → analog LPF → ADC
+  ADC rate = ~1 Msps (far above Nyquist 125kHz), then digital decimation down to BW
+  Final baseband complex sample rate = BW = 125 kHz, DSP processes N = 2^SF points/symbol
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+'use strict';
+
+// ============ 固定参数 ============
+let BW = 120;  // 带宽可调
+const T = 0.2;
+let Fc = 250;  // 教学载波（可调）。真实 LoRa 在 GHz 级，这里只影响 ②④⑥ 通带可视化
+let N_SYM = Math.round(BW * T);   // = BW × T，随 BW 可变
+const NDENSE = 2400;
+
+// ============ 可调参数 ============
+let symbol = 0;
+let Fs = 200;
+let phaseOffsetDeg = 0;
+let cfoHz = 0;
+let snrDb = 40;
+let lineWidthRatio = 1.0;
+
+// ============ 信号生成 ============
+
+// 基带上扫 chirp 相位：φ(t) = 2π(−BW/2·t + BW/(2T)·t²)
+// 瞬时频率 dφ/dt / 2π = −BW/2 + (BW/T)·t，从 −BW/2 线性扫到 +BW/2
+function phiUp(t) {
+  return 2 * Math.PI * (-BW / 2 * t + BW / (2 * T) * t * t);
+}
+function freqUp(t) {
+  return -BW / 2 + (BW / T) * t;
+}
+
+// 接收基带复数信号：r_BB(t) = e^{jφ(t)} = I(t) + j·Q(t)
+// 其中 φ(t) = φ_up((t+τ) mod T) + φ₀ + 2π·CFO·t，τ = s·T/N（循环移位）
+//
+// 为什么必须保留 I+jQ 两路，不能只用 I？
+//   I(t) = cos(φ) 是实偶函数：cos(+φ) = cos(−φ)
+//   → 频谱对称，正负频率无法区分
+//   → 上扫 chirp 和下扫 chirp 产生相同的实部波形
+//   Q(t) = sin(φ) 打破对称：sin(+φ) = −sin(−φ)
+//   → 合成 e^{jφ} = cos+j·sin，频谱只有单边（解析信号）
+//   → DFT 后正负频率分开，上扫/下扫 chirp 各自对应不同 bin
+function rxBB(t) {
+  const tau = symbol * T / N_SYM;
+  const u = ((t + tau) % T + T) % T;
+  const baseP = phiUp(u) + (phaseOffsetDeg * Math.PI / 180) + 2 * Math.PI * cfoHz * t;
+  return { i: Math.cos(baseP), q: Math.sin(baseP), f: freqUp(u) + cfoHz };
+}
+
+// 本地共轭 down-chirp：c*(t) = e^{−jφ_up(t)} = cos(φ_up) − j·sin(φ_up)
+// Q 取负 = 复数共轭，相当于把上扫相位翻转为下扫相位
+// 注意：这不是通带 down-chirp（通带是 Fc+BW/2 扫到 Fc−BW/2）
+//       而是基带的数学共轭，用于与 r_BB 相乘时相位相减
+function dnBB(t) {
+  const p = phiUp(t);
+  return { i: Math.cos(p), q: -Math.sin(p), f: -freqUp(t) };
+}
+
+// 共轭相乘（de-chirp 核心）：y(t) = r_BB(t) · c*(t) = e^{j(φ_rx − φ_up)}
+// 两个 chirp 的相位相减 → 瞬时频率 f_y = f_rx + f_dn
+// s=0 时 f_y ≈ 0，s≠0 时 f_y ≈ s·Δf（两段，但 DFT 24 点后合为单峰）
+//
+// 为什么要复数乘，不能实数乘？
+//   cos(φ_rx) · cos(φ_up) = ½cos(φ_rx−φ_up) + ½cos(φ_rx+φ_up)
+//   多出 ½cos(φ_rx+φ_up) = 快速 chirp（两倍扫速），污染 FFT
+//   e^{jφ_rx} · e^{−jφ_up} = e^{j(φ_rx−φ_up)}，只有差频，干净
+function prdBB(t) {
+  const r = rxBB(t), d = dnBB(t);
+  return {
+    i: r.i * d.i - r.q * d.q,
+    q: r.i * d.q + r.q * d.i,
+    f: r.f + d.f
+  };
+}
+
+// 通带上变频：Re{ r_BB(t) · e^{j2πFc·t} } = I·cos(2πFc·t) − Q·sin(2πFc·t)
+// 这是真实天线/示波器看到的实 RF 信号（单路实数，无虚部）
+// 真实 LoRa：Fc ≈ 868/915 MHz，这里用可调玩具 Fc 仅作教学展示
+// 注意：②④⑥ 图只是让载波可视，实际 DSP 完全在基带（③⑤⑦）工作
+function passband(bb, t) {
+  return bb.i * Math.cos(2 * Math.PI * Fc * t) - bb.q * Math.sin(2 * Math.PI * Fc * t);
+}
+
+// 折叠频率（模拟 ADC 采样的混叠效果）
+function aliasFreq(f) {
+  let fa = ((f % Fs) + Fs) % Fs;
+  if (fa > Fs / 2) fa -= Fs;
+  return fa;
+}
+// aliasedRefLines 已删除——chirp 混叠后相位不连续，积分计算的连续线不会过采样点。
+// 正确做法：把 ADC 采样点直接连线（DSP 只有离散点，连线就是它“看到的”信号）
+
+// sincRecon: sinc 理想重建（= IFFT 零填充），DSP 看到的混叠波形
+// samps: [{t,i,q}] 均匀间隔 1/Fs; grid: 目标时间数组; 返回: [{t,i,q}]
+function sincRecon(samps, grid) {
+  const N = samps.length;
+  return grid.map(t => {
+    let ri = 0, rq = 0;
+    for (let n = 0; n < N; n++) {
+      const x = Math.PI * Fs * (t - n / Fs);
+      const sc = Math.abs(x) < 1e-10 ? 1 : Math.sin(x) / x;
+      ri += samps[n].i * sc;
+      rq += samps[n].q * sc;
+    }
+    return { t, i: ri, q: rq };
+  });
+}
+
+// 高斯噪声 Box-Muller
+function gauss() {
+  let u = 0, v = 0;
+  while (!u) u = Math.random();
+  while (!v) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function noiseSigma() {
+  if (snrDb >= 40) return 0;
+  return Math.sqrt(Math.pow(10, -snrDb / 10) / 2);
+}
+
+// DFT（N_SYM 个 bin，对应 24 个符号）
+function computeDFT(samples) {
+  const Nf = N_SYM;
+  const result = new Array(Nf);
+  const Ns = samples.length;
+  for (let k = 0; k < Nf; k++) {
+    let re = 0, im = 0;
+    for (let n = 0; n < Ns; n++) {
+      const angle = -2 * Math.PI * k * n / Ns;
+      re += samples[n].i * Math.cos(angle) - samples[n].q * Math.sin(angle);
+      im += samples[n].i * Math.sin(angle) + samples[n].q * Math.cos(angle);
+    }
+    // 只取前 N_SYM 个 bin（等效于 bin 间隔 = BW/N_SYM = Δf）
+    result[k] = Math.sqrt(re * re + im * im) / Ns;
+  }
+  return result;
+}
+
+// ============ 绘图工具（时域/时频图） ============
+function setupCV(cv) {
+  const dpr = window.devicePixelRatio || 1;
+  const r = cv.getBoundingClientRect();
+  cv.width = r.width * dpr;
+  cv.height = r.height * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, w: r.width, h: r.height };
+}
+
+function drawPlot(cv, traces, opts) {
+  const { ctx, w, h } = setupCV(cv);
+  const PL = 50, PR = 10, PT = 10, PB = 28;
+  const pw = w - PL - PR, ph = h - PT - PB;
+  const [x0, x1] = opts.xRange, [y0, y1] = opts.yRange;
+  const X = x => PL + (x - x0) / (x1 - x0) * pw;
+  const Y = y => PT + (y1 - y) / (y1 - y0) * ph;
+
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#0a0a0a'; ctx.fillRect(PL, PT, pw, ph);
+
+  // 网格
+  ctx.strokeStyle = '#1f1f1f'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (const x of opts.xTicks) { ctx.moveTo(X(x), PT); ctx.lineTo(X(x), PT + ph); }
+  for (const y of opts.yTicks) { ctx.moveTo(PL, Y(y)); ctx.lineTo(PL + pw, Y(y)); }
+  ctx.stroke();
+
+  if (y0 < 0 && y1 > 0) {
+    ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PL, Y(0)); ctx.lineTo(PL + pw, Y(0)); ctx.stroke();
+  }
+
+  // Nyquist 虚线
+  if (opts.nyquist) {
+    ctx.strokeStyle = '#ff5e94'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(PL, Y(opts.nyquist));  ctx.lineTo(PL + pw, Y(opts.nyquist));
+    ctx.moveTo(PL, Y(-opts.nyquist)); ctx.lineTo(PL + pw, Y(-opts.nyquist));
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // 轴标签
+  ctx.fillStyle = '#888'; ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (const x of opts.xTicks) ctx.fillText(opts.xFmt ? opts.xFmt(x) : x, X(x), PT + ph + 4);
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const y of opts.yTicks) ctx.fillText(opts.yFmt ? opts.yFmt(y) : y, PL - 4, Y(y));
+
+  ctx.strokeStyle = '#3a3a3a'; ctx.strokeRect(PL, PT, pw, ph);
+
+  for (const t of traces) {
+    if (t.kind === 'line') {
+      ctx.strokeStyle = t.color; ctx.lineWidth = (t.w || 1.5) * lineWidthRatio;
+      if (t.dash) ctx.setLineDash(t.dash);
+      ctx.beginPath(); let first = true;
+      for (const [x, y] of t.data) {
+        if (y === null || isNaN(y)) { first = true; continue; }
+        const px = X(x), py = Y(y);
+        first ? (ctx.moveTo(px, py), first = false) : ctx.lineTo(px, py);
+      }
+      ctx.stroke(); if (t.dash) ctx.setLineDash([]);
+    } else if (t.kind === 'segments') {
+      ctx.strokeStyle = t.color; ctx.lineWidth = (t.w || 1.5) * lineWidthRatio;
+      for (const seg of t.data) {
+        ctx.beginPath(); let first = true;
+        for (const [x, y] of seg) {
+          const px = X(x), py = Y(y);
+          first ? (ctx.moveTo(px, py), first = false) : ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+    } else if (t.kind === 'stems') {
+      ctx.strokeStyle = t.color; ctx.fillStyle = t.color; ctx.lineWidth = Math.max(0.5, lineWidthRatio);
+      const r = (t.r || 2.8) * Math.max(0.6, Math.sqrt(lineWidthRatio));
+      for (const [x, y] of t.data) {
+        const px = X(x), py = Y(y), p0 = Y(0);
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath(); ctx.moveTo(px, p0); ctx.lineTo(px, py); ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.beginPath(); ctx.arc(px, py, r, 0, 2 * Math.PI); ctx.fill();
+      }
+    }
+  }
+
+  if (opts.xLabel) {
+    ctx.fillStyle = '#aaa'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(opts.xLabel, PL + pw / 2, PT + ph + 18);
+  }
+  if (opts.yLabel) {
+    ctx.save(); ctx.translate(11, PT + ph / 2); ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#aaa';
+    ctx.fillText(opts.yLabel, 0, 0); ctx.restore();
+  }
+}
+
+// ============ 极坐标绘图 ============
+function drawPolar(cv, points, color, label) {
+  const { ctx, w, h } = setupCV(cv);
+  const cx = w / 2, cy = h / 2;
+  const R = Math.min(w, h) * 0.42;
+
+  ctx.fillStyle = '#050510'; ctx.fillRect(0, 0, w, h);
+
+  // 参考圆和轴
+  ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - R - 10, cy); ctx.lineTo(cx + R + 10, cy);
+  ctx.moveTo(cx, cy - R - 10); ctx.lineTo(cx, cy + R + 10);
+  ctx.stroke();
+
+  // 轴文字
+  ctx.fillStyle = '#444'; ctx.font = '9px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('I', cx + R + 14, cy + 3);
+  ctx.fillText('Q', cx, cy - R - 14);
+  ctx.fillText('+1', cx + R, cy + 12);
+  ctx.fillText('-1', cx - R, cy + 12);
+
+  if (!points || points.length === 0) return;
+
+  const N = points.length;
+  // 用渐变颜色：起点浅（半透明），终点深（实色）
+  const base = color;
+
+  // 连线（轨迹）
+  ctx.lineWidth = 1.2;
+  for (let i = 1; i < N; i++) {
+    const alpha = 0.1 + 0.6 * (i / N);
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = base;
+    ctx.beginPath();
+    ctx.moveTo(cx + points[i - 1].i * R, cy - points[i - 1].q * R);
+    ctx.lineTo(cx + points[i].i * R, cy - points[i].q * R);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // 点
+  const r = 3;
+  for (let i = 0; i < N; i++) {
+    const alpha = 0.3 + 0.7 * (i / (N - 1));
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = base;
+    ctx.beginPath();
+    ctx.arc(cx + points[i].i * R, cy - points[i].q * R, r, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // 标注第一个点（起始）和最后一个点（当前）
+  ctx.fillStyle = '#fff'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('n=0', cx + points[0].i * R, cy - points[0].q * R - 7);
+
+  // 从原点到最后一个点的箭头
+  const last = points[N - 1];
+  const px = cx + last.i * R, py = cy - last.q * R;
+  ctx.strokeStyle = base; ctx.lineWidth = 2; ctx.globalAlpha = 0.8;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+// ============ FFT 图 ============
+function drawFFT(cv, magnitudes, detectedBin, trueBin) {
+  const { ctx, w, h } = setupCV(cv);
+  const PL = 40, PR = 10, PT = 10, PB = 28;
+  const pw = w - PL - PR, ph = h - PT - PB;
+
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#0a0a0a'; ctx.fillRect(PL, PT, pw, ph);
+
+  const Nf = magnitudes.length;
+  const maxMag = Math.max(...magnitudes, 0.01);
+  const barW = pw / Nf - 1;
+
+  for (let k = 0; k < Nf; k++) {
+    const x = PL + k * pw / Nf + 0.5;
+    const barH = (magnitudes[k] / maxMag) * ph;
+    const y = PT + ph - barH;
+
+    if (k === detectedBin) {
+      ctx.fillStyle = '#ffb84a';
+    } else if (k === trueBin) {
+      ctx.fillStyle = '#2a6a2a';
+    } else {
+      ctx.fillStyle = '#1a3a5a';
+    }
+    ctx.fillRect(x, y, Math.max(barW, 1), barH);
+
+    // 真实符号标注
+    if (k === trueBin && k !== detectedBin) {
+      ctx.strokeStyle = '#4cd964'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(x - 0.5, y - 1, Math.max(barW + 1, 2), barH + 1);
+    }
+  }
+
+  // x 轴刻度（只标关键的）
+  ctx.fillStyle = '#888'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+  for (let k = 0; k < Nf; k += 4) {
+    ctx.fillText(k, PL + (k + 0.5) * pw / Nf, PT + ph + 5);
+  }
+  ctx.fillText('Symbol bin k', PL + pw / 2, PT + ph + 18);
+
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  ctx.fillText('0', PL - 4, PT + ph);
+  ctx.fillText('1', PL - 4, PT);
+
+  ctx.strokeStyle = '#3a3a3a'; ctx.strokeRect(PL, PT, pw, ph);
+}
+
+// ============ 主更新函数 ============
+function update() {
+  // BW 可调，先重算 N_SYM
+  N_SYM = Math.round(BW * T);
+  const symSlider = document.getElementById('symbol');
+  if (parseInt(symSlider.max) !== N_SYM - 1) symSlider.max = N_SYM - 1;
+  if (symbol >= N_SYM) { symbol = N_SYM - 1; symSlider.value = symbol; }
+
+  document.getElementById('bwVal').textContent = BW + ' Hz';
+  document.getElementById('bwDispVal').textContent = BW;
+  document.getElementById('fcVal').textContent = Fc + ' Hz';
+  document.getElementById('lwVal').textContent = lineWidthRatio.toFixed(1) + '×';
+  document.getElementById('fcDispVal').textContent = Fc;
+  document.getElementById('nsymVal').textContent = N_SYM;
+  document.getElementById('pbRangeVal').textContent = (Fc - BW/2).toFixed(0) + ' ~ ' + (Fc + BW/2).toFixed(0);
+  document.getElementById('bbRangeVal').textContent = '−' + (BW/2).toFixed(0) + ' ~ +' + (BW/2).toFixed(0);
+  document.getElementById('sVal').textContent = symbol;
+  document.getElementById('fsymVal').textContent = (symbol * BW / N_SYM).toFixed(0);
+  document.getElementById('fsVal').textContent = Fs + ' Hz';
+  document.getElementById('phVal').textContent = phaseOffsetDeg + '°';
+  document.getElementById('cfoVal').textContent = cfoHz.toFixed(1) + ' Hz';
+  document.getElementById('snrVal').textContent = snrDb >= 40 ? '∞ dB' : snrDb + ' dB';
+  document.getElementById('nsVal').textContent = Math.round(Fs * T);
+  document.getElementById('nyqVal').textContent = Fs / 2;
+
+  const nyq = Fs / 2;
+  const sigMax = BW / 2; // 60 Hz
+  const aliasInd = document.getElementById('aliasInd');
+  const aliasBox = document.getElementById('aliasBox');
+  if (nyq < sigMax) {
+    aliasInd.innerHTML = `Aliasing: <b style="color:#ff5e94">Severe!</b> Nyquist=${nyq}Hz &lt; signal max freq ${sigMax}Hz<br>Alias plot <b>differs</b> from original — see folding in ①.①`;
+    aliasBox.style.background = '#2a1414'; aliasBox.style.borderColor = '#5a1a1a';
+  } else {
+    aliasInd.innerHTML = `No aliasing: Nyquist=${nyq}Hz &gt; signal max freq ${sigMax}Hz<br>Alias plot matches original (baseband fully within Nyquist)`;
+    aliasBox.style.background = '#0d1a0d'; aliasBox.style.borderColor = '#1a3a1a';
+  }
+
+  const dT = [];
+  for (let i = 0; i <= NDENSE; i++) dT.push(i * T / NDENSE);
+  const NSAMP = Math.round(Fs * T);
+  const sT = [];
+  for (let n = 0; n < NSAMP; n++) sT.push(n / Fs);
+
+  const tWrap = (1 - symbol / N_SYM) * T;
+  const xTicks = [0, 0.05, 0.10, 0.15, 0.20];
+  const xFmt = x => x.toFixed(2);
+
+  // ---------- ① 时频图 ----------
+  const rxSeg1 = [], rxSeg2 = [];
+  for (const t of dT) { const f = rxBB(t).f; (t < tWrap ? rxSeg1 : rxSeg2).push([t, f]); }
+  const dnLine = dT.map(t => [t, dnBB(t).f]);
+  const prdSeg1 = [], prdSeg2 = [];
+  for (const t of dT) { const f = prdBB(t).f; (t < tWrap ? prdSeg1 : prdSeg2).push([t, f]); }
+
+  drawPlot(document.getElementById('cvTF'), [
+    { kind: 'segments', data: [rxSeg1, rxSeg2].filter(s => s.length), color: '#5ab8ff', w: 2 },
+    { kind: 'line', data: dnLine, color: '#ffb84a', w: 2 },
+    { kind: 'segments', data: [prdSeg1, prdSeg2].filter(s => s.length), color: '#4cd964', w: 2.5 },
+  ], {
+    xRange: [0, T], yRange: [-BW/2 - 10, BW/2 + 10],
+    xTicks, yTicks: [-BW/2, -BW/4, 0, BW/4, BW/2].map(v => Math.round(v)),
+    xLabel: 'Time t (s)', yLabel: 'Baseband inst. freq (Hz)',
+    xFmt, nyquist: Fs / 2
+  });
+
+  // ---------- ①.① alias freq plot ----------
+  // 把每段中的折叠跳变点切断（避免连线穿过图中间）
+  function buildAliasSegs(rawSegs) {
+    const allSegs = [];
+    for (const seg of rawSegs) {
+      let cur = [];
+      for (let i = 0; i < seg.length; i++) {
+        const fa = aliasFreq(seg[i][1]);
+        if (cur.length > 0) {
+          const prevFa = cur[cur.length - 1][1];
+          if (Math.abs(fa - prevFa) > Fs * 0.4) {
+            if (cur.length > 1) allSegs.push(cur);
+            cur = [];
+          }
+        }
+        cur.push([seg[i][0], fa]);
+      }
+      if (cur.length > 1) allSegs.push(cur);
+    }
+    return allSegs;
+  }
+
+  const rxAlias = buildAliasSegs([rxSeg1, rxSeg2].filter(s => s.length));
+  const dnAlias = buildAliasSegs([dT.map(t => [t, dnBB(t).f])]);
+  const prdAlias = buildAliasSegs([prdSeg1, prdSeg2].filter(s => s.length));
+
+  drawPlot(document.getElementById('cvAlias'), [
+    { kind: 'segments', data: rxAlias, color: '#5ab8ff', w: 2 },
+    { kind: 'segments', data: dnAlias, color: '#ffb84a', w: 2 },
+    { kind: 'segments', data: prdAlias, color: '#4cd964', w: 2.5 },
+  ], {
+    xRange: [0, T], yRange: [-Fs/2 - 5, Fs/2 + 5],
+    xTicks, yTicks: [-Fs/2, -Fs/4, 0, Fs/4, Fs/2].map(v => Math.round(v)),
+    xLabel: 'Time t (s)', yLabel: 'Aliased freq (Hz)',
+    xFmt, nyquist: Fs / 2
+  });
+
+  // ---------- ② RX passband ----------
+  drawPlot(document.getElementById('cvRxPb'), [
+    { kind: 'line', data: dT.map(t => [t, passband(rxBB(t), t)]), color: '#5ab8ff', w: 1.4 },
+  ], { xRange: [0, T], yRange: [-1.5, 1.5], xTicks, yTicks: [-1, 0, 1], xLabel: 'Time t (s)', yLabel: 'Passband amp', xFmt });
+
+  // ---------- ③ RX I/Q ----------
+  const isAliasing = Fs < BW;
+  const rxSampRaw = sT.map(t => { const v = rxBB(t); return { t, i: v.i, q: v.q }; });
+  const sigma = noiseSigma();
+  const rxSamp = sigma === 0 ? rxSampRaw : rxSampRaw.map(s => ({ t: s.t, i: s.i + sigma * gauss(), q: s.q + sigma * gauss() }));
+
+  const rxRef = null; // sincRecon 双轨制：彩色实线=无噪声重建（显示混叠形状），灰色实线=带噪声重建（显示噪声影响）
+  drawPlot(document.getElementById('cvRxIQ'), [
+    // 真实连续信号：无混叠时实线，混叠时虚线（但要明显）
+    { kind: 'line', data: dT.map(t => [t, rxBB(t).i]), color: isAliasing ? '#3a7ab0' : '#5ab8ff', w: isAliasing ? 1.4 : 1.2, dash: isAliasing ? [5,3] : null },
+    { kind: 'line', data: dT.map(t => [t, rxBB(t).q]), color: isAliasing ? '#a03060' : '#ff5e94', w: isAliasing ? 1.4 : 1.2, dash: isAliasing ? [5,3] : null },
+    // 彩色实线：sinc 重建（无噪声）——显示混叠形状，屏除噪声干扰
+    ...(isAliasing ? (() => { const rc = sincRecon(rxSampRaw, dT); return [
+      { kind: 'line', data: rc.map(p => [p.t, p.i]), color: '#5ab8ff', w: 2 },
+      { kind: 'line', data: rc.map(p => [p.t, p.q]), color: '#ff5e94', w: 2 },
+    ]; })() : []),
+    // 灰色实线：sinc 重建（带噪声）——显示噪声如何扭曲重建波形，展示 sinc 匹加权平均对噪声的抑制
+    ...(sigma > 0 ? (() => { const rn = sincRecon(rxSamp, dT); return [
+      { kind: 'line', data: rn.map(p => [p.t, p.i]), color: 'rgba(180,180,220,0.7)', w: 1 },
+      { kind: 'line', data: rn.map(p => [p.t, p.q]), color: 'rgba(220,160,180,0.7)', w: 1 },
+    ]; })() : []),
+    { kind: 'stems', data: rxSamp.map(s => [s.t, s.i]), color: '#5ab8ff' },
+    { kind: 'stems', data: rxSamp.map(s => [s.t, s.q]), color: '#ff5e94' },
+  ], { xRange: [0, T], yRange: [-1.8, 1.8], xTicks, yTicks: [-1, 0, 1], xLabel: 'Time t (s)', yLabel: 'Baseband amp', xFmt });
+
+  // ---------- ④ Down passband ----------
+  drawPlot(document.getElementById('cvDnPb'), [
+    { kind: 'line', data: dT.map(t => [t, passband(dnBB(t), t)]), color: '#ffb84a', w: 1.4 },
+  ], { xRange: [0, T], yRange: [-1.5, 1.5], xTicks, yTicks: [-1, 0, 1], xLabel: 'Time t (s)', yLabel: 'Passband amp', xFmt });
+
+  // ---------- ⑤ Down I/Q ----------
+  // dnSamp 在 sT（ADC 采样位置）取值。c* 带宽同样是 ±BW/2，当 Fs < BW 时也违反 Nyquist，
+  // sincRecon 展示"乘法实际使用的混叠版 c*"，与 ③ 的混叠 r[n] 对应。
+  const dnSamp = sT.map(t => { const v = dnBB(t); return { t, i: v.i, q: v.q }; });
+  drawPlot(document.getElementById('cvDnIQ'), [
+    { kind: 'line', data: dT.map(t => [t, dnBB(t).i]), color: isAliasing ? '#a07020' : '#ffb84a', w: isAliasing ? 1.4 : 1.2, dash: isAliasing ? [5,3] : null },
+    { kind: 'line', data: dT.map(t => [t, dnBB(t).q]), color: isAliasing ? '#a03060' : '#ff5e94', w: isAliasing ? 1.4 : 1.2, dash: isAliasing ? [5,3] : null },
+    ...(isAliasing ? (() => { const dc = sincRecon(dnSamp, dT); return [
+      { kind: 'line', data: dc.map(p => [p.t, p.i]), color: '#ffb84a', w: 2 },
+      { kind: 'line', data: dc.map(p => [p.t, p.q]), color: '#ff5e94', w: 2 },
+    ]; })() : []),
+    { kind: 'stems', data: dnSamp.map(s => [s.t, s.i]), color: '#ffb84a' },
+    { kind: 'stems', data: dnSamp.map(s => [s.t, s.q]), color: '#ff5e94' },
+  ], { xRange: [0, T], yRange: [-1.5, 1.5], xTicks, yTicks: [-1, 0, 1], xLabel: 'Time t (s)', yLabel: 'Baseband amp', xFmt });
+
+  // ---------- ⑥ Product passband ----------
+  drawPlot(document.getElementById('cvPrdPb'), [
+    { kind: 'line', data: dT.map(t => [t, passband(prdBB(t), t)]), color: '#4cd964', w: 1.6 },
+  ], { xRange: [0, T], yRange: [-1.5, 1.5], xTicks, yTicks: [-1, 0, 1], xLabel: 'Time t (s)', yLabel: 'Passband amp', xFmt });
+
+  // ---------- ⑦ Product I/Q ----------
+  const prdSamp = rxSamp.map(s => {
+    const d = dnBB(s.t);
+    return { t: s.t, i: s.i * d.i - s.q * d.q, q: s.i * d.q + s.q * d.i };
+  });
+  const prdRef = null; // sincRecon 双轨：彩色=无噪声重建，灰色=带噪声重建
+  // prdSampRaw: 无噪声乘积（仅显示混叠形状）
+  const prdSampRaw = rxSampRaw.map(s => {
+    const d = dnBB(s.t);
+    return { t: s.t, i: s.i * d.i - s.q * d.q, q: s.i * d.q + s.q * d.i };
+  });
+  drawPlot(document.getElementById('cvPrdIQ'), [
+    { kind: 'line', data: dT.map(t => [t, prdBB(t).i]), color: isAliasing ? '#287030' : '#4cd964', w: isAliasing ? 1.4 : 1.2, dash: isAliasing ? [5,3] : null },
+    { kind: 'line', data: dT.map(t => [t, prdBB(t).q]), color: isAliasing ? '#a03060' : '#ff5e94', w: isAliasing ? 1.4 : 1.2, dash: isAliasing ? [5,3] : null },
+    // 彩色实线：sinc 重建（无噪声 prdSampRaw）——显示混叠形状
+    ...(isAliasing ? (() => { const pc = sincRecon(prdSampRaw, dT); return [
+      { kind: 'line', data: pc.map(p => [p.t, p.i]), color: '#4cd964', w: 2 },
+      { kind: 'line', data: pc.map(p => [p.t, p.q]), color: '#ff5e94', w: 2 },
+    ]; })() : []),
+    // 灰色实线：sinc 重建（带噪声 prdSamp）——显示噪声如何扭曲乘积结果
+    ...(sigma > 0 ? (() => { const pn = sincRecon(prdSamp, dT); return [
+      { kind: 'line', data: pn.map(p => [p.t, p.i]), color: 'rgba(160,210,160,0.7)', w: 1 },
+      { kind: 'line', data: pn.map(p => [p.t, p.q]), color: 'rgba(220,160,180,0.7)', w: 1 },
+    ]; })() : []),
+    { kind: 'stems', data: prdSamp.map(s => [s.t, s.i]), color: '#4cd964' },
+    { kind: 'stems', data: prdSamp.map(s => [s.t, s.q]), color: '#ff5e94' },
+  ], { xRange: [0, T], yRange: [-1.8, 1.8], xTicks, yTicks: [-1, 0, 1], xLabel: 'Time t (s)', yLabel: 'Baseband amp', xFmt });
+
+  // ---------- ⑧ Polar ----------
+  const rxPts = rxSamp.map(s => ({ i: s.i, q: s.q }));
+  const dnPts = sT.map(t => { const d = dnBB(t); return { i: d.i, q: d.q }; });
+  const ypPts = prdSamp.map(s => ({ i: s.i, q: s.q }));
+
+  drawPolar(document.getElementById('cvPolR'), rxPts, '#5ab8ff');
+  drawPolar(document.getElementById('cvPolD'), dnPts, '#ffb84a');
+  drawPolar(document.getElementById('cvPolY'), ypPts, '#4cd964');
+
+  // ---------- ⑨ FFT（chip-rate N_SYM=24 点）----------
+  // 当 Fs >= BW(120Hz)：ADC 采样率足够，直接按 chip 时刻采样（无混叠）
+  // 当 Fs < BW(120Hz)：ADC 只有 Fs*T=20 点，必须插值到 24 个 chip 位置
+  //   → 插值用到的 ADC 点本身已混叠 → FFT 峰值歪曲！
+  let chipSamp;
+  const _nz = () => sigma > 0 ? sigma * gauss() : 0;
+  if (Fs >= BW) {
+    chipSamp = Array.from({ length: N_SYM }, (_, n) => {
+      const tc = n * T / N_SYM;
+      const rv = rxBB(tc);
+      return { t: tc, i: rv.i + _nz(), q: rv.q + _nz() };
+    });
+  } else {
+    // ADC 采样（含混叠）
+    const NSAMP_ADC = Math.round(Fs * T);
+    const adcSamp = Array.from({ length: NSAMP_ADC }, (_, n) => {
+      const t = n / Fs;
+      const rv = rxBB(t);
+      return { i: rv.i + _nz(), q: rv.q + _nz() };
+    });
+    // 线性插值到 chip 位置（无法恢复混叠丢失的信息）
+    chipSamp = Array.from({ length: N_SYM }, (_, n) => {
+      const tc = n * T / N_SYM;
+      const fidx = tc * Fs;
+      const lo = Math.min(Math.floor(fidx), NSAMP_ADC - 1);
+      const hi = Math.min(Math.ceil(fidx), NSAMP_ADC - 1);
+      const frac = fidx - Math.floor(fidx);
+      return {
+        t: tc,
+        i: adcSamp[lo].i * (1 - frac) + adcSamp[hi].i * frac,
+        q: adcSamp[lo].q * (1 - frac) + adcSamp[hi].q * frac
+      };
+    });
+  }
+  const chipPrd = chipSamp.map(s => {
+    const d = dnBB(s.t);
+    return { t: s.t, i: s.i * d.i - s.q * d.q, q: s.i * d.q + s.q * d.i };
+  });
+  const mags = computeDFT(chipPrd);
+  let peakBin = 0, peakVal = -1;
+  for (let k = 0; k < mags.length; k++) { if (mags[k] > peakVal) { peakVal = mags[k]; peakBin = k; } }
+  const correct = peakBin === symbol;
+  document.getElementById('fftResult').textContent =
+    `Detected ŝ = ${peakBin}, true s = ${symbol}, ${correct ? '✓ Correct' : '✗ Error!'}`;
+  document.getElementById('fftResult').style.color = correct ? '#4cd964' : '#ff5e94';
+
+  drawFFT(document.getElementById('cvFFT'), mags, peakBin, symbol);
+}
+
+// ============ 事件绑定 ============
+document.getElementById('symbol').addEventListener('input', e => { symbol = parseInt(e.target.value); update(); });
+document.getElementById('phase').addEventListener('input', e => { phaseOffsetDeg = parseInt(e.target.value); update(); });
+document.getElementById('cfo').addEventListener('input', e => { cfoHz = parseFloat(e.target.value); update(); });
+document.getElementById('snr').addEventListener('input', e => { snrDb = parseInt(e.target.value); update(); });
+document.getElementById('bwSlider').addEventListener('input', e => { BW = parseInt(e.target.value); update(); });
+document.getElementById('fcSlider').addEventListener('input', e => { Fc = parseInt(e.target.value); update(); });
+document.getElementById('lwSlider').addEventListener('input', e => { lineWidthRatio = parseFloat(e.target.value); update(); });
+
+document.querySelectorAll('.seg button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.seg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    Fs = parseInt(b.dataset.fs);
+    update();
+  });
+});
+
+window.addEventListener('resize', update);
+update();
+</script>
+</body>
+</html>

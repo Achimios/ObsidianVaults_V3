@@ -1,0 +1,448 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.root{padding:8px 0;display:flex;flex-direction:column;gap:11px;font-family:var(--font-sans,sans-serif)}
+.ctrl{display:flex;flex-wrap:wrap;gap:5px 12px;align-items:center;padding:8px 12px;background:var(--color-background-secondary,#f5f5f3);border-radius:8px}
+.ctrl label{font-size:12px;color:var(--color-text-secondary,#666);white-space:nowrap}
+.ctrl select,.ctrl button{font-size:12px;cursor:pointer}
+.ctrl button{padding:3px 10px;border-radius:5px;border:1px solid var(--color-border-tertiary,#ddd);background:var(--color-background-secondary,#eee);color:var(--color-text-primary,#222)}
+.ctrl input[type=range]{width:72px}
+.val{font-size:12px;font-weight:700;min-width:32px;color:var(--color-text-primary,#222)}
+.tog{padding:3px 10px;border-radius:5px;border:1.5px solid #888;font-size:12px;cursor:pointer;font-weight:600;transition:all .15s}
+.tog.on{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.tog.off{background:var(--color-background-secondary,#eee);color:var(--color-text-secondary,#666)}
+.panel{background:var(--color-background-primary,#fff);border:0.5px solid var(--color-border-tertiary,#e0e0e0);border-radius:8px;padding:10px 12px}
+.ptitle{font-size:13px;font-weight:600;margin-bottom:2px;color:var(--color-text-primary,#222)}
+.psub{font-size:11px;color:var(--color-text-tertiary,#999);margin-bottom:6px;line-height:1.5}
+canvas{display:block;border-radius:4px}
+.two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:11px}
+.sgrid{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.sc{width:37px;height:29px;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;line-height:1.3;cursor:pointer}
+.cbar{height:7px;border-radius:3px;margin-top:4px;background:linear-gradient(to right,#042C53,#185FA5,#1D9E75,#EF9F27,#D85A30)}
+.cbar-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--color-text-tertiary,#999);margin-top:1px}
+</style>
+
+<div class="root">
+<div class="ctrl">
+  <label>调频类型</label>
+  <select id="ct">
+    <option value="linear">线性 Chirp（LoRa/CSS）</option>
+    <option value="perlin">非线性 Perlin Chirp（LPI）</option>
+  </select>
+  <button class="tog off" id="mwBtn" title="每个symbol使用独立Perlin波形，接收机同步seed解调">帧内多波形 OFF</button>
+  <label>SNR</label>
+  <input type="range" id="snr" min="-20" max="20" value="5" step="1">
+  <span class="val" id="snrv">5 dB</span>
+  <label>调频种子</label>
+  <input type="range" id="cs" min="0" max="99" value="7">
+  <span class="val" id="csv">7</span>
+  <label>消息种子</label>
+  <input type="range" id="ms" min="0" max="99" value="42">
+  <span class="val" id="msv">42</span>
+  <label>噪声种子</label>
+  <input type="range" id="ns" min="0" max="99" value="0">
+  <span class="val" id="nsv">0</span>
+  <button id="berBtn">BER × 200次</button>
+</div>
+
+<div class="panel">
+  <div class="ptitle">① 时域波形（前4个symbol，每symbol 128点 @ 1kHz = 128ms）</div>
+  <div class="psub" id="wDesc">TX=黑线（干净），RX=橙线（加噪）；垂直虚线=symbol边界；匹配滤波直接对128点原始样本做滑动互相关，不经过任何变换</div>
+  <canvas id="wc" style="width:100%;height:160px;background:var(--color-background-secondary,#f5f5f3)"></canvas>
+</div>
+
+<div class="panel">
+  <div class="ptitle">② 接收信号时频谱（STFT：Hann窗 128pt，重叠75%，hop=32pt）</div>
+  <div class="psub" id="sDesc">白线=各symbol真实瞬时频率轨迹；x轴=symbol序号（共20个）；y轴=频率0–500Hz</div>
+  <canvas id="sc" style="width:100%;height:280px"></canvas>
+  <div class="cbar"></div>
+  <div class="cbar-lbl"><span>低能量</span><span>高能量</span></div>
+</div>
+
+<div class="two-col">
+  <div class="panel">
+    <div class="ptitle">③ 匹配滤波相关输出（独立计算采样，不复用绘图）</div>
+    <div class="psub">选中symbol与8个模板的互相关幅度（归一化）。绿✓=正确，红✗=误判。</div>
+    <canvas id="cc" style="width:100%;height:196px;background:var(--color-background-secondary,#f5f5f3)"></canvas>
+    <div style="margin-top:4px;font-size:11px;color:var(--color-text-tertiary,#999)">
+      查看 symbol：<select id="ss" style="font-size:11px"></select>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ptitle">④ Symbol判决网格 &amp; BER</div>
+    <div class="psub">大字=解码值，小字=发送值；绿=正确，红=误码；点击格子→③</div>
+    <div class="sgrid" id="sg"></div>
+    <div style="margin-top:9px">
+      <div style="font-size:11px;color:var(--color-text-secondary,#666)">单次 BER</div>
+      <div id="b1" style="font-size:22px;font-weight:700;color:var(--color-text-primary,#222)">—</div>
+      <div id="bN" style="font-size:11px;margin-top:5px;color:var(--color-text-secondary,#666)">按「BER×200次」得统计平均 BER</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ── 常数 ──────────────────────────────────────────────────
+const FS=1000, M=128, NA=8, NTX=20;
+const FL=80, FH=420;
+const SH=Array.from({length:NA},(_,i)=>Math.floor(i*M/NA)); // 相位偏移量
+
+// ── 全局状态 ─────────────────────────────────────────────
+let G={sel:0,multiWave:false,snr:5,
+       msg:null,tx:null,rx:null,tmpls:null,dec:null,corrs:null,freqs:null};
+
+// ── RNG & Perlin ──────────────────────────────────────────
+function mkRng(seed){
+  let s=(Math.imul(seed|0,2654435761)^0xDEADBEEF)>>>0;
+  return()=>{s=((Math.imul(s,1664525)+1013904223)>>>0);return s/0x100000000;};
+}
+function smoothPerlin(len,nc,seed){
+  const r=mkRng(seed);
+  const c=Array.from({length:nc+2},()=>r()*2-1);
+  return Float32Array.from({length:len},(_,i)=>{
+    const t=i/(len-1)*nc,gi=~~t,f=t-gi,sf=f*f*(3-2*f);
+    return c[gi]*(1-sf)+c[gi+1]*sf;
+  });
+}
+function ifTraj(type,cSeed,symIdx,multiWave){
+  // 返回M点瞬时频率数组
+  if(type==='linear')
+    return Float32Array.from({length:M},(_,n)=>FL+(FH-FL)*n/M);
+  // Perlin: 如果multiWave，每个symbol用独立seed
+  const seed=multiWave?(cSeed*100+symIdx+1):cSeed;
+  const p=smoothPerlin(M,10,seed);
+  return Float32Array.from({length:M},(_,n)=>FL+(FH-FL)*(p[n]+1)/2);
+}
+
+// ── 波形生成 ──────────────────────────────────────────────
+function makeBaseWave(freq){
+  // 给定瞬时频率轨迹，生成M点基波（起始相位0）
+  const base=new Float32Array(M);
+  let ph=0;
+  for(let n=0;n<M;n++){base[n]=Math.cos(ph);ph+=2*Math.PI*freq[n]/FS;}
+  return base;
+}
+
+function buildAll(type,cSeed,msg,multiWave){
+  // 每个symbol的瞬时频率轨迹（用于绘图）
+  const freqs=Array.from({length:NTX},(_,si)=>ifTraj(type,cSeed,si,multiWave));
+
+  // 模板：symbol si 的第 k 个相位偏移模板
+  // multiWave模式：每symbol波形不同，模板与发送波形一一对应（接收机已知seed序列）
+  // 普通模式：所有symbol同一波形，NA个相位偏移
+  const tmpls=Array.from({length:NTX},(_,si)=>{
+    const base=makeBaseWave(freqs[si]);
+    return Array.from({length:NA},(_,k)=>{
+      const s=SH[k];
+      const t=new Float32Array(M);
+      for(let n=0;n<M;n++)t[n]=base[(n+s)%M];
+      let norm=0;t.forEach(v=>norm+=v*v);norm=Math.sqrt(norm)||1;
+      for(let n=0;n<M;n++)t[n]/=norm;
+      return t;
+    });
+  });
+
+  // TX信号
+  const tx=new Float32Array(NTX*M);
+  for(let si=0;si<NTX;si++){
+    const base=makeBaseWave(freqs[si]);
+    const s=SH[msg[si]];
+    for(let n=0;n<M;n++)tx[si*M+n]=base[(n+s)%M];
+  }
+  return{tmpls,tx,freqs};
+}
+
+function genMsg(seed){
+  const r=mkRng(seed);
+  return Uint8Array.from({length:NTX},()=>~~(r()*NA));
+}
+
+// ── AWGN（独立于绘图采样）────────────────────────────────
+function awgn(sig,snr_db,nSeed){
+  const r=mkRng(nSeed+99991);
+  const snrLin=Math.pow(10,snr_db/10);
+  let pw=0;sig.forEach(v=>pw+=v*v);pw/=sig.length||1;
+  const sg=Math.sqrt(pw/Math.max(snrLin,1e-9));
+  const out=new Float32Array(sig.length);
+  for(let i=0;i<sig.length-1;i+=2){
+    const u1=Math.max(1e-15,r()),u2=r();
+    const mag=sg*Math.sqrt(-2*Math.log(u1));
+    out[i]  =sig[i]  +mag*Math.cos(2*Math.PI*u2);
+    out[i+1]=sig[i+1]+mag*Math.sin(2*Math.PI*u2);
+  }
+  if(sig.length%2===1){
+    const u1=Math.max(1e-15,r()),u2=r();
+    out[sig.length-1]=sig[sig.length-1]+sg*Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+  }
+  return out;
+}
+
+// ── 解调（匹配滤波，采样独立于绘图）──────────────────────
+function demod(rx,tmpls){
+  const dec=new Uint8Array(NTX),corrs=[];
+  for(let si=0;si<NTX;si++){
+    // 直接用原始M点样本（不降采样），与绘图完全分离
+    const blk=rx.subarray(si*M,(si+1)*M);
+    const cv=tmpls[si].map(tm=>{
+      let s=0;for(let n=0;n<M;n++)s+=blk[n]*tm[n];
+      return Math.abs(s);
+    });
+    corrs.push(cv);
+    let best=0;cv.forEach((v,i)=>{if(v>cv[best])best=i;});
+    dec[si]=best;
+  }
+  return{dec,corrs};
+}
+
+// ── 色映射 ────────────────────────────────────────────────
+function cmap(v){
+  const s=[[4,44,83],[24,95,165],[29,158,117],[239,159,39],[216,90,48]];
+  v=Math.max(0,Math.min(1,v));
+  const t=v*(s.length-1),i=Math.min(~~t,s.length-2),f=t-i,a=s[i],b=s[i+1];
+  return[~~(a[0]+f*(b[0]-a[0])),~~(a[1]+f*(b[1]-a[1])),~~(a[2]+f*(b[2]-a[2]))];
+}
+
+// ── 绘图：波形（绘图用降采样，计算用全精度独立路径）──────
+function drawWave(tx,rx,msg){
+  const cv=document.getElementById('wc');
+  const W=cv.offsetWidth||700,H=160;
+  cv.width=W;cv.height=H;
+  const ctx=cv.getContext('2d');
+  const SHOW=M*4; // 前4个symbol
+  let mx=0;
+  for(let i=0;i<SHOW;i++)if(Math.abs(rx[i])>mx)mx=Math.abs(rx[i]);
+  mx=Math.max(mx,.1);
+  const mid=H/2,yscale=mid*.88/mx;
+  // 绘图降采样步长（独立于匹配计算）
+  const drawStep=Math.max(1,~~(SHOW/(W*2)));
+
+  // Symbol边界
+  for(let s=0;s<=4;s++){
+    const x=s/4*W;
+    ctx.strokeStyle='rgba(128,128,128,.2)';ctx.lineWidth=.5;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.strokeStyle='rgba(128,128,128,.12)';ctx.lineWidth=.5;
+  ctx.beginPath();ctx.moveTo(0,mid);ctx.lineTo(W,mid);ctx.stroke();
+
+  function line(arr,col,al,lw){
+    ctx.save();ctx.strokeStyle=col;ctx.globalAlpha=al;ctx.lineWidth=lw;ctx.beginPath();
+    for(let i=0;i<SHOW;i+=drawStep){
+      const x=i/SHOW*W,y=mid-arr[i]*yscale;
+      i<drawStep?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();ctx.restore();
+  }
+  line(rx,'#D85A30',.72,1);
+  line(tx,'#1a1a1a',.9,1.5);
+
+  ctx.fillStyle='rgba(70,70,70,.7)';ctx.font='10px sans-serif';
+  for(let s=0;s<4;s++){
+    ctx.fillText('sym'+s+' ['+msg[s]+']',s/4*W+5,14);
+  }
+}
+
+// ── 绘图：时频谱（高分辨率绘图，与计算独立）─────────────
+function drawSpec(rx,freqs,msg){
+  const cv=document.getElementById('sc');
+  const WIN=128,HOP=32,NF=WIN/2+1; // Hann 128pt，75%重叠
+  const win=Float32Array.from({length:WIN},(_,n)=>0.5*(1-Math.cos(2*Math.PI*n/(WIN-1))));
+  const nFr=~~((rx.length-WIN)/HOP)+1;
+  cv.width=nFr;cv.height=NF;cv.style.height='280px';
+  const ctx=cv.getContext('2d');
+
+  // 计算STFT（绘图专用，与匹配滤波完全独立）
+  const spec=new Float32Array(nFr*NF);
+  for(let f=0;f<nFr;f++){
+    const s0=f*HOP;
+    for(let k=0;k<NF;k++){
+      let re=0,im=0;
+      for(let n=0;n<WIN&&s0+n<rx.length;n++){
+        const v=rx[s0+n]*win[n],a=2*Math.PI*k*n/WIN;
+        re+=v*Math.cos(a);im-=v*Math.sin(a);
+      }
+      spec[f*NF+k]=Math.sqrt(re*re+im*im);
+    }
+  }
+  let mx=0;spec.forEach(v=>{if(v>mx)mx=v;});mx=mx||1;
+
+  const img=ctx.createImageData(nFr,NF);
+  for(let f=0;f<nFr;f++)for(let k=0;k<NF;k++){
+    const v=spec[f*NF+k]/mx,row=NF-1-k,idx=(row*nFr+f)*4;
+    const[r,g,b]=cmap(Math.pow(Math.max(0,v),.38));
+    img.data[idx]=r;img.data[idx+1]=g;img.data[idx+2]=b;img.data[idx+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+
+  // 瞬时频率轨迹叠加（每symbol独立颜色）
+  const colors=['rgba(255,255,255,.75)','rgba(180,230,255,.75)'];
+  for(let si=0;si<NTX;si++){
+    const shift=SH[msg[si]];
+    const freq=freqs[si];
+    ctx.strokeStyle=colors[si%2];ctx.lineWidth=1.1;ctx.setLineDash([]);ctx.beginPath();
+    for(let n=0;n<M;n++){
+      const fx=(si*M+n)/HOP;
+      const f=freq[(n+shift)%M];
+      const fy=NF*(1-f/(FS/2));
+      const prev=n>0?freq[(n+shift-1+M)%M]:f;
+      const jump=n>0&&Math.abs(f-prev)>(FH-FL)*.4;
+      if(n===0||jump)ctx.moveTo(fx,fy);else ctx.lineTo(fx,fy);
+    }
+    ctx.stroke();
+  }
+
+  // Y轴频率刻度
+  ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='9px sans-serif';
+  [0,100,200,300,400,500].forEach(f=>{
+    const y=NF*(1-f/(FS/2));
+    ctx.fillText(f+'Hz',2,Math.max(9,Math.min(NF-2,y+3)));
+  });
+  // X轴symbol刻度
+  for(let si=0;si<=NTX;si++){
+    const x=~~(si*M/HOP);
+    if(x<nFr)ctx.fillText('s'+si,x+1,NF-2);
+  }
+}
+
+// ── 绘图：相关条形图 ──────────────────────────────────────
+function drawCorr(){
+  if(!G.corrs)return;
+  const cv=document.getElementById('cc');
+  const W=cv.offsetWidth||300,H=196;
+  cv.width=W;cv.height=H;
+  const ctx=cv.getContext('2d');
+  const bg=getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary')||'#f5f5f3';
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  const corrs=G.corrs[G.sel],correct=G.msg[G.sel],decoded=G.dec[G.sel];
+  const mx=Math.max(...corrs,.01);
+  const bH=~~((H-32)/NA)-2,bW=W-64;
+
+  for(let i=0;i<NA;i++){
+    const y=4+i*(bH+2),bw=corrs[i]/mx*bW;
+    const isC=i===correct,isD=i===decoded;
+    ctx.fillStyle='rgba(128,128,128,.1)';ctx.fillRect(60,y,bW,bH);
+    ctx.fillStyle=isC?'#1D9E75':isD?'#D85A30':'#185FA5';
+    ctx.globalAlpha=isC||isD?.83:.22;
+    ctx.fillRect(60,y,Math.max(0,bw),bH);
+    ctx.globalAlpha=1;
+    ctx.fillStyle=isC?'#1D9E75':isD&&!isC?'#D85A30':'var(--color-text-secondary,#888)';
+    ctx.font='bold 10px sans-serif';
+    ctx.fillText('Phase'+i+(isC?' ✓':'')+(isD&&!isC?' ✗':''),2,y+bH/2+4);
+    ctx.fillStyle='var(--color-text-primary,#333)';
+    ctx.font='10px sans-serif';
+    ctx.fillText(corrs[i].toFixed(3),60+bw+3,y+bH/2+4);
+  }
+  const pg=~~(10*Math.log10(M));
+  ctx.fillStyle='rgba(90,90,90,.65)';ctx.font='9px sans-serif';
+  ctx.fillText('处理增益 +'+pg+' dB   等效检测SNR: '+(G.snr+pg)+' dB   M='+M+'pts',4,H-5);
+}
+
+// ── 符号判决网格 ─────────────────────────────────────────
+function updateGrid(){
+  const sg=document.getElementById('sg');sg.innerHTML='';
+  for(let i=0;i<NTX;i++){
+    const ok=G.dec[i]===G.msg[i];
+    const d=document.createElement('div');d.className='sc';
+    d.style.cssText='background:'+(ok?'rgba(29,158,117,.18)':'rgba(216,90,48,.18)')+
+      ';border:1px solid '+(ok?'rgba(29,158,117,.45)':'rgba(216,90,48,.45)');
+    d.innerHTML='<b style="color:'+(ok?'#1D9E75':'#D85A30')+'">'+G.dec[i]+'</b>'+
+      '<span style="opacity:.4;font-size:9px">'+G.msg[i]+'</span>';
+    d.title='symbol '+i+'：发送='+G.msg[i]+'，解码='+G.dec[i];
+    d.onclick=(ii=>()=>{G.sel=ii;document.getElementById('ss').value=ii;drawCorr();})(i);
+    sg.appendChild(d);
+  }
+}
+
+// ── 主渲染 ────────────────────────────────────────────────
+function render(){
+  const type=document.getElementById('ct').value;
+  const snr=+document.getElementById('snr').value;
+  const cSeed=+document.getElementById('cs').value;
+  const mSeed=+document.getElementById('ms').value;
+  const nSeed=+document.getElementById('ns').value;
+  const mw=G.multiWave;
+
+  document.getElementById('snrv').textContent=snr+' dB';
+  document.getElementById('csv').textContent=cSeed;
+  document.getElementById('msv').textContent=mSeed;
+  document.getElementById('nsv').textContent=nSeed;
+  G.snr=snr;
+
+  // 更新描述
+  document.getElementById('wDesc').textContent=
+    mw?'帧内多波形模式：每个symbol使用独立Perlin形状（seed=调频种子×100+symbol索引）；接收机已知seed序列，仍可正确解调':
+    'TX=黑线（干净），RX=橙线（加噪）；匹配滤波直接对128点原始样本做滑动互相关，不经过任何变换';
+  document.getElementById('sDesc').textContent=
+    mw?'多波形LPI模式：每symbol轨迹形状不同，时频图上无任何周期规律，能量完全淹没于背景——对不知道seed的接收机无法解调':
+    '白线=各symbol瞬时频率轨迹；Hann窗128pt，重叠75%，hop=32pt';
+
+  const msg=genMsg(mSeed);
+  const{tmpls,tx,freqs}=buildAll(type,cSeed,msg,mw);
+  // AWGN：独立于绘图路径
+  const rx=awgn(tx,snr,nSeed);
+  // 匹配滤波：用全精度M点样本
+  const{dec,corrs}=demod(rx,tmpls);
+
+  Object.assign(G,{msg,tx,rx,tmpls,dec,corrs,freqs});
+
+  let errs=0;for(let i=0;i<NTX;i++)if(dec[i]!==msg[i])errs++;
+  document.getElementById('b1').textContent=(errs/NTX*100).toFixed(1)+'% ('+errs+'/'+NTX+')';
+
+  // 绘图（使用独立绘图采样，不影响计算）
+  drawWave(tx,rx,msg);
+  drawSpec(rx,freqs,msg);
+  updateGrid();
+  drawCorr();
+}
+
+// ── BER×200 ───────────────────────────────────────────────
+document.getElementById('berBtn').onclick=()=>{
+  const btn=document.getElementById('berBtn');
+  btn.disabled=true;btn.textContent='运算中...';
+  setTimeout(()=>{
+    const type=document.getElementById('ct').value;
+    const snr=+document.getElementById('snr').value;
+    const cSeed=+document.getElementById('cs').value;
+    const mw=G.multiWave;
+    let totErr=0;
+    for(let trial=0;trial<200;trial++){
+      const msg=genMsg(trial);
+      const{tmpls,tx}=buildAll(type,cSeed,msg,mw);
+      const rx=awgn(tx,snr,trial*17+3);
+      const{dec}=demod(rx,tmpls);
+      for(let i=0;i<NTX;i++)if(dec[i]!==msg[i])totErr++;
+    }
+    const avg=totErr/(200*NTX);
+    document.getElementById('bN').innerHTML=
+      '200次统计平均 BER：<b>'+(avg*100).toFixed(2)+'%</b><br>'+
+      '误码 '+totErr+' / '+(200*NTX)+'&nbsp;|&nbsp;随机猜上限 '+(100/NA).toFixed(1)+'%';
+    btn.disabled=false;btn.textContent='BER × 200次';
+  },15);
+};
+
+// ── 多波形开关 ───────────────────────────────────────────
+document.getElementById('mwBtn').onclick=function(){
+  G.multiWave=!G.multiWave;
+  this.textContent='帧内多波形 '+(G.multiWave?'ON':'OFF');
+  this.className='tog '+(G.multiWave?'on':'off');
+  // 多波形强制Perlin
+  if(G.multiWave)document.getElementById('ct').value='perlin';
+  schedule();
+};
+
+// ── symbol选择器 ─────────────────────────────────────────
+const ss=document.getElementById('ss');
+for(let i=0;i<NTX;i++){
+  const o=document.createElement('option');o.value=i;o.textContent='symbol '+i;ss.appendChild(o);
+}
+ss.onchange=()=>{G.sel=+ss.value;drawCorr();};
+
+// ── 事件绑定 ─────────────────────────────────────────────
+let _t;
+function schedule(){clearTimeout(_t);_t=setTimeout(render,90);}
+document.getElementById('ct').onchange=schedule;
+['snr','cs','ms','ns'].forEach(id=>document.getElementById(id).addEventListener('input',schedule));
+setTimeout(render,100);
+</script>

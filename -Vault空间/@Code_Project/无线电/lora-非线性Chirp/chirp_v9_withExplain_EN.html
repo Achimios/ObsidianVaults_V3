@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    /* ══════════════════════════════════════════════════════
+   Mirror's Edge Theme — Customizable via CSS vars
+   Clean white + ME red accents + ice-blue charts + glass transparency
+   ══════════════════════════════════════════════════════ */
+    :root {
+      /* Backgrounds */
+      --color-background-primary: #F7F7F5;
+      /* Primary: near-white */
+      --color-background-secondary: #EDEDEB;
+      /* Secondary: light gray */
+      /* Text */
+      --color-text-primary: #1A1A1A;
+      --color-text-secondary: #6A6A6A;
+      --color-text-tertiary: #A0A0A0;
+      /* Borders */
+      --color-border-tertiary: rgba(0, 0, 0, 0.09);
+      /* Accent colors */
+      --me-red: #E8321A;
+      /* Mirror's Edge Red */
+      --me-orange: #F5A623;
+      /* Secondary Orange */
+      --me-blue: #1A8FE3;
+      /* Clear Blue */
+      --me-green: #2ECC71;
+      /* Mint Green (correct) */
+      /* Chart colors (edit here to control all canvas colors) */
+      --chart-tx: #2A2A2A;
+      /* TX waveform */
+      --chart-rx: #E8321A;
+      /* RX waveform */
+      --chart-correct: #2ECC71;
+      --chart-wrong: #E8321A;
+      --chart-cw: #F5A623;
+      --chart-pulse: #9B59B6;
+    }
+
+    /* ══ End Theme Section ══ */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: var(--font-sans, sans-serif);
+      background: var(--color-background-primary, #fff);
+      font-size: 12px
+    }
+
+    .ctrl {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 6px 8px;
+      background: var(--color-background-secondary, #f5f5f3);
+      border-radius: 8px
+    }
+
+    .ctrl label {
+      font-size: 11px;
+      color: var(--color-text-secondary, #666);
+      white-space: nowrap
+    }
+
+    .ctrl select,
+    .ctrl input[type=range] {
+      font-size: 11px;
+      vertical-align: middle
+    }
+
+    .ctrl input[type=range] {
+      flex: 1;
+      min-width: 0
+    }
+
+    .ctrl-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .ctrl-row label {
+      min-width: 48px
+    }
+
+    input[type=range] {
+      accent-color: #8693a8
+    }
+
+    .ctrl button {
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--color-border-tertiary, #ddd);
+      background: var(--color-background-secondary, #eee);
+      color: var(--color-text-primary, #222);
+      font-size: 11px;
+      cursor: pointer
+    }
+
+    .val {
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 30px;
+      color: var(--color-text-primary, #222);
+      display: inline-block
+    }
+
+    .tog {
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1.5px solid #aaa;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background .12s, color .12s
+    }
+
+    .tog.on {
+      background: var(--me-red, #E8321A);
+      color: #fff;
+      border-color: var(--me-red, #E8321A)
+    }
+
+    .tog.off {
+      background: var(--color-background-secondary, #eee);
+      color: var(--color-text-secondary, #666)
+    }
+
+    .panel {
+      background: var(--color-background-primary, #fff);
+      border: .5px solid var(--color-border-tertiary, #e0e0e0);
+      border-radius: 8px;
+      padding: 8px 10px
+    }
+
+    .ptitle {
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 1px;
+      color: var(--color-text-primary, #222)
+    }
+
+    .psub {
+      font-size: 10px;
+      color: var(--color-text-tertiary, #999);
+      margin-bottom: 5px;
+      line-height: 1.5
+    }
+
+    .info-box {
+      background: var(--color-background-secondary, #f5f5f3);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 10.5px;
+      color: var(--color-text-secondary, #666);
+      line-height: 1.7
+    }
+
+    .info-box b {
+      color: var(--color-text-primary, #222)
+    }
+
+    canvas {
+      display: block;
+      border-radius: 3px
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px
+    }
+
+    .sgrid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      margin-top: 3px
+    }
+
+    .sc {
+      width: 34px;
+      height: 26px;
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 9.5px;
+      line-height: 1.2;
+      cursor: pointer
+    }
+
+    .cbar {
+      height: 6px;
+      border-radius: 3px;
+      margin-top: 3px;
+      background: linear-gradient(to right, #042C53, #185FA5, #1D9E75, #EF9F27, #D85A30)
+    }
+
+    .cbar-lbl {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--color-text-tertiary);
+      margin-top: 1px
+    }
+
+    .badge {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px
+    }
+
+    .bp {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--color-background-secondary, #f0f0ee);
+      color: var(--color-text-secondary, #555)
+    }
+
+    .bp b {
+      color: var(--color-text-primary, #222)
+    }
+
+    .dv {
+      width: 1px;
+      height: 14px;
+      background: var(--color-border-tertiary, #ddd);
+      margin: 0 2px;
+      display: inline-block;
+      vertical-align: middle
+    }
+
+    .audio-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: var(--color-background-secondary, #f5f5f3);
+      border-radius: 8px;
+      flex-wrap: wrap
+    }
+
+    /* ══ Left Sticky Sidebar ══ */
+    .app-layout {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 6px 0 6px 6px;
+    }
+
+    .main-plots {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 6px 4px 6px 0;
+    }
+
+    body {
+      overflow-y: scroll;
+    }
+  </style>
+</head>
+
+<body>
+  <!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  >v<📋 TOC - Perlin-CSS Simulator Architecture Index       ║
+  ╠══════════════════════════════════════════════════════════════╣
+  ║  >v<🎛️ Sidebar     - Controls # A/B/C panels + Audio       ║
+  ║  >v<📊 Main Plots  - Charts ①–⑦ # Time, Spectrogram, FFT.. ║
+  ║  >v<📖 Principle   - Theory # LPI logic & engineering      ║
+  ║  >v<📐 Explainer   - Animation # Matched filter step-by-step║
+  ║  >v<📝 Design Memo - Decisions # ⑨ subsystem decisions     ║
+  ║  >v<💡 Brainstorm  - Ideas # Bilingual CN/EN toggle demo  ║
+  ╚══════════════════════════════════════════════════════════════╝
+  -->
+  <div class="app-layout">
+    <div class="sidebar"><!-- >v<🎛️Sidebar - Controls # All parameter controls in sticky left panel -->
+      <div style="color:#1A8FE3;font-size:10px;padding:2px 4px 4px 4px;line-height:1.4">Sim sample rate = 1/1000 of real LoRa; 500 Hz in sim ⇔ 500 kHz real BW — mathematically equivalent</div>
+
+      <!-- A: Base Signal -->
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <label>Modulation</label>
+          <select id="ct">
+            <option value="linear">Linear Chirp</option>
+            <option value="perlin">Perlin (LPI)</option>
+            <option value="zc">Zadoff-Chu</option>
+          </select>
+        </div>
+        <div class="ctrl-row">
+          <label>ID Mode</label>
+          <select id="modeSel">
+            <option value="phase">Phase Shift</option>
+            <option value="wave">Wave Switch</option>
+          </select>
+          <button class="tog off" id="mwBtn" style="margin-left:4px">Multi-Wave</button>
+        </div>
+        <div class="ctrl-row">
+          <label>SF</label>
+          <select id="sfSel">
+            <option value="6">SF6 M=64</option>
+            <option value="7" selected>SF7 M=128</option>
+            <option value="8">SF8 M=256</option>
+          </select>
+        </div>
+        <div class="ctrl-row">
+          <label>SNR</label><input type="range" id="snr" min="-20" max="20" value="5" step="1"><span class="val"
+            id="snrv">5dB</span>
+        </div>
+        <div class="ctrl-row">
+          <label>Wave Seed</label><input type="range" id="cs" min="0" max="99" value="7"><span class="val" id="csv">7</span>
+        </div>
+        <div class="ctrl-row">
+          <label>Msg Seed</label><input type="range" id="ms" min="0" max="99" value="42"><span class="val" id="msv">42</span>
+        </div>
+        <div class="ctrl-row">
+          <label>Noise Seed</label><input type="range" id="ns" min="0" max="99" value="0"><span class="val" id="nsv">0</span>
+        </div>
+        <button id="berBtn">BER×200</button>
+      </div>
+
+      <!-- B: Spreading -->
+      <div class="ctrl">
+        <b style="font-size:11px">Spreading</b>
+        <div class="ctrl-row">
+          <button class="tog off" id="dsssBtn">DSSS</button>
+          <label style="margin-left:6px">Chip×</label>
+          <select id="chipRate">
+            <option value="2">×2 (Wide)</option>
+            <option value="4" selected>×4</option>
+            <option value="8">×8 (Narrow)</option>
+          </select>
+        </div>
+        <div class="ctrl-row">
+          <label>PN Seed</label><input type="range" id="pnSeed" min="0" max="99" value="0"><span class="val"
+            id="pnSeedV">0</span>
+        </div>
+        <div class="ctrl-row"
+          style="border-top:1px solid var(--color-border-tertiary,#ddd);padding-top:5px;margin-top:1px">
+          <button class="tog off" id="cpBtn">CP (Cyclic Prefix)</button>
+        </div>
+        <div class="ctrl-row">
+          <label>Length</label><input type="range" id="cpLen" min="4" max="32" value="16" step="4"><span class="val"
+            id="cpLenV">16pt</span>
+        </div>
+      </div>
+
+      <!-- C: Jamming -->
+      <div class="ctrl">
+        <b style="font-size:11px">Jamming</b>
+        <div class="ctrl-row">
+          <button class="tog off" id="cwBtn">CW Tone</button>
+        </div>
+        <div class="ctrl-row">
+          <label>Freq Hz</label><input type="range" id="cwFreq" min="10" max="490" value="200" step="10"><span class="val"
+            id="cwFreqV">200Hz</span>
+        </div>
+        <div class="ctrl-row">
+          <label>JSR dB</label><input type="range" id="cwJSR" min="-20" max="30" value="0" step="1"><span class="val"
+            id="cwJSRV">0dB</span>
+        </div>
+        <div class="ctrl-row"
+          style="border-top:1px solid var(--color-border-tertiary,#ddd);padding-top:5px;margin-top:1px">
+          <button class="tog off" id="impBtn">Impulse</button>
+        </div>
+        <div class="ctrl-row">
+          <label>Type</label>
+          <select id="impType">
+            <option value="motor">Harmonic EMI (periodic)</option>
+            <option value="random">Random Impulse</option>
+          </select>
+        </div>
+        <div class="ctrl-row">
+          <label>Amplitude</label><input type="range" id="impAmp" min="0.1" max="5" value="1" step="0.1"><span class="val"
+            id="impAmpV">1.0</span>
+        </div>
+        <div class="ctrl-row">
+          <label id="impFreqLabel">Freq Hz</label><input type="range" id="impFreq" min="10" max="490" value="233"
+            step="1"><span class="val" id="impFreqV">233Hz</span>
+        </div>
+      </div>
+
+      <!-- Audio -->
+      <div class="audio-bar">
+        <b style="font-size:11px">🔊</b>
+        <button id="playTxBtn">▶ TX</button>
+        <button id="playRxBtn">▶ RX</button>
+        <button id="stopBtn">■ Stop</button>
+        <label>Freq×</label>
+        <select id="audioScale">
+          <option value="1" selected>×1 Original</option>
+          <option value="4">×4</option>
+          <option value="8">×8</option>
+          <option value="16">×16</option>
+        </select>
+        <label>Syms</label>
+        <select id="audioSyms">
+          <option value="4">4 sym</option>
+          <option value="8" selected>8 sym</option>
+          <option value="20">All 20</option>
+        </select>
+        <label>Duration×</label>
+        <select id="durMult">
+          <option value="0.5">×0.5 Fast</option>
+          <option value="1" selected>×1 Normal</option>
+          <option value="2">×2 Slow</option>
+          <option value="4">×4 V.Slow</option>
+        </select>
+        <span class="val" id="audioInfo" style="font-size:10px;min-width:140px"></span>
+      </div>
+
+      <!-- Badge -->
+      <div class="panel" style="padding:5px 10px">
+        <div class="badge" id="badge"></div>
+      </div>
+
+      <!-- Multipath & Doppler Immunity -->
+      <div class="panel" style="font-size:9.5px">
+        <div class="ptitle" style="font-size:11px">📡 Channel Immunity (Multipath &amp; Doppler)</div>
+        <div class="info-box" style="font-size:9.5px;line-height:1.6">
+          <b>Multipath:</b> 100m reflection true delay = 0.33μs, at 500kHz sample rate = only 0.17 samples → rounds to 0. Reflection overlays directly into main signal; matched filter processes it together, no ISI. Freq-selective fading requires delay &gt; 1/BW = 2μs (&gt;600m path diff), typically only in urban high-rise environments. <b>CSS long symbols are naturally immune to multipath.</b>
+          <br><b>Doppler:</b> v=100m/s @2.4GHz gives fd=800Hz. After downconversion to 500kHz baseband, 800Hz offset = 0.16%. Scaled to 500Hz simulation BW = 0.8Hz shift = 0.1 FFT bins, completely buried within the chirp correlation main lobe (≈2 bins wide). <b>CSS is inherently robust to Doppler, no compensation needed.</b>
+          <br><b>Phase Offset:</b> In traditional linear chirp "conjugate multiply + FFT", phase offset has zero impact — it synchronously affects the product phase only.
+          <br><b>Frequency Offset:</b> In traditional linear chirp, it synchronously shifts the product frequency. In nonlinear chirp — not yet calculated. Corrected via preamble AFC.
+          <br><b>The Real Threat:</b> 2.4GHz band WiFi/Bluetooth narrowband interference (continuous CW) and harmonic EMI impulse noise — these are the primary adversaries for drone SDR links. See jamming analysis below.
+        </div>
+      </div>
+
+    </div><!-- /sidebar -->
+    <div class="main-plots"><!-- >v<📊Main Plots - Charts # 7 visualization panels on the right -->
+
+      <!-- ① Waveform -->
+      <div class="panel">
+        <div class="ptitle">① Time-Domain Waveform <small style="font-weight:normal;color:var(--color-text-tertiary)">— baseband, displayed as SSB upconverted</small>
+          <span style="float:right;display:flex;gap:4px;align-items:center">
+            <button id="wavPrev">◀</button>
+            <span class="val" id="wavPage" style="font-size:10px;min-width:54px;text-align:center">sym 0–3</span>
+            <button id="wavNext">▶</button>
+          </span>
+        </div>
+        <div class="psub">Black=TX, Orange=RX; Red vertical lines = impulse positions; CW superimposes visible modulation ripple on RX envelope</div>
+        <canvas id="wc" style="width:100%;height:150px"></canvas>
+      </div>
+
+      <!-- ② Spectrogram -->
+      <div class="panel">
+        <div class="ptitle">② Spectrogram (Hann 64pt, 87.5% overlap) <small style="font-weight:normal;color:var(--color-text-tertiary)">— baseband, displayed as SSB upconverted</small>
+          <button id="splitBtn" class="tog off" style="float:right;padding:1px 7px;font-size:10px">Split View</button>
+        </div>
+        <div class="psub">CW → horizontal bright line (fixed freq); Impulse → vertical bright streaks (broadband transient); White trace = TX instantaneous frequency</div>
+        <canvas id="sc" style="width:100%;height:240px"></canvas>
+        <canvas id="sc2" style="width:100%;height:200px;display:none;margin-top:4px"></canvas>
+        <div class="cbar"></div>
+        <div class="cbar-lbl"><span>Low</span><span>High</span></div>
+      </div>
+
+      <!-- ③ FFT -->
+      <div class="panel">
+        <div class="ptitle">③ Power Spectrum (Interceptor View)</div>
+        <div class="psub">CW → sharp spectral line (identifiable freq); Impulse → broadband floor lift; DSSS → flatter spectrum (LPI↑)</div>
+        <canvas id="fc" style="width:100%;height:120px"></canvas>
+      </div>
+
+      <!-- ④⑤⑥ -->
+      <div class="three-col">
+        <div class="panel">
+          <div class="ptitle">④ Matched Filter Correlation (Current Sym)</div>
+          <div class="psub">8-template cross-correlation; Green ✓=Correct, Red ✗=Wrong; CW uniformly raises noise floor</div>
+          <canvas id="cc" style="width:100%;height:185px"></canvas>
+          <div style="margin-top:3px;font-size:10px">sym: <select id="ss" style="font-size:10px"></select></div>
+        </div>
+        <div class="panel">
+          <div class="ptitle">⑤ Decision Grid &amp; BER</div>
+          <div class="psub">Large=Decoded, Small=Sent; Green=Correct, Red=Error</div>
+          <div class="sgrid" id="sg"></div>
+          <div style="margin-top:6px">
+            <div style="font-size:10px;color:var(--color-text-secondary)">Single BER</div>
+            <div id="b1" style="font-size:20px;font-weight:700;color:var(--color-text-primary)">—</div>
+            <div id="bN" style="font-size:10px;margin-top:3px;color:var(--color-text-secondary)">Run BER×200 for statistical average</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ptitle">⑥ Template Cross-Correlation Matrix</div>
+          <div class="psub">Darker off-diagonal = more orthogonal; prefer groups with greater orthogonality</div>
+          <canvas id="xc" style="width:100%;height:185px"></canvas>
+          <div class="cbar" style="background:linear-gradient(to right,#042C53,#185FA5,#D85A30)"></div>
+          <div class="cbar-lbl"><span>Low (orthogonal)</span><span>High (interference)</span></div>
+        </div>
+      </div>
+
+      <!-- ⑦ CW Frequency Sweep BER -->
+      <div class="panel">
+        <div class="ptitle">⑦ CW Frequency Sweep BER</div>
+        <div class="psub">With CW enabled, sweeps all jamming frequencies across the band to find which frequency most impacts chirp BER (theoretically flat — protected everywhere by +21dB processing gain). JSR &gt; +21dB needed to see significant BER rise. <button id="scanBtn" style="margin-left:8px;padding:1px 7px;font-size:10px">Scan</button></div>
+        <canvas id="scanCanvas"
+          style="width:100%;height:160px;background:var(--color-background-secondary,#f5f5f3)"></canvas>
+      </div>
+
+    </div><!-- /main-plots -->
+  </div><!-- /app-layout end -->
+
+  <div>
+
+  <!-- >v<📖Principle Panels - Theory # Nonlinear Chirp CSS: LPI principles & engineering tradeoffs -->
+  <div class="panel" style="margin:0 4px 8px 4px">
+    <div class="ptitle">📊 Nonlinear Chirp CSS: LPI Value &amp; Engineering Tradeoffs</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(500px,1fr));gap:16px;margin-top:8px">
+
+      <div class="info-box">
+        <b>Why does nonlinear Chirp have LPI advantage?</b>
+        <br>Standard LoRa (linear Chirp) has an analytic frequency trajectory <code>f(t) = FL + (FH-FL)·t/M</code> — any SDR can identify it with one dechirp+FFT.
+        <br>Perlin/nonlinear Chirp trajectory is determined by a seed. Without the seed, no analytic dechirp can be constructed, achieving <b>LPI (Low Probability of Intercept)</b>. An adversary only sees a diffuse blob on the wideband spectrum, indistinguishable from noise — this is true <b>LPD (Low Probability of Detection)</b>.
+        <br><b>Cost:</b> The receiver must store a full set of templates (NA×M samples); cannot use the `conjugate-multiply then FFT` shortcut. Acceptable when NA is small (≤16).
+        <br><b>Real-world LPI Chirp reference systems:</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">System</td>
+            <td style="text-align:left">Waveform</td>
+            <td style="text-align:left">Scenario</td>
+          </tr>
+          <tr>
+            <td><b>FMCW RadCom (77GHz automotive)</b></td>
+            <td>Linear chirp, sensing+comms same waveform</td>
+            <td>Production vehicles, TI/NXP chipset</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>LoRa / LoRaWAN</b></td>
+            <td>Linear CSS (NA=M, dechirp+FFT)</td>
+            <td>IoT sensing, largest commercial CSS system</td>
+          </tr>
+          <tr>
+            <td><b>APART Project</b></td>
+            <td>Adaptive nonlinear chirp</td>
+            <td>BLOS air-to-ground tactical link, 2010s</td>
+          </tr>
+          <tr style="background:rgba(232,50,26,.04)">
+            <td><b>Link 16 / SINCGARS</b></td>
+            <td>FHSS + DSSS (non-chirp)</td>
+            <td>US military tactical data links, baseline</td>
+          </tr>
+          <tr>
+            <td><b>Military FHSS+chirp hybrid</b></td>
+            <td>Frequency hopping + intra-hop chirp</td>
+            <td>Classified, details undisclosed</td>
+          </tr>
+        </table>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">Dimension</td>
+            <td>Standard LoRa</td>
+            <td>Our Nonlinear Chirp</td>
+          </tr>
+          <tr><td>LPI Level</td><td>Medium (flat spectrum, predictable linear trajectory)</td><td style="color:var(--me-green)">High (Perlin trajectory not analytically replicable)</td></tr>
+          <tr><td>NBI Resilience</td><td>+21dB processing gain</td><td>Same level + extra trajectory randomness</td></tr>
+          <tr><td>Demod Complexity</td><td>Very low (dechirp+FFT)</td><td>Medium (NA template dot products, ≈1.7× overhead)</td></tr>
+          <tr><td>Application</td><td>Global IoT ecosystem</td><td style="color:var(--me-blue)">Drone-specific tactical link</td></tr>
+        </table>
+        <small>Positioned close to APART (Adaptive Phonon-Activated Radio Transceivers) philosophy: prioritize high LPI, accept small demod complexity cost. Only sender and receiver know the Perlin seed — without it the waveform cannot be replicated. Standard LoRa linear chirp is identifiable by any SDR; this scheme is not.
+          <br>The real LPI bottleneck is not the control link but the video OFDM downlink, which is hard to hide. A crafty idea: in low-clutter environments, have the drone/robot dog detect the scene, compress semantics, and send back scene+target info to reconstruct a 3D map — like a Tesla screen. Obstacles like branches and rebar require annotation.
+        <br><b>Consider injecting appropriate noise</b></small>
+      </div>
+
+      <div class="info-box">
+        <b>🔧 Path to Hardware — From Simulation to Production</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">Phase</td>
+            <td>Platform</td>
+            <td>Task</td>
+            <td>Difficulty</td>
+            <td>Goal</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.06)">
+            <td><b>① Algorithm Validation</b><br><small>← Current phase</small></td>
+            <td>Python / This HTML Simulator</td>
+            <td>Full link simulation: CW jamming, noise, parameter tradeoffs</td>
+            <td style="color:var(--me-green)">Low</td>
+            <td>Confirm algorithm correctness</td>
+          </tr>
+          <tr>
+            <td><b>② SDR Over-the-Air</b></td>
+            <td>HackRF One + GNURadio + Python</td>
+            <td>Real OTA tx/rx; verify robustness to multipath, freq offset, delay. Python generates Perlin templates; GNURadio captures IQ</td>
+            <td style="color:var(--me-orange)">Medium</td>
+            <td>Expose real channel issues missed by simulation</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>③ MCU Embedded Prototype</b></td>
+            <td>STM32H7 + AT86RF215</td>
+            <td>C implementation of matched filter; AT86RF215 provides IQ interface (400–900MHz, BW up to 4MHz)</td>
+            <td style="color:var(--me-orange)">Med-High</td>
+            <td>Verify real-time performance &amp; power</td>
+          </tr>
+          <tr>
+            <td><b>④ Production</b></td>
+            <td>FPGA (Artix-7 / Zynq)</td>
+            <td>Parallel template-matching pipeline for large NA; or STM32+FPGA co-processing</td>
+            <td style="color:var(--me-red)">High</td>
+            <td>Miniaturization / mass production / final HW</td>
+          </tr>
+        </table>
+        <b>RF Front-End Chip Selection (IQ interface = mandatory, SX1276 won't work):</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">Chip</td>
+            <td>Band</td>
+            <td>IQ Interface</td>
+            <td>Max BW</td>
+            <td>Notes</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.06)">
+            <td><b>AT86RF215</b> (Microchip)</td>
+            <td>400–900 / 2.4GHz</td>
+            <td style="color:var(--me-green)">✅ SPI IQ stream</td>
+            <td>4 MHz</td>
+            <td style="color:var(--me-green)">Top pick: dual-band + IQ + MCU-drivable</td>
+          </tr>
+          <tr>
+            <td><b>CC1101</b> (TI)</td>
+            <td>300–928MHz</td>
+            <td style="color:var(--me-red)">❌ No IQ, FSK only</td>
+            <td>800 kHz</td>
+            <td>BW too narrow for CSS</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>HackRF One</b> (Great Scott)</td>
+            <td>1MHz–6GHz</td>
+            <td style="color:var(--me-green)">✅ USB IQ stream</td>
+            <td>20 MHz</td>
+            <td>SDR dev only; not for airborne</td>
+          </tr>
+          <tr>
+            <td><b>ADRV9002</b> (ADI)</td>
+            <td>30MHz–6GHz</td>
+            <td style="color:var(--me-green)">✅ LVDS IQ</td>
+            <td>40 MHz</td>
+            <td>High performance; needs FPGA; production-grade option</td>
+          </tr>
+        </table>
+        <b>STM32H7 Real-Time Feasibility Estimate (M=128, NA=8, BW=500kHz):</b>
+        ADC sampling ≈ 4Msps (2M each for I/Q); per-symbol dot product = 128×8 = 1024 complex multiply-adds;
+        STM32H7 @ 480MHz with DSP extensions: <b>~0.1ms per symbol, ample real-time margin</b> (symbol duration = 0.256ms).
+        For NA≤16, STM32H7 handles it easily; NA>32, consider adding FPGA co-processor.
+        <br><small style="color:var(--color-text-tertiary)">Hand-soldering analog circuits to generate Perlin chirp is nearly impossible: precise time-varying frequency control cannot be achieved in pure analog. All-digital baseband + RF front-end chip is the only practical path.</small>
+      </div>
+
+      <div class="info-box">
+        <b>Increasing M → Higher Sensitivity (Processing Gain)</b><br>
+        Processing gain = 10·log₁₀(M), independent of NA. There are two paths to larger M:
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">Path</td>
+            <td>How M Increases</td>
+            <td>Symbol Duration</td>
+            <td>Cost</td>
+          </tr>
+          <tr>
+            <td><b>A. Faster ADC</b></td>
+            <td>FS×2, T unchanged → M×2</td>
+            <td>Unchanged</td>
+            <td>ADC power/cost ×2</td>
+          </tr>
+          <tr>
+            <td><b>B. Longer Symbol</b></td>
+            <td>FS unchanged, T×2 → M×2</td>
+            <td>×2 (longer)</td>
+            <td>Data rate ÷2, latency ×2</td>
+          </tr>
+        </table>
+        Both paths yield +3dB. The choice: spend ADC money or spend time.
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:6px">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">M</td>
+            <td>Processing Gain</td>
+            <td>Duration (BW=500kHz real)</td>
+            <td>Notes</td>
+          </tr>
+          <tr>
+            <td>64 (SF6)</td>
+            <td>+18.1 dB</td>
+            <td>128 μs</td>
+            <td></td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.07)">
+            <td><b>128 (SF7)</b></td>
+            <td><b>+21.1 dB</b></td>
+            <td><b>256 μs</b></td>
+            <td>← Current</td>
+          </tr>
+          <tr>
+            <td>256 (SF8)</td>
+            <td>+24.1 dB</td>
+            <td>512 μs</td>
+            <td>M×2 = +3dB</td>
+          </tr>
+          <tr>
+            <td>512</td>
+            <td>+27.1 dB</td>
+            <td>1.024 ms</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>1024</td>
+            <td>+30.1 dB</td>
+            <td>2.048 ms</td>
+            <td></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="info-box">
+        <b>Doubling both M &amp; NA vs. doubling M alone:</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">Action</td>
+            <td>Sensitivity</td>
+            <td>bits/sym</td>
+            <td>Compute</td>
+            <td>Reason</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.06)">
+            <td>M×2 (NA unchanged)</td>
+            <td style="color:var(--me-green)"><b>+3dB</b></td>
+            <td>No change</td>
+            <td>×2</td>
+            <td>Integration time ×2, noise ± cancellation more effective</td>
+          </tr>
+          <tr>
+            <td>NA×2 (M unchanged)</td>
+            <td style="color:var(--color-text-secondary)"><b>0 (no impact)</b></td>
+            <td>+1 bit</td>
+            <td>×2</td>
+            <td>NA is completely unrelated to processing gain; it only expands the symbol alphabet</td>
+          </tr>
+          <tr>
+            <td>M×2 and NA×2</td>
+            <td style="color:var(--me-green)"><b>+3dB</b></td>
+            <td>+1 bit</td>
+            <td>×4</td>
+            <td>Gain comes from M only; NA contributes just 1 bit/sym, at 4× compute cost</td>
+          </tr>
+        </table>
+        <b>Conclusion: Sensitivity is determined solely by M (integration sample count); NA (symbol template count) contributes nothing to sensitivity.</b> Want better sensitivity → increase M. Want higher-order modulation → increase NA (but NA>16 begins to defeat the purpose of nonlinear chirp).
+      </div>
+
+      <div class="info-box"
+        style="border-left:3px solid var(--me-orange);background:rgba(245,166,35,.06)">
+        <b>⚠️ Counterintuitive: Increasing BW (M fixed) → Sensitivity DECREASES! SX1276 confirms it</b>
+        <br>SX1276 datasheet measurements: SF7/BW125 → -124dBm, SF7/BW500 → -118dBm (4×BW = -6dB sensitivity, exactly 10log₁₀(4)=6dB).<br><small style="color:var(--color-text-tertiary)">Source: Semtech SX1276/77/78/79 Datasheet Rev.7, Table 16 Receiver Characteristics (<a href="https://www.semtech.com/products/wireless-rf/lora-connect/sx1276" target="_blank">product page</a> for latest version)</small>
+        <br><br>Root cause (RF systems): Total noise power N = N₀ × BW. BW×2: ADC sample rate ×2, symbol duration T = M/BW halves, integration time shortens, SNR drops 3dB; plus wider ADC bandwidth admits more noise. Net effect: BW×k → sensitivity -10log₁₀(k) dB.
+        <br><br><b>BW increase's real value (besides sensitivity):</b><br>
+        <b style="color:var(--me-green)">✅ Higher data rate!</b> CSS orthogonality requires Tₛ = M/BW. BW×2 → Tₛ halves → more symbols per second → data rate doubles.
+        <small>ADC sample count M stays the same, but clock frequency scales with BW; symbols complete in less time.</small>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">BW Change</td>
+            <td>M Change</td>
+            <td>Sensitivity</td>
+            <td>Data Rate</td>
+            <td>LPI Level</td>
+            <td>CW Resilience</td>
+            <td>ADC Req.</td>
+          </tr>
+          <tr>
+            <td>BW×2</td>
+            <td>M unchanged</td>
+            <td style="color:var(--me-red)">-3dB (worse)</td>
+            <td style="color:var(--me-green)">×2 (better)</td>
+            <td>↑↑ (wider spread)</td>
+            <td>↑↑ (more freq diversity)</td>
+            <td>2× faster</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.06)">
+            <td>BW×2</td>
+            <td>M×2</td>
+            <td style="color:var(--me-green)">Unchanged (proportional)</td>
+            <td style="color:var(--me-green)">×2 (better)</td>
+            <td>↑↑</td>
+            <td>↑↑</td>
+            <td>2× faster, dur.×1</td>
+          </tr>
+          <tr>
+            <td>BW unchanged</td>
+            <td>M×2</td>
+            <td style="color:var(--me-green)">+3dB (better)</td>
+            <td style="color:var(--me-red)">÷2 (worse)</td>
+            <td>Unchanged</td>
+            <td>Unchanged</td>
+            <td>Unchanged, dur.×2</td>
+          </tr>
+        </table>
+        <b>Conclusion:</b> Widening BW's real value is <b>data rate↑</b>, LPI (lower PSD), and frequency diversity (NBI resilience) — but sensitivity drops. To improve sensitivity you must increase M (faster ADC or longer symbol).
+      </div>
+
+      <div class="info-box">
+        <b>NA (Symbol Template Count) Tradeoffs: M=128 fixed, comparing different NA</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:6px">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">NA</td>
+            <td>bits/sym</td>
+            <td>Template Dot Products</td>
+            <td>Real FFT (linear)</td>
+            <td>Ratio</td>
+            <td>Processing Gain</td>
+            <td>Use Case</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>3 bits</td>
+            <td>8×128=<b>1,024</b></td>
+            <td rowspan="5" style="text-align:center;vertical-align:middle">M+M/2·log₂M<br>=<b>576</b></td>
+            <td>1.78×</td>
+            <td>+21.1 dB</td>
+            <td style="color:var(--me-green)">← Current, runs on MCU</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td>16</td>
+            <td>4 bits</td>
+            <td>16×128=<b>2,048</b></td>
+            <td>3.6×</td>
+            <td>+21.1 dB</td>
+            <td style="color:var(--me-green)">MCU-capable</td>
+          </tr>
+          <tr>
+            <td>32</td>
+            <td>5 bits</td>
+            <td>32×128=<b>4,096</b></td>
+            <td>7.1×</td>
+            <td>+21.1 dB</td>
+            <td>Suitable for DSP</td>
+          </tr>
+          <tr>
+            <td>64</td>
+            <td>6 bits</td>
+            <td>64×128=<b>8,192</b></td>
+            <td>14.2×</td>
+            <td>+21.1 dB</td>
+            <td>FPGA acceleration recommended</td>
+          </tr>
+          <tr style="background:rgba(232,50,26,.06)">
+            <td>128=M <small style="color:var(--me-red)">(Standard LoRa)</small></td>
+            <td>7 bits</td>
+            <td>128×128=<b>16,384</b></td>
+            <td>28.4×</td>
+            <td>+21.1 dB</td>
+            <td style="color:var(--me-red)">FPGA required; nonlinear makes no sense<br><small>Semtech's conjugate-multiply+FFT is equivalent to this NA=M case</small></td>
+          </tr>
+        </table>
+        <br>
+        <b>Conclusion:</b> Processing gain is determined <u>solely by M</u>, not NA. NA only affects bits-per-symbol and compute load. For nonlinear Chirp, <b>NA≤16 is the optimal engineering sweet spot</b> — full LPI, real-time on MCU, reasonable data rate (3-4 bits/sym × 1kHz/128 ≈ 23-31 bps). Beyond NA>32, template matching overhead defeats the purpose of nonlinear design; better to fall back to linear Chirp + FFT.
+      </div>
+
+      <div class="info-box" style="border-left:3px solid var(--me-blue);background:rgba(26,143,227,.04)">
+        <b>📶 Near-Field High-Interference vs. Far-Field Low-Interference — different noise sources</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:6px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">Scenario</td>
+            <td>Signal S</td>
+            <td>Noise N Source</td>
+            <td>SNR Limiting Factor</td>
+            <td>Strategy</td>
+          </tr>
+          <tr>
+            <td><b>Near-Field, High Interference</b><br><small>Urban / obstructed / dense environments</small></td>
+            <td style="color:var(--me-green)">Strong (low path loss)</td>
+            <td>Multipath fading, adjacent-channel RFI,<br>co-channel contention, WiFi harmonics</td>
+            <td>LNA is not the bottleneck;<br>environmental interference dominates</td>
+            <td>Spreading gain, CW immunity</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>Far-Field, Low Interference</b><br><small>BLOS air-to-ground / open channel</small></td>
+            <td style="color:var(--me-red)">Weak (high path loss)</td>
+            <td>Thermal noise kTB + LNA noise figure F</td>
+            <td>N = kTBF;<br>LNA NF directly determines sensitivity</td>
+            <td>Large M for gain, optimize LNA NF</td>
+          </tr>
+        </table>
+        <b>Root cause:</b> N = k·T·B·F. Near-field: S is strong, external interference far exceeds thermal noise (F is irrelevant). Far-field: interference vanishes, N reverts to thermal noise, every 1dB of NF costs 1dB of sensitivity.
+        <br>For our drone tactical link: <b>the primary BLOS scenario is far-field low-interference — LNA quality and M size are top priority. Urban near-field backup links rely more on interference resilience (processing gain + spreading bandwidth).</b>
+      </div>
+
+      <div class=”info-box” style=”border-left:3px solid var(--me-green);background:rgba(46,204,113,.04)”>
+        <b>📶 IQ Downconversion &amp; Template Matching</b>
+        <br>Standard LoRa's conjugate multiply performs IQ demodulation and dechirp simultaneously — two steps in one. Our template matching separates them:
+        <table style=”width:100%;border-collapse:collapse;font-size:10px;margin:6px 0”>
+          <tr style=”color:var(--color-text-tertiary)”>
+            <td style=”text-align:left”>Stage</td>
+            <td>Standard LoRa</td>
+            <td>Our Nonlinear Chirp</td>
+          </tr>
+          <tr>
+            <td><b>Downconversion</b></td>
+            <td>IQ dual-channel (required)</td>
+            <td>IQ dual-channel (<b>still required</b> — image rejection)</td>
+          </tr>
+          <tr style=”background:rgba(46,204,113,.04)”>
+            <td><b>Demod Core</b></td>
+            <td>r(t)·s*(t) (conjugate multiply, uses Q path) → |FFT|</td>
+            <td>|Σ(I_r+jQ_r)·(I_t−jQ_t)| (complex dot product, take magnitude)</td>
+          </tr>
+          <tr>
+            <td><b>Effect of phase offset φ</b></td>
+            <td>Eliminated by magnitude, <b>no impact</b></td>
+            <td>Eliminated by complex magnitude, <b>no impact</b> (real dot product would multiply by cosφ!)</td>
+          </tr>
+          <tr style=”background:rgba(232,50,26,.04)”>
+            <td><b>Primary source of freq offset</b></td>
+            <td colspan=”2”>Crystal accuracy (±20ppm → ±18kHz @915MHz) far exceeds Doppler (drone 20m/s → 61Hz). Requires preamble AFC compensation.</td>
+          </tr>
+        </table>
+        <b>Note:</b> The animations on this page demonstrate in real baseband (implying “IQ downconversion done, phase aligned”). In hardware, store complex templates I_t+jQ_t, perform complex dot product and take magnitude — phase offset is automatically eliminated.
+      </div>
+
+    </div><!-- /principle grid end -->
+  </div><!-- /📊 principle panels end -->
+
+  <!-- >v<📐Matched Filter Explainer - Animation # Step-by-step correlation detection animation -->
+  <div class="panel" style="margin:0 4px 8px 4px">
+    <div class="ptitle">📐 Matched Filter Correlation Detection · Step-by-Step Animation</div>
+    <div class="psub" style="max-width:900px">
+      <b>Full receive pipeline:</b> ① IQ downconversion (image rejection) → ② STFT signal presence detection → ③ Preamble (known template) autocorrelation peak → timing sync → ④ Extract M=128 sample symbol block → ⑤ Matched filter (<b>this animation demonstrates this step; IQ already done implicitly</b>).
+      <br>Each received symbol (M=128 samples) is pointwise-multiplied with NA pre-stored symbol templates and summed. Only the "correct phase" template achieves <b>coherent summation</b> to a maximum; wrong phases cancel toward zero due to chirp orthogonality.
+      Noise cancels as random ±, SNR improves by +10log₁₀(128)=<b>+21dB</b> after M averages.
+      <br>Row ① = Template, Row ② = Received signal, Row ③ = Pointwise product (animation advances), Row ④ = Running integral (correlation value), Row ⑤ = NA results comparison
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+      <button id="explainPlayBtn">▶ Animate</button>
+      <button id="explainResetBtn">↺ Reset</button>
+      <label style="font-size:11px">Sym: <select id="explainSym" style="font-size:11px"></select></label>
+      <label style="font-size:11px">Template: <select id="explainTmpl" style="font-size:11px"></select></label>
+      <span id="explainInfo" style="font-size:10px;color:var(--color-text-secondary)"></span>
+    </div>
+    <canvas id="explainCV" style="width:100%;height:460px"></canvas>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════
+    // 常数
+    // ═══════════════════════════════════════════
+    const FS = 1000, NA = 8, NTX = 20, FL = 80, FH = 420;
+    let M = 128, SH = [];
+    function updateSH() { SH = Array.from({ length: NA }, (_, i) => Math.floor(i * M / NA)); }
+    updateSH();
+
+    let G = {
+      sel: 0, wavePage: 0,
+      multiWave: false, cpOn: false, cpLen: 16,
+      dsssOn: false, chipRate: 4, pnSeed: 0,
+      cwOn: false, cwFreq: 200, cwJSR: 0,
+      impOn: false, impType: 'motor', impAmp: 1.0, impFreq: 233,
+      identMode: 'phase', snr: 5, stftSplit: false,
+      msg: null, tx: null, rx: null, rxClean: null,
+      tmpls: null, dec: null, corrs: null, freqs: null, symLen: M,
+      impPositions: []
+    };
+    let audioNode = null;
+
+    // ═══ RNG & Perlin ════════════════════════
+    function mkRng(s) {
+      let v = (Math.imul(s | 0, 2654435761) ^ 0xDEADBEEF) >>> 0;
+      return () => { v = ((Math.imul(v, 1664525) + 1013904223) >>> 0); return v / 0x100000000; };
+    }
+    function smoothPerlin(len, nc, seed) {
+      const r = mkRng(seed), c = Array.from({ length: nc + 2 }, () => r() * 2 - 1);
+      return Float32Array.from({ length: len }, (_, i) => {
+        const t = i / (len - 1) * nc, gi = ~~t, f = t - gi, sf = f * f * (3 - 2 * f);
+        return c[gi] * (1 - sf) + c[gi + 1] * sf;
+      });
+    }
+    function genMsg(seed) { const r = mkRng(seed); return Uint8Array.from({ length: NTX }, () => ~~(r() * NA)); }
+
+    // ═══ 波形生成 ════════════════════════════
+    function ifLinear() { return Float32Array.from({ length: M }, (_, n) => FL + (FH - FL) * n / M); }
+    function ifPerlin(seed) {
+      const p = smoothPerlin(M, 10, seed);
+      return Float32Array.from({ length: M }, (_, n) => FL + (FH - FL) * (p[n] + 1) / 2);
+    }
+    function ifToWave(freq) {
+      const b = new Float32Array(M); let ph = 0;
+      for (let n = 0; n < M; n++) { b[n] = Math.cos(ph); ph += 2 * Math.PI * freq[n] / FS; }
+      return b;
+    }
+    function makeZCwave(root) {
+      const b = new Float32Array(M);
+      for (let n = 0; n < M; n++) {
+        const nn = n % 127, ph = -Math.PI * (root % 127 + 1) * nn * (nn + 1) / 127;
+        b[n] = Math.cos(ph + 2 * Math.PI * ((FL + FH) / 2) * n / FS);
+      }
+      return b;
+    }
+    function makePNcode(len, seed, cr) {
+      const r = mkRng(seed * 1234 + 7), chips = Math.ceil(len / cr);
+      const c = Array.from({ length: chips }, () => r() > 0.5 ? 1 : -1);
+      return Float32Array.from({ length: len }, (_, n) => c[~~(n / cr)]);
+    }
+    function applyDSSS(wave, on, cr, pnSeed, si) {
+      if (!on) return wave;
+      const pn = makePNcode(M, pnSeed * 100 + si, cr);
+      return Float32Array.from(wave, (_, n) => wave[n] * pn[n]);
+    }
+    function normalize(arr) {
+      let n = 0; arr.forEach(v => n += v * v); n = Math.sqrt(n) || 1;
+      return Float32Array.from(arr, v => v / n);
+    }
+    function addCP(wave, on, cpLen) {
+      if (!on) return wave;
+      const out = new Float32Array(cpLen + M);
+      for (let i = 0; i < cpLen; i++)out[i] = wave[M - cpLen + i];
+      for (let i = 0; i < M; i++)out[cpLen + i] = wave[i];
+      return out;
+    }
+    function makeBaseWave(type, cSeed, waveIdx, symIdx, multiWave) {
+      if (type === 'zc') return makeZCwave(cSeed + waveIdx * 7);
+      if (type === 'linear') {
+        if (G.identMode === 'wave') {
+          const f0 = FL + (FH - FL) * waveIdx / (NA * 2), f1 = FH - (FH - FL) * waveIdx / (NA * 2);
+          return ifToWave(Float32Array.from({ length: M }, (_, n) => f0 + (f1 - f0) * n / M));
+        }
+        return ifToWave(ifLinear());
+      }
+      const seed = multiWave ? (cSeed * 1000 + symIdx * NA + waveIdx + 1) : (cSeed * 100 + waveIdx + 1);
+      return ifToWave(ifPerlin(seed));
+    }
+
+    // ═══ 构建TX + 模板 ═══════════════════════
+    function buildAll(p) {
+      const { type, cSeed, msg, multiWave, identMode, cpOn, cpLen, dsssOn, chipRate, pnSeed } = p;
+      const symLen = cpOn ? M + cpLen : M;
+      const tmpls = Array.from({ length: NTX }, (_, si) => {
+        if (identMode === 'wave') {
+          return Array.from({ length: NA }, (_, k) => {
+            let w = makeBaseWave(type, cSeed, k, si, multiWave);
+            w = applyDSSS(w, dsssOn, chipRate, pnSeed, si);
+            return normalize(w);
+          });
+        } else {
+          let base = makeBaseWave(type, cSeed, 0, si, multiWave);
+          base = applyDSSS(base, dsssOn, chipRate, pnSeed, si);
+          return Array.from({ length: NA }, (_, k) => {
+            const t = new Float32Array(M), s = SH[k];
+            for (let n = 0; n < M; n++)t[n] = base[(n + s) % M];
+            return normalize(t);
+          });
+        }
+      });
+      const tx = new Float32Array(NTX * symLen);
+      for (let si = 0; si < NTX; si++) {
+        const core = tmpls[si][msg[si]], withCP = addCP(core, cpOn, cpLen);
+        for (let n = 0; n < symLen; n++)tx[si * symLen + n] = withCP[n];
+      }
+      const freqs = Array.from({ length: NTX }, (_, si) => {
+        if (type === 'zc') return Float32Array.from({ length: M }, () => (FL + FH) / 2);
+        if (type === 'linear') return ifLinear();
+        const seed = multiWave ? (cSeed * 100 + si + 1) : cSeed;
+        return ifPerlin(seed);
+      });
+      return { tmpls, tx, freqs, symLen };
+    }
+
+    // ═══ CW窄带干扰 ══════════════════════════
+    // 持续叠加到整段RX，相位随机
+    function applyCW(sig, on, freq, jsr_db) {
+      if (!on) return sig;
+      const jsr = Math.pow(10, jsr_db / 20); // 幅度比
+      let sigPwr = 0; sig.forEach(v => sigPwr += v * v); sigPwr /= sig.length || 1;
+      const amp = Math.sqrt(sigPwr) * jsr;
+      const phi0 = Math.random() * 2 * Math.PI;
+      const out = new Float32Array(sig.length);
+      for (let n = 0; n < sig.length; n++)
+        out[n] = sig[n] + amp * Math.cos(2 * Math.PI * freq * n / FS + phi0);
+      return out;
+    }
+
+    // ═══ 脉冲干扰 ════════════════════════════
+    // 返回 {out, positions}
+    function applyImpulse(sig, on, type, amp, freq) {
+      if (!on) return { out: sig, positions: [] };
+      const out = new Float32Array(sig);
+      const positions = [];
+      const pulseWidth = Math.max(2, Math.round(FS / freq * 0.05)); // 脉冲宽度=5%周期
+
+      if (type === 'motor') {
+        // 周期性脉冲，频率=某种在基带上的谐波
+        const period = Math.round(FS / freq);
+        const offset = Math.round(Math.random() * period); // 随机初相
+        for (let n = offset; n < sig.length; n += period) {
+          positions.push(n);
+          for (let k = 0; k < pulseWidth && n + k < sig.length; k++) {
+            const env = Math.exp(-4 * k / pulseWidth); // 指数衰减脉冲形状
+            out[n + k] += amp * env;
+          }
+        }
+      } else {
+        // 随机脉冲（泊松过程，每样本概率=freq/FS）
+        const prob = Math.min(freq / FS, 0.1);
+        const r = mkRng(54321);
+        for (let n = 0; n < sig.length; n++) {
+          if (r() < prob) {
+            positions.push(n);
+            for (let k = 0; k < pulseWidth && n + k < sig.length; k++) {
+              const env = Math.exp(-4 * k / pulseWidth);
+              out[n + k] += amp * env * (r() > 0.5 ? 1 : -1);
+            }
+          }
+        }
+      }
+      return { out, positions };
+    }
+
+    // ═══ AWGN ════════════════════════════════
+    function awgn(sig, snr_db, nSeed) {
+      if (snr_db >= 20) return new Float32Array(sig);
+      const r = mkRng(nSeed + 99991);
+      const snrL = Math.pow(10, snr_db / 10);
+      let pw = 0; sig.forEach(v => pw += v * v); pw /= sig.length || 1;
+      const sg = Math.sqrt(pw / Math.max(snrL, 1e-9));
+      const out = new Float32Array(sig.length);
+      for (let i = 0; i < sig.length; i += 2) {
+        const u1 = Math.max(1e-15, r()), u2 = r(), mag = sg * Math.sqrt(-2 * Math.log(u1));
+        out[i] = sig[i] + mag * Math.cos(2 * Math.PI * u2);
+        if (i + 1 < sig.length) out[i + 1] = sig[i + 1] + mag * Math.sin(2 * Math.PI * u2);
+      }
+      return out;
+    }
+
+    // ═══ 解调 ════════════════════════════════
+    function demod(rx, tmpls, p) {
+      const { cpOn, cpLen, symLen } = p;
+      const dec = new Uint8Array(NTX), corrs = [];
+      for (let si = 0; si < NTX; si++) {
+        const start = si * symLen + (cpOn ? cpLen : 0);
+        const blk = rx.slice(start, start + M);
+        const cv = tmpls[si].map(tm => { let s = 0; for (let n = 0; n < M; n++)s += blk[n] * tm[n]; return Math.abs(s); });
+        corrs.push(cv);
+        let best = 0; cv.forEach((v, i) => { if (v > cv[best]) best = i; });
+        dec[si] = best;
+      }
+      return { dec, corrs };
+    }
+
+    // ═══ FFT ════════════════════════════════
+    function nextPow2(n) { let p = 1; while (p < n) p <<= 1; return p; }
+    function fftIP(re, im) {
+      const N = re.length;
+      for (let i = 1, j = 0; i < N; i++) {
+        let bit = N >> 1; for (; j & bit; bit >>= 1)j ^= bit; j ^= bit;
+        if (i < j) { [re[i], re[j]] = [re[j], re[i]];[im[i], im[j]] = [im[j], im[i]]; }
+      }
+      for (let len = 2; len <= N; len <<= 1) {
+        const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+        for (let i = 0; i < N; i += len) {
+          let cr = 1, ci = 0;
+          for (let j = 0; j < len / 2; j++) {
+            const ur = re[i + j], ui = im[i + j], vr = re[i + j + len / 2] * cr - im[i + j + len / 2] * ci, vi = re[i + j + len / 2] * ci + im[i + j + len / 2] * cr;
+            re[i + j] = ur + vr; im[i + j] = ui + vi; re[i + j + len / 2] = ur - vr; im[i + j + len / 2] = ui - vi;
+            const nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr;
+          }
+        }
+      }
+    }
+
+    // ═══ 色映射 ══════════════════════════════
+    function cmap(v) {
+      const s = [[4, 44, 83], [24, 95, 165], [29, 158, 117], [239, 159, 39], [216, 90, 48]];
+      v = Math.max(0, Math.min(1, v));
+      const t = v * (s.length - 1), i = Math.min(~~t, s.length - 2), f = t - i, a = s[i], b = s[i + 1];
+      return [~~(a[0] + f * (b[0] - a[0])), ~~(a[1] + f * (b[1] - a[1])), ~~(a[2] + f * (b[2] - a[2]))];
+    }
+    function cmapBR(v) {
+      v = Math.max(0, Math.min(1, v));
+      return [~~(4 + v * 212), ~~(44 + v * 46), ~~(83 - v * 35)];
+    }
+
+    // ═══ Canvas工具 ══════════════════════════
+    function setupCV(id, PH) {
+      const cv = document.getElementById(id);
+      const dpr = devicePixelRatio || 1, PW = cv.offsetWidth || 700;
+      cv.width = PW * dpr; cv.height = PH * dpr; cv.style.height = PH + 'px';
+      const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+      return { ctx, PW, PH };
+    }
+
+    // ═══ ① 波形 ══════════════════════════════
+    function drawWave() {
+      if (!G.tx) return;
+      const { tx, rx, msg, symLen, impPositions, cpLen } = G;
+      const { cpOn } = G;
+      const { ctx, PW, PH } = setupCV('wc', 150);
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, PW, PH);
+      const pg = G.wavePage, SHOW = 4, st = pg * SHOW * symLen;
+      const slRx = rx.slice(st, st + SHOW * symLen), slTx = tx.slice(st, st + SHOW * symLen);
+      const LEN = slRx.length;
+      let mx = 0; slRx.forEach(v => { if (Math.abs(v) > mx) mx = Math.abs(v); }); mx = Math.max(mx, .1);
+      const mid = PH / 2, ys = mid * .84 / mx;
+      if (cpOn) {
+        for (let s = 0; s < SHOW; s++) {
+          const x0 = s * symLen / LEN * PW, x1 = (s * symLen + cpLen) / LEN * PW;
+          ctx.fillStyle = 'rgba(0,200,180,.12)'; ctx.fillRect(x0, 0, x1 - x0, PH);
+          ctx.strokeStyle = 'rgba(0,170,150,.3)'; ctx.lineWidth = .5; ctx.setLineDash([]);
+          ctx.beginPath(); ctx.moveTo(x1, 0); ctx.lineTo(x1, PH); ctx.stroke();
+        }
+      }
+      for (let s = 0; s <= SHOW; s++) {
+        const x = s * symLen / LEN * PW;
+        ctx.strokeStyle = 'rgba(128,128,128,.18)'; ctx.lineWidth = .5; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, PH); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      function line(arr, col, al, lw) {
+        ctx.save(); ctx.strokeStyle = col; ctx.globalAlpha = al; ctx.lineWidth = lw; ctx.beginPath();
+        for (let i = 0; i < arr.length; i++) { const x = i / LEN * PW, y = mid - arr[i] * ys; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+        ctx.stroke(); ctx.restore();
+      }
+      line(slRx, '#D85A30', .7, 1); line(slTx, '#1a1a1a', .88, 1.5);
+      // 脉冲位置标注
+      ctx.strokeStyle = 'rgba(216,30,30,.6)'; ctx.lineWidth = 1; ctx.setLineDash([]);
+      impPositions.forEach(pos => {
+        const relPos = pos - st;
+        if (relPos >= 0 && relPos < LEN) {
+          const x = relPos / LEN * PW;
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, PH); ctx.stroke();
+        }
+      });
+      ctx.fillStyle = 'rgba(50,50,50,.7)'; ctx.font = '10px sans-serif'; ctx.setLineDash([]);
+      for (let s = 0; s < SHOW; s++) {
+        const si = pg * SHOW + s;
+        if (si < NTX) ctx.fillText('s' + si + '[' + msg[si] + ']', s * symLen / LEN * PW + 4, 13);
+      }
+      if (cpOn) { ctx.fillStyle = 'rgba(0,140,120,.8)'; ctx.font = '9px sans-serif'; ctx.fillText('CP=' + G.cpLen + 'pt', 3, PH - 3); }
+      document.getElementById('wavPage').textContent = 'sym ' + (pg * SHOW) + '–' + Math.min(pg * SHOW + SHOW - 1, NTX - 1);
+    }
+
+    // ═══ ② 时频谱 ════════════════════════════
+    function drawSpec() {
+      if (!G.rx) return;
+      const { rx, freqs, msg, symLen } = G;
+      const type = document.getElementById('ct').value;
+      const WIN = 64, HOP = 8, NF = WIN / 2 + 1;
+      const win = Float32Array.from({ length: WIN }, (_, n) => 0.5 * (1 - Math.cos(2 * Math.PI * n / (WIN - 1))));
+      const nFr = ~~((rx.length - WIN) / HOP) + 1;
+      const spec = new Float32Array(nFr * NF);
+      for (let f = 0; f < nFr; f++) {
+        const s0 = f * HOP;
+        for (let k = 0; k < NF; k++) {
+          let re = 0, im = 0;
+          for (let n = 0; n < WIN && s0 + n < rx.length; n++) {
+            const v = rx[s0 + n] * win[n], a = 2 * Math.PI * k * n / WIN;
+            re += v * Math.cos(a); im -= v * Math.sin(a);
+          }
+          spec[f * NF + k] = Math.sqrt(re * re + im * im);
+        }
+      }
+      let mx = 0; spec.forEach(v => { if (v > mx) mx = v; }); mx = mx || 1;
+      const ofc = document.createElement('canvas'); ofc.width = nFr; ofc.height = NF;
+      const octx = ofc.getContext('2d');
+      const img = octx.createImageData(nFr, NF);
+      for (let f = 0; f < nFr; f++)for (let k = 0; k < NF; k++) {
+        const v = spec[f * NF + k] / mx, row = NF - 1 - k, idx = (row * nFr + f) * 4;
+        const [r, g, b] = cmap(Math.pow(Math.max(0, v), .35));
+        img.data[idx] = r; img.data[idx + 1] = g; img.data[idx + 2] = b; img.data[idx + 3] = 255;
+      }
+      octx.putImageData(img, 0, 0);
+
+      // helper: 画单个canvas， frStart~frEnd 范围， siStart~siEnd 的sym轨迹
+      function paintCV(cvId, height, frStart, frEnd, siStart, siEnd) {
+        const cv = document.getElementById(cvId);
+        const PW = cv.offsetWidth || 700, PH = height;
+        const dpr = devicePixelRatio || 1;
+        cv.width = PW * dpr; cv.height = PH * dpr; cv.style.height = PH + 'px';
+        const ctx = cv.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        const srcW = frEnd - frStart;
+        ctx.drawImage(ofc, frStart, 0, srcW, NF, 0, 0, cv.width, cv.height);
+        ctx.scale(dpr, dpr);
+        for (let si = siStart; si < siEnd; si++) {
+          const shift = G.identMode === 'phase' ? SH[msg[si]] : 0, freq = freqs[si];
+          ctx.strokeStyle = si % 2 === 0 ? 'rgba(255,255,255,.82)' : 'rgba(160,220,255,.75)';
+          ctx.lineWidth = 1.6; ctx.setLineDash([]); ctx.beginPath();
+          if (type === 'zc') {
+            const y = (1 - (FL + FH) / 2 / (FS / 2)) * PH;
+            const x0 = (si * symLen / HOP - frStart) / srcW * PW, x1 = ((si * symLen + M) / HOP - frStart) / srcW * PW;
+            ctx.moveTo(x0, y); ctx.lineTo(x1, y);
+          } else {
+            for (let n = 0; n < M; n++) {
+              const fx = ((si * symLen + n) / HOP - frStart) / srcW * PW, f = freq[(n + shift) % M], fy = (1 - f / (FS / 2)) * PH;
+              const prev = n > 0 ? freq[(n + shift - 1 + M) % M] : f;
+              if (n === 0 || Math.abs(f - prev) > (FH - FL) * .4) ctx.moveTo(fx, fy); else ctx.lineTo(fx, fy);
+            }
+          }
+          ctx.stroke();
+        }
+        ctx.fillStyle = 'rgba(255,255,255,.72)'; ctx.font = '9px sans-serif';
+        [0, 100, 200, 300, 400, 500].forEach(f => {
+          const y = (1 - f / (FS / 2)) * PH; ctx.fillText(f + 'Hz', 2, Math.max(9, Math.min(PH - 2, y + 3)));
+        });
+        for (let si = siStart; si <= siEnd; si++) {
+          const x = (si * symLen / HOP - frStart) / srcW * PW; if (x >= 0 && x < PW) ctx.fillText('s' + si, x + 1, PH - 2);
+        }
+      }
+
+      const cv1 = document.getElementById('sc'), cv2 = document.getElementById('sc2');
+      if (!G.stftSplit) {
+        cv2.style.display = 'none';
+        cv1.style.height = '240px';
+        paintCV('sc', 240, 0, nFr, 0, NTX);
+      } else {
+        cv1.style.height = '200px';
+        cv2.style.display = 'block';
+        const half = ~~(nFr / 2), halfSym = ~~(NTX / 2);
+        paintCV('sc', 200, 0, half, 0, halfSym);
+        paintCV('sc2', 200, half, nFr, halfSym, NTX);
+      }
+    }
+
+    // ═══ ③ FFT功率谱 ═════════════════════════
+    function drawFFT() {
+      if (!G.rx) return;
+      const { ctx, PW, PH } = setupCV('fc', 120);
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, PW, PH);
+      const rx = G.rx, N = nextPow2(rx.length);
+      const re = new Float32Array(N), im = new Float32Array(N);
+      for (let i = 0; i < rx.length; i++) { const w = 0.5 * (1 - Math.cos(2 * Math.PI * i / (rx.length - 1))); re[i] = rx[i] * w; }
+      fftIP(re, im);
+      const half = N / 2, pwr = Float32Array.from({ length: half }, (_, k) => re[k] * re[k] + im[k] * im[k]);
+      const sm = new Float32Array(half);
+      for (let k = 0; k < half; k++) { let s = 0, c = 0; for (let d = -3; d <= 3; d++) { const kk = k + d; if (kk >= 0 && kk < half) { s += pwr[kk]; c++; } } sm[k] = s / c; }
+      let mxP = 0; sm.forEach(v => { if (v > mxP) mxP = v; }); mxP = mxP || 1;
+      const pad = 22;
+      ctx.fillStyle = 'rgba(24,95,165,.15)'; ctx.beginPath(); ctx.moveTo(pad, PH - pad);
+      for (let k = 0; k < half; k++) {
+        const x = pad + (k / half) * (PW - pad * 2), y = PH - pad - (sm[k] / mxP) * (PH - pad * 2) * .86;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(PW - pad, PH - pad); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#185FA5'; ctx.lineWidth = 1.5; ctx.setLineDash([]); ctx.beginPath();
+      for (let k = 0; k < half; k++) {
+        const x = pad + (k / half) * (PW - pad * 2), y = PH - pad - (sm[k] / mxP) * (PH - pad * 2) * .86;
+        k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      // CW频率标线
+      if (G.cwOn) {
+        const x = pad + (G.cwFreq / (FS / 2)) * (PW - pad * 2);
+        ctx.strokeStyle = 'rgba(239,159,39,.9)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 2]);
+        ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, PH - pad); ctx.stroke();
+        ctx.setLineDash([]); ctx.fillStyle = '#EF9F27'; ctx.font = '9px sans-serif';
+        ctx.fillText('CW ' + G.cwFreq + 'Hz', x + 2, pad + 9);
+      }
+      [FL, FH].forEach((f, i) => {
+        const x = pad + (f / (FS / 2)) * (PW - pad * 2);
+        ctx.strokeStyle = i === 0 ? 'rgba(29,158,117,.6)' : 'rgba(216,90,48,.6)';
+        ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, PH - pad); ctx.stroke();
+        ctx.setLineDash([]); ctx.fillStyle = i === 0 ? '#1D9E75' : '#D85A30'; ctx.font = '9px sans-serif'; ctx.fillText(f + 'Hz', x + 2, pad + 20);
+      });
+      ctx.strokeStyle = 'rgba(128,128,128,.3)'; ctx.lineWidth = .5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(pad, PH - pad); ctx.lineTo(PW - pad, PH - pad); ctx.stroke();
+      ctx.fillStyle = 'rgba(80,80,80,.6)'; ctx.font = '9px sans-serif';
+      [0, 100, 200, 300, 400, 500].forEach(f => { const x = pad + (f / (FS / 2)) * (PW - pad * 2); ctx.fillText(f, x - 5, PH - pad + 9); });
+    }
+
+    // ═══ ⑦ 干扰分析 - CW扫描 ═══════════════
+    function runCWScan() {
+      const btn = document.getElementById('scanBtn');
+      btn.disabled = true; btn.textContent = 'Scanning...';
+      setTimeout(() => {
+        const type = document.getElementById('ct').value;
+        const snr = +document.getElementById('snr').value;
+        const sf = +document.getElementById('sfSel').value; M = 1 << sf; updateSH();
+        const cSeed = +document.getElementById('cs').value;
+        const { multiWave, cpOn, cpLen, dsssOn, chipRate, pnSeed, identMode, cwJSR } = G;
+        const freqSteps = 20;
+        const freqs_scan = Array.from({ length: freqSteps }, (_, i) => ~~(20 + i * (460 / freqSteps)));
+        const bers = freqs_scan.map(cwF => {
+          let err = 0;
+          for (let trial = 0; trial < 40; trial++) {
+            const msg = genMsg(trial);
+            const { tmpls, tx, symLen } = buildAll({ type, cSeed, msg, multiWave, identMode, cpOn, cpLen, dsssOn, chipRate, pnSeed });
+            let rx = awgn(tx, snr, trial * 17 + 3);
+            rx = applyCW(rx, true, cwF, cwJSR);
+            const { dec } = demod(rx, tmpls, { cpOn, cpLen, symLen });
+            for (let i = 0; i < NTX; i++)if (dec[i] !== msg[i]) err++;
+          }
+          return err / (40 * NTX);
+        });
+        drawCWScan(freqs_scan, bers);
+        btn.disabled = false; btn.textContent = 'Scan';
+      }, 10);
+    }
+
+    function drawCWScan(freqs_scan, bers) {
+      const { ctx, PW, PH } = setupCV('scanCanvas', 160);
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, PW, PH);
+      const pad = 24, W = PW - pad * 2, H = PH - pad * 2;
+      // 轴
+      ctx.strokeStyle = 'rgba(128,128,128,.3)'; ctx.lineWidth = .5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, PH - pad); ctx.lineTo(PW - pad, PH - pad); ctx.stroke();
+      // BER曲线
+      ctx.strokeStyle = '#D85A30'; ctx.lineWidth = 1.5; ctx.setLineDash([]); ctx.beginPath();
+      freqs_scan.forEach((f, i) => {
+        const x = pad + f / 500 * W, y = PH - pad - bers[i] * H;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        ctx.fillStyle = '#D85A30'; ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.stroke();
+      // 随机猜基线
+      ctx.strokeStyle = 'rgba(128,128,128,.5)'; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(pad, PH - pad - H / NA); ctx.lineTo(PW - pad, PH - pad - H / NA); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle = 'rgba(100,100,100,.6)'; ctx.font = '8px sans-serif';
+      ctx.fillText('Random guess ' + (100 / NA).toFixed(0) + '%', pad + 2, PH - pad - H / NA - 2);
+      // FL/FH markers
+      [FL, FH].forEach((f, i) => {
+        const x = pad + f / 500 * W;
+        ctx.strokeStyle = i === 0 ? 'rgba(29,158,117,.5)' : 'rgba(216,90,48,.5)';
+        ctx.lineWidth = .8; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, PH - pad); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      // Y轴刻度
+      ctx.fillStyle = 'rgba(80,80,80,.7)'; ctx.font = '8px sans-serif';
+      [0, 25, 50, 75, 100].forEach(pct => {
+        const y = PH - pad - pct / 100 * H;
+        ctx.fillText(pct + '%', 1, y + 3);
+      });
+      ctx.fillText('BER', pad, pad - 4);
+      ctx.fillText('CW Freq (Hz)', PW - 50, PH - 4);
+      [0, 100, 200, 300, 400, 500].forEach(f => {
+        ctx.fillText(f, pad + f / 500 * W - 8, PH - pad + 10);
+      });
+    }
+
+    // ═══ ⑦ 干扰分析 - 相关对比 ══════════════
+    function drawCmpCorr() {
+      if (!G.corrs || !G.tmpls) return;
+      const { ctx, PW, PH } = setupCV('cmpCanvas', 160);
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, PW, PH);
+
+      // 计算无干扰版本的相关
+      const si = G.sel, symLen = G.symLen, cpOn = G.cpOn, cpLen = G.cpLen;
+      const startIdx = si * symLen + (cpOn ? cpLen : 0);
+      const blkClean = G.rxClean ? G.rxClean.slice(startIdx, startIdx + M) : null;
+      const blkDirty = G.rx.slice(startIdx, startIdx + M);
+      const tm = G.tmpls[si];
+
+      const corrClean = blkClean ? tm.map(t => { let s = 0; for (let n = 0; n < M; n++)s += blkClean[n] * t[n]; return Math.abs(s); }) : null;
+      const corrDirty = tm.map(t => { let s = 0; for (let n = 0; n < M; n++)s += blkDirty[n] * t[n]; return Math.abs(s); });
+
+      let mx = Math.max(...corrDirty, .01);
+      if (corrClean) corrClean.forEach(v => { if (v > mx) mx = v; });
+
+      const bH = ~~((PH - 16) / NA) - 1, bW = (PW - 8) / 2 - 4;
+      for (let i = 0; i < NA; i++) {
+        const y = 4 + i * (bH + 1);
+        const isC = i === G.msg[si];
+        // 无干扰（蓝）
+        if (corrClean) {
+          const bw = corrClean[i] / mx * bW;
+          ctx.fillStyle = isC ? 'rgba(24,95,165,.7)' : 'rgba(24,95,165,.25)';
+          ctx.fillRect(4, y, bw, bH);
+        }
+        // 含干扰（橙）
+        const bw2 = corrDirty[i] / mx * bW;
+        ctx.fillStyle = isC ? 'rgba(216,90,48,.7)' : 'rgba(216,90,48,.25)';
+        ctx.fillRect(4 + bW + 8, y, bw2, bH);
+        // 标签
+        ctx.fillStyle = 'rgba(80,80,80,.7)'; ctx.font = '8px sans-serif';
+        ctx.fillText(i, (corrClean ? bW : 0) + bW + 8 + bw2 + 2, y + bH / 2 + 2);
+      }
+      ctx.fillStyle = 'rgba(24,95,165,.8)'; ctx.font = '9px sans-serif'; ctx.fillText('No Jamming', 4, PH - 2);
+      ctx.fillStyle = 'rgba(216,90,48,.8)'; ctx.fillText('With Jamming', 4 + bW + 8, PH - 2);
+    }
+
+    // ═══ ④ 相关条 ════════════════════════════
+    function drawCorr() {
+      if (!G.corrs) return;
+      const { ctx, PW, PH } = setupCV('cc', 185);
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, PW, PH);
+      const corrs = G.corrs[G.sel], correct = G.msg[G.sel], decoded = G.dec[G.sel];
+      const mx = Math.max(...corrs, .01), bH = ~~((PH - 26) / NA) - 2, bW = PW - 56;
+
+      // 无干扰参考相关值（蓝色竖线对比）
+      const si = G.sel, symLen = G.symLen, cpLen = G.cpLen, cpOn = G.cpOn;
+      const startIdx = si * symLen + (cpOn ? cpLen : 0);
+      const blkClean = G.rxClean ? G.rxClean.slice(startIdx, startIdx + M) : null;
+      const tm = G.tmpls ? G.tmpls[si] : null;
+      let corrClean = null;
+      if (blkClean && tm) {
+        corrClean = tm.map(t => { let s = 0; for (let n = 0; n < M; n++)s += blkClean[n] * t[n]; return Math.abs(s); });
+        const mxC = Math.max(...corrClean, .01);
+        const scale = mx / mxC;
+        corrClean = corrClean.map(v => v * scale);
+      }
+
+      for (let i = 0; i < NA; i++) {
+        const y = 3 + i * (bH + 2), bw = corrs[i] / mx * bW;
+        const isC = i === correct, isD = i === decoded;
+        ctx.fillStyle = 'rgba(128,128,128,.1)'; ctx.fillRect(52, y, bW, bH);
+        ctx.fillStyle = isC ? '#1D9E75' : isD ? '#D85A30' : '#185FA5';
+        ctx.globalAlpha = isC || isD ? .82 : .2; ctx.fillRect(52, y, Math.max(0, bw), bH); ctx.globalAlpha = 1;
+        // 无干扰蓝色竖线
+        if (corrClean) {
+          const bwC = corrClean[i] / mx * bW;
+          ctx.strokeStyle = 'rgba(26,143,227,0.85)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 2]);
+          ctx.beginPath(); ctx.moveTo(52 + Math.max(0, bwC), y + 1); ctx.lineTo(52 + Math.max(0, bwC), y + bH - 1); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.fillStyle = isC ? '#1D9E75' : isD && !isC ? '#D85A30' : 'var(--color-text-secondary,#888)';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText((G.identMode === 'wave' ? 'W' : 'Ph') + i + (isC ? ' ✓' : '') + (isD && !isC ? ' ✗' : ''), 2, y + bH / 2 + 3);
+        ctx.fillStyle = 'var(--color-text-primary,#333)'; ctx.font = '9px sans-serif';
+        ctx.fillText(corrs[i].toFixed(3), 52 + bw + 2, y + bH / 2 + 3);
+      }
+      if (corrClean) {
+        ctx.strokeStyle = 'rgba(26,143,227,0.8)'; ctx.lineWidth = 1; ctx.setLineDash([3, 2]);
+        ctx.beginPath(); ctx.moveTo(PW - 44, PH - 10); ctx.lineTo(PW - 34, PH - 10); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(26,143,227,0.75)'; ctx.font = '8px sans-serif'; ctx.fillText('No Jamming', PW - 32, PH - 7);
+      }
+      const pg = ~~(10 * Math.log10(M));
+      ctx.fillStyle = 'rgba(90,90,90,.6)'; ctx.font = '8.5px sans-serif';
+      ctx.fillText('+' + pg + 'dB gain SNR:' + (G.snr + pg) + 'dB', 3, PH - 4);
+    }
+
+    // ═══ ⑤ 判决网格 ══════════════════════════
+    function updateGrid() {
+      const sg = document.getElementById('sg'); sg.innerHTML = '';
+      for (let i = 0; i < NTX; i++) {
+        const ok = G.dec[i] === G.msg[i];
+        const d = document.createElement('div'); d.className = 'sc';
+        d.style.cssText = 'background:' + (ok ? 'rgba(29,158,117,.18)' : 'rgba(216,90,48,.18)') + ';border:1px solid ' + (ok ? 'rgba(29,158,117,.45)' : 'rgba(216,90,48,.45)');
+        d.innerHTML = '<b style="color:' + (ok ? '#1D9E75' : '#D85A30') + '">' + G.dec[i] + '</b><span style="opacity:.4;font-size:8.5px">' + G.msg[i] + '</span>';
+        d.onclick = (ii => () => { G.sel = ii; document.getElementById('ss').value = ii; drawCorr(); })(i);
+        sg.appendChild(d);
+      }
+    }
+
+    // ═══ ⑥ 互相关矩阵 ════════════════════════
+    function drawXCorr() {
+      if (!G.tmpls) return;
+      const { ctx, PW, PH } = setupCV('xc', 185);
+      const tmpls = G.tmpls[0], cW = (PW - 18) / NA, cH = (PH - 18) / NA;
+      for (let i = 0; i < NA; i++)for (let j = 0; j < NA; j++) {
+        let s = 0; for (let n = 0; n < M; n++)s += tmpls[i][n] * tmpls[j][n];
+        const v = Math.abs(s), x = 9 + j * cW, y = 9 + i * cH;
+        const [r, g, b] = cmapBR(Math.pow(v, .5));
+        ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fillRect(x, y, cW - 1, cH - 1);
+        if (cW > 20) {
+          ctx.fillStyle = 'rgba(255,255,255,.82)'; ctx.font = '8px sans-serif';
+          ctx.fillText(v.toFixed(2), x + 2, y + cH / 2 + 3);
+        }
+      }
+      ctx.fillStyle = 'rgba(255,255,255,.65)'; ctx.font = '8px sans-serif';
+      for (let i = 0; i < NA; i++) { ctx.fillText(i, 9 + i * cW + cW / 2 - 3, 8); ctx.fillText(i, 1, 9 + i * cH + cH / 2 + 3); }
+    }
+
+    // ═══ Badge ════════════════════════════════
+    function updateBadge() {
+      const type = document.getElementById('ct').value;
+      const { multiWave, cpOn, cpLen, dsssOn, chipRate, cwOn, cwFreq, cwJSR, impOn, impType, impAmp, impFreq, identMode } = G;
+      const sf = Math.log2(M) | 0, symLen = cpOn ? M + cpLen : M;
+      const rb = (Math.log2(NA) * FS / symLen).toFixed(1), toa = (NTX * symLen / FS * 1000).toFixed(0);
+      const pg = (10 * Math.log10(M)).toFixed(1);
+      const typeL = type === 'zc' ? 'ZC' : type === 'linear' ? 'Linear Chirp' : (multiWave ? 'Perlin Multi-Wave' : 'Perlin');
+      let h = `<span class="bp">SF<b>${sf}</b></span><span class="bp">M=<b>${M}pt</b></span>` +
+        `<span class="bp">BW<b>${FH - FL}Hz</b></span><span class="bp">Rate<b>${rb}bit/s</b></span>` +
+        `<span class="bp">ToA<b>${toa}ms</b></span><span class="bp">Gain<b>+${pg}dB</b></span>` +
+        `<span class="bp">Mod<b>${typeL}</b></span><span class="bp">ID<b>${identMode === 'wave' ? 'Wave Switch' : 'Phase Shift'}</b></span>`;
+      if (cpOn) h += `<span class="bp">CP<b>${cpLen}pt</b></span>`;
+      if (dsssOn) h += `<span class="bp">DSSS<b>×${chipRate}</b></span>`;
+      if (cwOn) h += `<span class="bp" style="color:#EF9F27">CW<b>${cwFreq}Hz JSR${cwJSR > 0 ? '+' : ''}${cwJSR}dB</b></span>`;
+      if (impOn) h += `<span class="bp" style="color:#D85A30">Impulse<b>${impType === 'motor' ? 'Harmonic' : 'Random'} ×${impAmp}</b></span>`;
+      document.getElementById('badge').innerHTML = h;
+    }
+
+    // ═══ 音频 ════════════════════════════════
+    function playAudio(sig, scale, nSyms, symLen, durMult) {
+      if (audioNode) { try { audioNode.stop(); } catch (e) { } audioNode = null; }
+      const targetFS = 44100, playLen = Math.min(nSyms * symLen, sig.length);
+      // resFS = 频率缩放后的逻辑采样率；durMult 独立控制时长，不影响频率
+      const resFS = targetFS / scale;
+      const nOut = Math.round(playLen * resFS / FS * durMult);
+      const ac = new AudioContext({ sampleRate: targetFS });
+      const buf = ac.createBuffer(1, nOut, targetFS);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < nOut; i++) {
+        // src 索引除以 durMult → 时域拉伸，频率不变
+        const src = (i / durMult) * FS / resFS, si = ~~src, f = src - si;
+        data[i] = si + 1 < playLen ? sig[si] * (1 - f) + sig[si + 1] * f : (si < playLen ? sig[si] : 0);
+      }
+      const fade = Math.min(200, nOut / 4) | 0;
+      for (let i = 0; i < fade; i++) { data[i] *= i / fade; data[nOut - 1 - i] *= i / fade; }
+      const src2 = ac.createBufferSource(); src2.buffer = buf; src2.connect(ac.destination); src2.start();
+      audioNode = src2;
+      const durMs = (nOut / targetFS * 1000).toFixed(0);
+      document.getElementById('audioInfo').textContent = `${durMs}ms | Freq×${scale} Dur×${durMult} | ${FL * scale}–${FH * scale}Hz`;
+      src2.onended = () => { document.getElementById('audioInfo').textContent = 'Done'; audioNode = null; };
+    }
+
+    // ═══ 主渲染 ═══════════════════════════════
+    function render() {
+      const type = document.getElementById('ct').value;
+      const snr = +document.getElementById('snr').value;
+      const sf = +document.getElementById('sfSel').value; M = 1 << sf; updateSH();
+      const cSeed = +document.getElementById('cs').value;
+      const mSeed = +document.getElementById('ms').value;
+      const nSeed = +document.getElementById('ns').value;
+      const identMode = document.getElementById('modeSel').value;
+      G.identMode = identMode; G.snr = snr;
+
+      document.getElementById('snrv').textContent = snr >= 20 ? 'OFF' : snr + 'dB';
+      document.getElementById('csv').textContent = cSeed;
+      document.getElementById('msv').textContent = mSeed;
+      document.getElementById('nsv').textContent = nSeed;
+      // 脉冲标签更新
+      document.getElementById('impFreqLabel').textContent = G.impType === 'motor' ? 'Harmonic Hz' : 'Impulses/s';
+
+      const { multiWave, cpOn, cpLen, dsssOn, chipRate, pnSeed, cwOn, cwFreq, cwJSR, impOn, impType, impAmp, impFreq } = G;
+      const msg = genMsg(mSeed);
+      const { tmpls, tx, freqs, symLen } = buildAll({ type, cSeed, msg, multiWave, identMode, cpOn, cpLen, dsssOn, chipRate, pnSeed });
+
+      // 干净RX（只有噪声，用于对比）
+      const rxClean = awgn(tx, snr, nSeed);
+
+      // 含干扰RX
+      let rx = new Float32Array(rxClean);
+      rx = applyCW(rx, cwOn, cwFreq, cwJSR);
+      const { out: rxImp, positions } = applyImpulse(rx, impOn, impType, impAmp, impFreq);
+      rx = rxImp;
+
+      const { dec, corrs } = demod(rx, tmpls, { cpOn, cpLen, symLen });
+      Object.assign(G, { msg, tx, rx, rxClean, tmpls, dec, corrs, freqs, symLen, impPositions: positions });
+
+      let errs = 0; for (let i = 0; i < NTX; i++)if (dec[i] !== msg[i]) errs++;
+      document.getElementById('b1').textContent = (errs / NTX * 100).toFixed(1) + '% (' + errs + '/' + NTX + ')';
+
+      updateBadge();
+      drawWave(); drawSpec(); drawFFT();
+      updateGrid(); drawCorr(); drawXCorr();
+      if (window.refreshExplain) refreshExplain();
+    }
+
+    // ═══ BER×200 ══════════════════════════════
+    document.getElementById('berBtn').onclick = () => {
+      const btn = document.getElementById('berBtn'); btn.disabled = true; btn.textContent = 'Computing...';
+      setTimeout(() => {
+        const type = document.getElementById('ct').value;
+        const snr = +document.getElementById('snr').value;
+        const sf = +document.getElementById('sfSel').value; M = 1 << sf; updateSH();
+        const cSeed = +document.getElementById('cs').value;
+        const { multiWave, cpOn, cpLen, dsssOn, chipRate, pnSeed, cwOn, cwFreq, cwJSR, impOn, impType, impAmp, impFreq, identMode } = G;
+        let totErr = 0;
+        for (let trial = 0; trial < 200; trial++) {
+          const msg = genMsg(trial);
+          const { tmpls, tx, symLen } = buildAll({ type, cSeed, msg, multiWave, identMode, cpOn, cpLen, dsssOn, chipRate, pnSeed });
+          let rx = awgn(tx, snr, trial * 17 + 3);
+          rx = applyCW(rx, cwOn, cwFreq, cwJSR);
+          const { out: rxI } = applyImpulse(rx, impOn, impType, impAmp, impFreq);
+          const { dec } = demod(rxI, tmpls, { cpOn, cpLen, symLen });
+          for (let i = 0; i < NTX; i++)if (dec[i] !== msg[i]) totErr++;
+        }
+        const avg = totErr / (200 * NTX);
+        document.getElementById('bN').innerHTML = '200-trial BER: <b>' + (avg * 100).toFixed(2) + '%</b> | errors ' + totErr + '/' + (200 * NTX) + ' | random guess ' + (100 / NA).toFixed(1) + '%';
+        btn.disabled = false; btn.textContent = 'BER×200';
+      }, 15);
+    };
+
+    // ═══ 开关绑定 ════════════════════════════
+    function togBtn(id, key, label, cb) {
+      document.getElementById(id).onclick = function () {
+        G[key] = !G[key];
+        this.textContent = label + ' ' + (G[key] ? 'ON' : 'OFF');
+        this.className = 'tog ' + (G[key] ? 'on' : 'off');
+        if (cb) cb(G[key]); schedule();
+      };
+    }
+    togBtn('mwBtn', 'multiWave', 'Multi-Wave', on => { if (on) document.getElementById('ct').value = 'perlin'; });
+    togBtn('cpBtn', 'cpOn', 'CP (Cyclic Prefix)');
+    togBtn('dsssBtn', 'dsssOn', 'DSSS');
+    togBtn('cwBtn', 'cwOn', 'CW Tone');
+    togBtn('impBtn', 'impOn', 'Impulse');
+
+    // 数值控件
+    [
+      ['cpLen', 'cpLen', 'cpLenV', v => v + 'pt', v => +v],
+      ['pnSeed', 'pnSeed', 'pnSeedV', v => v, v => +v],
+      ['cwFreq', 'cwFreq', 'cwFreqV', v => v + 'Hz', v => +v],
+      ['cwJSR', 'cwJSR', 'cwJSRV', v => (v >= 0 ? '+' : '') + v + 'dB', v => +v],
+      ['impAmp', 'impAmp', 'impAmpV', v => (+v).toFixed(1), v => +v],
+      ['impFreq', 'impFreq', 'impFreqV', v => v + 'Hz', v => +v],
+    ].forEach(([id, key, lid, fmt, xfm]) => {
+      document.getElementById(id).addEventListener('input', function () {
+        G[key] = xfm(this.value);
+        document.getElementById(lid).textContent = fmt(G[key]);
+        schedule();
+      });
+    });
+    document.getElementById('impType').onchange = function () { G.impType = this.value; schedule(); };
+    document.getElementById('chipRate').onchange = function () { G.chipRate = +this.value; schedule(); };
+
+    // 波形翻页
+    document.getElementById('wavPrev').onclick = () => { if (G.wavePage > 0) { G.wavePage--; drawWave(); } };
+    document.getElementById('wavNext').onclick = () => { if ((G.wavePage + 1) * 4 < NTX) { G.wavePage++; drawWave(); } };
+
+    // Symbol选择
+    const ss = document.getElementById('ss');
+    for (let i = 0; i < NTX; i++) { const o = document.createElement('option'); o.value = i; o.textContent = 'sym ' + i; ss.appendChild(o); }
+    ss.onchange = () => { G.sel = +ss.value; drawCorr(); };
+
+    // 主控件
+    ['ct', 'sfSel', 'modeSel'].forEach(id => document.getElementById(id).addEventListener('change', schedule));
+    ['snr', 'cs', 'ms', 'ns'].forEach(id => document.getElementById(id).addEventListener('input', schedule));
+
+    // 音频
+    document.getElementById('playTxBtn').onclick = () => {
+      if (!G.tx) return;
+      playAudio(G.tx, +document.getElementById('audioScale').value, +document.getElementById('audioSyms').value, G.symLen, +document.getElementById('durMult').value);
+    };
+    document.getElementById('playRxBtn').onclick = () => {
+      if (!G.rx) return;
+      playAudio(G.rx, +document.getElementById('audioScale').value, +document.getElementById('audioSyms').value, G.symLen, +document.getElementById('durMult').value);
+    };
+    document.getElementById('stopBtn').onclick = () => {
+      if (audioNode) { try { audioNode.stop(); } catch (e) { } audioNode = null; }
+      document.getElementById('audioInfo').textContent = 'Stopped';
+    };
+
+    // CW扫描
+    document.getElementById('scanBtn').onclick = runCWScan;
+
+    // ② 时频分割按钮
+    document.getElementById('splitBtn').onclick = function () {
+      G.stftSplit = !G.stftSplit;
+      this.classList.toggle('on', G.stftSplit);
+      this.classList.toggle('off', !G.stftSplit);
+      drawSpec();
+    };
+
+    window.addEventListener('resize', () => { clearTimeout(_t); _t = setTimeout(render, 200); });
+    let _t;
+    function schedule() { clearTimeout(_t); _t = setTimeout(render, 100); }
+
+    // ═══ 📐 匹配滤波分步动画 ══════════════════════════════
+    {
+      let animId = null, animStep = 0, animTmplIdx = 0, animSymIdx = 0;
+      const SPEED = 2; // samples per frame
+
+      function waveRow(ctx, data, nShow, x0, y0, w, h, color, label, alpha1, alpha2) {
+        // alpha1=filled part, alpha2=unfilled part
+        const n = data.length;
+        let mx = 0; for (let i = 0; i < n; i++)if (Math.abs(data[i]) > mx) mx = Math.abs(data[i]); mx = mx || 1;
+        const mid = y0 + h / 2;
+        // background
+        ctx.fillStyle = 'rgba(0,0,0,0.03)'; ctx.fillRect(x0, y0, w, h);
+        // grid mid
+        ctx.strokeStyle = 'rgba(180,180,180,0.4)'; ctx.lineWidth = 0.5; ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, mid); ctx.lineTo(x0 + w, mid); ctx.stroke(); ctx.setLineDash([]);
+        // draw waveform
+        for (let pass = 0; pass < 2; pass++) {
+          const isFilled = pass === 0;
+          ctx.strokeStyle = isFilled ? color + 'CC' : color + '22';
+          ctx.lineWidth = isFilled ? 1.3 : 0.8;
+          ctx.beginPath();
+          const limit = isFilled ? nShow : n;
+          const start = isFilled ? 0 : nShow;
+          if (start >= limit) { continue; }
+          for (let i = start; i < limit; i++) {
+            const px = x0 + i / n * w, py = mid - data[i] / mx * (h / 2 - 2);
+            if (i === start) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+        // label
+        ctx.fillStyle = 'rgba(40,40,40,0.7)'; ctx.font = 'bold 9px sans-serif';
+        ctx.fillText(label, x0 + 3, y0 + 10);
+      }
+
+      function corrBarsRow(ctx, corrects, decoded, allCorrs, x0, y0, w, h) {
+        ctx.fillStyle = 'rgba(0,0,0,0.03)'; ctx.fillRect(x0, y0, w, h);
+        const mx = Math.max(...allCorrs, .01), bH = ~~((h - 12) / NA) - 1, bW = w - 64;
+        for (let i = 0; i < NA; i++) {
+          const y = y0 + 2 + i * (bH + 1), bw = allCorrs[i] / mx * bW;
+          const isC = i === corrects, isD = i === decoded;
+          ctx.fillStyle = 'rgba(180,180,180,.12)'; ctx.fillRect(x0 + 62, y, bW, bH);
+          ctx.fillStyle = isC ? '#1D9E75' : isD ? '#D85A30' : '#185FA5';
+          ctx.globalAlpha = isC || isD ? .85 : .18;
+          ctx.fillRect(x0 + 62, y, Math.max(0, bw), bH); ctx.globalAlpha = 1;
+          ctx.fillStyle = isC ? '#1D9E75' : isD && !isC ? '#D85A30' : '#888';
+          ctx.font = 'bold 8.5px sans-serif';
+          ctx.fillText('Tmpl ' + i + (isC ? ' ✓' : '') + (isD && !isC ? ' ✗' : ''), x0 + 2, y + bH / 2 + 3);
+          ctx.fillStyle = '#444'; ctx.font = '8px sans-serif';
+          ctx.fillText(allCorrs[i].toFixed(1), x0 + 62 + bw + 2, y + bH / 2 + 3);
+        }
+        ctx.fillStyle = 'rgba(60,60,60,.5)'; ctx.font = 'bold 9px sans-serif';
+        ctx.fillText('⑤ All NA=' + NA + ' templates', x0 + 3, y0 + 8);
+      }
+
+      function drawExplainer(nStep) {
+        if (!G.corrs || !G.tmpls) return;
+        const cv = document.getElementById('explainCV');
+        const PW = cv.offsetWidth || 900, PH = 460;
+        const dpr = devicePixelRatio || 1;
+        cv.width = PW * dpr; cv.height = PH * dpr; cv.style.height = PH + 'px';
+        const ctx = cv.getContext('2d');
+        ctx.scale(dpr, dpr);
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+        ctx.fillRect(0, 0, PW, PH);
+
+        const si = animSymIdx, ti = animTmplIdx;
+        const symLen = G.symLen, cpLen = G.cpLen, cpOn = G.cpOn;
+        const start = si * symLen + (cpOn ? cpLen : 0);
+        const rxSeg = G.rx.slice(start, start + M);
+        const correct = G.msg[si], decoded = G.dec[si];
+        const tmplCorrect = G.tmpls[si][correct];
+        const tmplChosen = G.tmpls[si][ti];
+
+        // Compute products
+        const prodCorrect = Float32Array.from({ length: M }, (_, n) => rxSeg[n] * tmplCorrect[n]);
+        const prodChosen = ti === correct ? prodCorrect : Float32Array.from({ length: M }, (_, n) => rxSeg[n] * tmplChosen[n]);
+        // Running sums
+        const runCorrect = new Float32Array(M), runChosen = new Float32Array(M);
+        let sc = 0, sn = 0;
+        for (let n = 0; n < M; n++) { sc += prodCorrect[n]; runCorrect[n] = sc; sn += prodChosen[n]; runChosen[n] = sn; }
+
+        const nShow = Math.min(M, nStep);
+        const MARGIN_L = 6, COL_W = (PW - MARGIN_L * 3) / 2, PAD = 4;
+        const ROW_H = 78, TOP = 4;
+
+        // Left column: correct template
+        const Lx = MARGIN_L;
+        waveRow(ctx, tmplCorrect, M, Lx, TOP, COL_W, ROW_H, '#1D9E75', '① Tmpl T_correct[n] (phase=' + correct + ')', 1, 0);
+        waveRow(ctx, rxSeg, M, Lx, TOP + ROW_H + PAD, COL_W, ROW_H, '#E8321A', '② RX rx[n] (sym=' + si + ', +noise)', 1, 0);
+        waveRow(ctx, prodCorrect, nShow, Lx, TOP + (ROW_H + PAD) * 2, COL_W, ROW_H, '#F5A623', '③ Product T_correct×rx (' + nShow + '/' + M + ' samples)');
+        waveRow(ctx, runCorrect, nShow, Lx, TOP + (ROW_H + PAD) * 3, COL_W, ROW_H, '#1A8FE3', '④ Running sum → corr=' + (nShow > 0 ? runCorrect[nShow - 1].toFixed(1) : '…'));
+
+        // Right column: compared template (may differ from correct)
+        const isWrong = ti !== correct;
+        const Rx = MARGIN_L + COL_W + MARGIN_L;
+        waveRow(ctx, tmplChosen, M, Rx, TOP, COL_W, ROW_H, isWrong ? '#D85A30' : '#1D9E75', '① Tmpl T_' + ti + '[n] (phase=' + ti + (isWrong ? ' ✗' : ' = correct') + ')', 1, 0);
+        waveRow(ctx, rxSeg, M, Rx, TOP + ROW_H + PAD, COL_W, ROW_H, '#E8321A', '② RX rx[n] (same as left)', 1, 0);
+        waveRow(ctx, prodChosen, nShow, Rx, TOP + (ROW_H + PAD) * 2, COL_W, ROW_H, isWrong ? 'rgba(216,90,48,.9)' : '#F5A623', '③ Product T_' + ti + '×rx (' + (isWrong ? 'wrong phase→±cancel' : 'same as left') + ')');
+        waveRow(ctx, runChosen, nShow, Rx, TOP + (ROW_H + PAD) * 3, COL_W, ROW_H, isWrong ? '#D85A30' : '#1A8FE3', '④ Running sum → corr=' + (nShow > 0 ? runChosen[nShow - 1].toFixed(1) : '…'));
+
+        // Bottom: all NA bars spanning full width
+        corrBarsRow(ctx, correct, decoded, G.corrs[si], MARGIN_L, TOP + (ROW_H + PAD) * 4 + 4, PW - MARGIN_L * 2, ROW_H);
+
+        // Progress indicator
+        const pct = nShow / M;
+        ctx.fillStyle = 'rgba(26,143,227,.25)';
+        ctx.fillRect(MARGIN_L, PH - 6, Math.round((PW - MARGIN_L * 2) * pct), 4);
+        ctx.fillStyle = 'rgba(26,143,227,.8)'; ctx.font = '9px sans-serif';
+        const finalL = runCorrect[M - 1].toFixed(1), finalR = runChosen[M - 1].toFixed(1);
+        if (nShow === M) {
+          document.getElementById('explainInfo').textContent =
+            'Correct tmpl final=' + finalL + ' | vs tmpl ' + ti + ' final=' + finalR +
+            (isWrong ? ' → ' + parseFloat(finalL) > parseFloat(finalR) ? 'Correct ✓' : 'Wrong ✗' : '');
+        }
+      }
+
+      function startAnim() {
+        if (animId) return;
+        animId = requestAnimationFrame(function step() {
+          animStep = Math.min(animStep + SPEED, M);
+          drawExplainer(animStep);
+          if (animStep < M) { animId = requestAnimationFrame(step); }
+          else { animId = null; document.getElementById('explainPlayBtn').textContent = '▶ Animate'; }
+        });
+        document.getElementById('explainPlayBtn').textContent = '⏸ Playing';
+      }
+
+      function resetExplain() {
+        if (animId) { cancelAnimationFrame(animId); animId = null; }
+        animStep = 0;
+        document.getElementById('explainPlayBtn').textContent = '▶ Animate';
+        drawExplainer(M); // show full static
+      }
+
+      function initExplainSelects() {
+        const sym = document.getElementById('explainSym');
+        const tmpl = document.getElementById('explainTmpl');
+        sym.innerHTML = ''; tmpl.innerHTML = '';
+        for (let i = 0; i < NTX; i++) { const o = document.createElement('option'); o.value = i; o.textContent = 'sym ' + i; sym.appendChild(o); }
+        for (let i = 0; i < NA; i++) { const o = document.createElement('option'); o.value = i; o.textContent = 'Tmpl ' + i; tmpl.appendChild(o); }
+        sym.value = animSymIdx; tmpl.value = animTmplIdx;
+        sym.onchange = () => { animSymIdx = +sym.value; resetExplain(); };
+        tmpl.onchange = () => { animTmplIdx = +tmpl.value; resetExplain(); };
+      }
+
+      // 公开 refresh 让 render() 触发更新
+      window.refreshExplain = () => {
+        if (!G.corrs) return;
+        // sync symIdx to G.sel
+        animSymIdx = G.sel;
+        const el = document.getElementById('explainSym'); if (el) el.value = animSymIdx;
+        // auto-choose wrong template for contrast
+        const correct = G.msg[animSymIdx];
+        if (animTmplIdx === correct) animTmplIdx = (correct + 1) % NA;
+        const el2 = document.getElementById('explainTmpl'); if (el2) el2.value = animTmplIdx;
+        drawExplainer(M);
+      };
+
+      document.getElementById('explainPlayBtn').onclick = () => {
+        if (animId) { cancelAnimationFrame(animId); animId = null; document.getElementById('explainPlayBtn').textContent = '▶ Animate'; }
+        else { animStep = 0; startAnim(); }
+      };
+      document.getElementById('explainResetBtn').onclick = resetExplain;
+
+      // init selects after page load
+      setTimeout(() => { initExplainSelects(); }, 200);
+    }
+    // ══ end explainer ══
+    setTimeout(render, 130);
+  </script>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- 📝 系统设计讨论备忘录 · Perlin-CSS 战术链路工程决策全记录          -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div class="panel" style="margin:0 4px 8px 4px;border-left:4px solid var(--me-blue)">
+    <div class="ptitle">📝 System Design Memo · Perlin-CSS Tactical Link Engineering Decisions</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(500px,1fr));gap:16px;margin-top:8px">
+
+      <!-- ① 命名层次 -->
+      <div class="info-box">
+        <b>① Naming &amp; Positioning</b>
+        <br>Chirp ⊃ CSS (Chirp Spread Spectrum) ⊃ LoRa (Semtech linear CSS patent)
+        <br>Recommended name for this scheme: <b>Perlin-CSS</b> or <b>Nonlinear CSS</b>
+        <br>Do NOT call it "LoRa" (cannot dechirp+FFT demodulate; incompatible with Semtech patent)
+        <br><br>Positioned closest to APART (Adaptive Phonon-Activated Radio Transceivers) philosophy: <b>high LPI priority; seed = key; without seed, waveform cannot be replicated</b>.
+        Standard LoRa linear chirp is identifiable by any SDR; this scheme is not.
+      </div>
+
+      <!-- ② 导频 vs 前导码 -->
+      <div class="info-box">
+        <b>② No Pilots Needed — Preamble Handles All Sync</b>
+        <br>WiFi (OFDM) needs pilot subcarriers — each subcarrier in a multi-carrier system requires independent channel estimation.
+        <br>CSS is single-carrier spread spectrum; the preamble (a few repeated chirps) handles all synchronization:
+        <ul style="margin:4px 0;padding-left:18px;font-size:10px">
+          <li>AGC settling (receive gain lock)</li>
+          <li>Timing sync (preamble autocorrelation peak → symbol boundary)</li>
+          <li>AFC frequency correction (estimate crystal offset and compensate)</li>
+        </ul>
+        Data symbols need <b>no inserted pilots</b>.
+        <br><br><b>Perlin preamble scheme (recommended):</b> Both sides agree on preamble_seed=0; send N repeated Perlin chirps.
+        AFC scans candidate Δf offsets for max correlation peak (with TCXO, range is only ±500Hz — negligible cost).
+        Advantage: no linear chirp signature anywhere, preamble is also unidentifiable — complete LPI.
+        <br><small style="color:var(--color-text-tertiary)">Primary freq offset source: crystal accuracy (±20ppm → ±18kHz @915MHz) far exceeds Doppler (drone 20m/s → 61Hz, negligible).</small>
+      </div>
+
+      <!-- ③ 双工与随机发射 -->
+      <div class="info-box">
+        <b>③ Duplex Design vs. Random Transmit Timing</b>
+        <br>Random transmit timing has a duplex problem: if both ends are random, bidirectional comms can't be guaranteed. Options:
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">Scheme</td>
+            <td>Scenario</td>
+            <td>LPI Level</td>
+            <td>Complexity</td>
+          </tr>
+          <tr>
+            <td><b>2× Simplex Units</b> (separate uplink + downlink)</td>
+            <td>Abundant hardware</td>
+            <td>High</td>
+            <td>Low</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>Call-Response Trigger</b> (drone sends beacon, controller replies, enters RX)</td>
+            <td>Asymmetric data (more control, less telemetry)</td>
+            <td>Medium (beacon is periodic)</td>
+            <td>Medium</td>
+          </tr>
+          <tr>
+            <td><b>Pseudorandom Frame-Interval TDD</b> (negotiated PR sequence for tx/rx alternation)</td>
+            <td>Symmetric bidirectional, high LPI</td>
+            <td>High (irregular intervals)</td>
+            <td>Medium</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.04)">
+            <td><b>GPS PPS Hard-Sync TDD</b> (integer-second alignment, agreed frame structure)</td>
+            <td>Drone (with GPS) primary scenario</td>
+            <td>Highest (preamble can be omitted)</td>
+            <td>Low (GPS already present)</td>
+          </tr>
+        </table>
+        <b>GPS PPS scheme details:</b> Both sides agree: "at millisecond N of each integer second, start frame K". Sync without any preamble. The adversary sees no preamble energy signature at all — <b>the most thorough LPI</b>.
+        <br><b>No-GPS fallback:</b> TCXO + initial handshake (one-time sync at power-on) + crystal drift compensation (1ppm TCXO → 3.6ms drift/hour, needs periodic re-sync).
+        <br><small style="color:var(--color-text-tertiary)">Frame length/interval/sequence should be designed per actual traffic (drone telemetry vs. robot dog bidirectional vs. other); no universal optimum exists.</small>
+      </div>
+
+      <!-- ④ DSSS与Perlin的关系 -->
+      <div class="info-box">
+        <b>④ Is Perlin Chirp Still Needed with DSSS?</b>
+        <br>With DSSS, the PN code already provides:
+        <ul style="margin:4px 0;padding-left:18px;font-size:10px">
+          <li>Spectrum spreading (noise-like PSD)</li>
+          <li>Multipath resilience (high chip time resolution)</li>
+          <li>Multiple access (different PN codes are orthogonal)</li>
+        </ul>
+        <b>Perlin chirp's additional value:</b> The frequency trajectory cannot be analytically replicated (seed = key). Even knowing it's CSS, an adversary cannot dechirp. If the DSSS PN code structure is cracked, it can still be despread.
+        <br><br><b>Conclusion:</b> Pure DSSS implementation is hard (chip-level sync). If resource-constrained, <b>Perlin-CSS alone is sufficient</b>. DSSS+Perlin stacked is the strongest LPI, but doubles hardware cost — <b>classify as Phase-2 enhancement option</b>.
+        <br><small style="color:var(--me-red)">DSSS HW challenges: chip-level clock sync (an order of magnitude harder than symbol-level), chip rate must be integer ratio with ADC clock, dual-layer processing chain adds latency.</small>
+      </div>
+
+      <!-- ⑤ FEC vs 长M -->
+      <div class="info-box">
+        <b>⑤ FEC or Longer M?</b>
+        <br>CSS already has built-in time-diversity integration; M already acts as soft-decision error correction. FEC in chirp has poor cost/benefit:
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">Method</td>
+            <td>Gain</td>
+            <td>Cost</td>
+          </tr>
+          <tr>
+            <td>M doubled (256→512)</td>
+            <td style="color:var(--me-green)">+3dB</td>
+            <td>Data rate ÷2; faster ADC or 2× duration</td>
+          </tr>
+          <tr style="background:rgba(232,50,26,.04)">
+            <td>FEC rate 1/2</td>
+            <td>≈3–6dB (coding gain)</td>
+            <td>Data rate ÷2; encode/decode compute ↑↑</td>
+          </tr>
+        </table>
+        <b>Verdict:</b> FEC is viable. Consider when link margin is insufficient and M cannot be increased.
+        <br>If using FEC, recommend lightweight Hamming(7,4) or Reed-Solomon. Avoid Turbo/LDPC (embedded compute overhead not worth it).
+      </div>
+
+      <!-- ⑥ FHSS方案 -->
+      <div class="info-box">
+        <b>⑥ Inter-Frame FHSS Scheme</b>
+        <br>No large frequency jumps within a symbol (chirp continuity required); only inter-frame hopping. After IQ downconversion, the frequency center is normalized — this can be omitted in simulation but must be implemented in hardware.
+        <br><br><b>Most random ≠ Best LPI:</b> Pure random hopping still statistically exposes the operating band (wideband scan finds energy at specific frequencies).
+        <br><b>LPI-optimal hopping should:</b>
+        <ul style="margin:4px 0;padding-left:18px;font-size:10px">
+          <li>Cover all available frequencies uniformly (no preference exposure)</li>
+          <li>Use a pseudorandom sequence (seed secret = hop key)</li>
+          <li>Keep dwell time short (per-frame energy extremely low, single frame hard to detect)</li>
+          <li>Hop rate > adversary scan rate</li>
+        </ul>
+        <b>Costas array hopping (military theoretical basis):</b> Mathematically guarantees any two time slots and any two frequencies meet at most once — both uniform and orthogonal.
+        <br><b>Multi-device coexistence:</b> Different devices use different FHSS seed sequences; occasional collisions handled by CRC frame drop — simpler than coordination overhead.
+        <br><b>Recommended band:</b> 902–928MHz ISM (26MHz hopping range), BW=500kHz, ≈52 independent channels.
+      </div>
+
+      <!-- ⑦ OCDM -->
+      <div class="info-box">
+        <b>⑦ OCDM (Orthogonal Chirp Division Multiplexing)</b>
+        <br>Analogous to OFDM but with all subcarriers replaced by chirps — chirps with different starting offsets are mutually orthogonal; multiple data streams transmit simultaneously in the same band.
+        <br><br><b>Theoretical advantage:</b> Chirp's time-frequency duality provides inherent robustness to multipath and time-frequency offset, outperforming OFDM against frequency-selective fading. ETH Zurich and others have academic research on this.
+        <br><b>Practical cost:</b> Receiver must perform independent matched filtering per subcarrier; complexity = NA × number of subcarriers. Difficult to implement in embedded systems.
+        <br><b>Verdict:</b> Little value for drone tactical links (too complex). Archive as the ultimate form of the chirp family. If FPGA acceleration matures, could be explored for high-throughput scenarios.
+      </div>
+
+      <!-- ⑧ 其他LPI建议 -->
+      <div class="info-box">
+        <b>⑧ Other LPI Enhancement Suggestions</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">Technique</td>
+            <td>Principle</td>
+            <td>Difficulty</td>
+          </tr>
+          <tr>
+            <td><b>Variable Frame Length</b></td>
+            <td>No fixed frame boundary energy signature; adversary statistical analysis fails</td>
+            <td>Low</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>Minimal Power Control</b></td>
+            <td>Transmit the weakest power that closes the link; interception range ↓</td>
+            <td>Medium (needs link budget estimation)</td>
+          </tr>
+          <tr>
+            <td><b>Perlin Seed Rotation</b></td>
+            <td>Change chirp generation seed every frame / every N frames; accumulated templates become useless</td>
+            <td>Medium (both sides sync seed sequence)</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.04)">
+            <td><b>AES-128-GCM Encryption</b></td>
+            <td>Frame-level encryption; prevents spoofed command injection</td>
+            <td>Low (library call)</td>
+          </tr>
+          <tr>
+            <td><b>CRC Frame Check</b></td>
+            <td>Drop errored frames; prevent mis-decoded commands from triggering wrong actions</td>
+            <td>Very low</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- ⑨ 接收流水线完整版 -->
+      <div class="info-box" style="border-left:3px solid var(--me-blue)">
+        <b>⑨ Complete RX Pipeline (Hardware Level)</b>
+        <br>
+        <code style="font-size:10px;line-height:1.8">
+          Antenna → LNA → IQ Mixer (image rejection) → IQ ADC (≈8×BW, I[n]+jQ[n])<br>
+          → AFC Frequency Correction (preamble autocorrelation scan Δf)<br>
+          → Timing Sync (preamble complex template sliding correlation, find peak → symbol boundary)<br>
+          → Extract M=128 sample symbol block<br>
+          → Matched Filter: compute |Σ(I_r+jQ_r)·(I_t−jQ_t)| for NA complex templates<br>
+          → Take max → decode symbol index<br>
+          → FEC decode (optional) → CRC check → AES decrypt → Application layer
+        </code>
+        <br><b>Phase offset:</b> Automatically eliminated by complex magnitude; no alignment needed.
+        <br><b>Frequency offset:</b> AFC estimates and compensates during preamble (crystal is main cause; Doppler negligible).
+        <br><b>Simulation simplification on this page:</b> Direct baseband real dot product, implying "IQ downconversion done, phase aligned, AFC corrected".
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- >v<💡 Brainstorm - Ideas # Bilingual CN/EN toggle: divergent thoughts & actionable suggestions -->
+  <div class="panel" style="margin:0 4px 8px 4px;border-left:4px solid var(--me-green)">
+    <div class="ptitle">
+      💡 Divergent Thoughts &amp; Actionable Next Steps
+      <button id="brainLangToggle" class="tog on" style="float:right;padding:1px 8px;font-size:10px;margin-right:4px">EN</button>
+    </div>
+    <div id="brainContent" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:10px;margin-top:6px"></div>
+  </div>
+
+  <script>
+  // ═══ Bilingual Toggle Demo — for this info-box only ═══
+  // Pattern: content stored in a dict, toggle button re-renders.
+  // Apply this pattern to any box by storing {cn:{title,html}, en:{title,html}} and calling render().
+  const BRAIN = {
+    en: {
+      title: '💡 Divergent Thoughts & Actionable Next Steps',
+      boxes: [
+        { title: '① Gaps Between Simulation & Reality',
+          html: 'This sim uses <b>real baseband dot products</b>, implicitly assuming: IQ downconversion complete, phase aligned, AFC corrected. Real hardware adds: <b>(a)</b> IQ imbalance (gain/phase mismatch between I/Q channels → imperfect image rejection), <b>(b)</b> ADC quantization noise (12-bit ENOB → ~11 effective bits), <b>(c)</b> PA nonlinearity (AM-AM/AM-PM distortion if driven near saturation for efficiency), <b>(d)</b> LNA noise figure (2-4dB typ. directly subtracts from link budget).<br><b>Action:</b> First HackRF test should measure EVM with real IQ imbalance to calibrate these gaps against simulation baseline.' },
+        { title: '② Perlin Noise Parameter Tuning',
+          html: 'Currently using 10 octaves of Perlin noise for M=128. <b>Fewer octaves → smoother chirp → less orthogonal but easier to synchronize.</b> More octaves → sharper trajectory → better orthogonality but more sensitive to timing jitter. <br><b>Action:</b> Add an "octaves" slider to the sim (currently hardcoded at 10). Sweep 2-20 octaves and measure cross-correlation matrix non-diagonal leakage vs. timing error tolerance.' },
+        { title: '③ Template Precomputation & Storage Strategy',
+          html: 'For NA=8 M=128, templates require 8×128=1024 floats (4KB). But if seed-rotating every frame, templates must be regenerated in real-time. <b>Option A:</b> Precompute all templates for the next seed during current frame (double buffer). <b>Option B:</b> Use a fast Perlin generator in fixed-point on MCU (STM32H7 DSP can do ~2 cycles per lerp). <b>Action:</b> Benchmark Perlin generation vs. memory-read speed on target MCU.' },
+        { title: '④ Alternative Nonlinear Functions Beyond Perlin',
+          html: 'Perlin noise is not the only option. <b>Logistic map:</b> x[n+1]=r·x[n]·(1-x[n]), r≈3.99 for chaos — even simpler to compute. <b>Lorenz attractor:</b> 3 coupled ODEs, richer dynamics. <b>Sparse frequency hopping chirp:</b> split M into segments, hop within each segment. <b>Action:</b> Add a dropdown for "chirp function" with logistic map as a quick test case. Compare LPI metrics (PSD flatness, cyclostationary signature).' },
+        { title: '⑤ What Would an Adversary Actually Do?',
+          html: 'An adversary with an SDR would try: <b>(1) Cyclostationary analysis:</b> CSS has inherent cyclostationarity at symbol rate = BW/M — detectable even for nonlinear chirp. <b>(2) Energy detection with long integration:</b> If TX power exceeds noise floor + processing gain, long averaging reveals presence (but not content). <b>(3) ML-based chirp classification:</b> Train a CNN on spectrograms of known chirp types → might fingerprint Perlin-CSS even without seed. <b>Mitigation:</b> Hop between different seed families, add dummy transmissions, use minimal power control.' },
+        { title: '⑥ Hardware Testing Roadmap (in order)',
+          html: '<b>Phase 1 (benchtop):</b> STM32H7 + AT86RF215 eval board. Test: baseband IQ loopback, measure EVM vs. SNR. Confirm real-time template matching timing. <b>Phase 2 (cabled):</b> Two boards, attenuator between them (no antennas). Sweep SNR -20 to +20dB, measure BER vs. theory. <b>Phase 3 (OTA, open field):</b> Add antennas, 100m-1km range. Measure multipath immunity, range vs. BER. <b>Phase 4 (jammed):</b> Introduce CW/impulse with HackRF as jammer, test resilience.' },
+        { title: '⑦ Integration with Existing SDR Frameworks',
+          html: 'GNURadio: Write a Python "Perlin CSS Modulator" block (outputs IQ stream) + "Perlin CSS Demodulator" block (template matching). Can reuse HackRF osmocom source/sink directly. <b>Action:</b> Prototype modulator block first — it\'s just calling <code>ifPerlin(seed)</code> and <code>ifToWave()</code> from this sim, wrapped as a GNURadio sync block.' },
+        { title: '⑧ Figure of Merit: LPI Score',
+          html: 'Need a quantitative way to compare LPI. Proposal: <b>LPI Score = PSD_flatness × seed_space_size × cyclostationary_peak_suppression.</b> PSD flatness = std(PSD)/mean(PSD) (lower=better). Seed space size = 2^(seed_bits) (32-bit seed = 4B possibilities). Cyclostationary suppression = correlation peak at symbol rate / noise floor. <b>Action:</b> Add an auto-computed LPI score meter to the sim.' },
+        { title: '⑨ Multi-user Access via Seed Orthogonality',
+          html: 'Perlin-CSS can work like CDMA: assign each UAV a different seed family. Cross-correlation between two different-seed chirps stays low (<b>but is not guaranteed zero</b> — unlike Walsh codes). The advantage: no fixed code book to compromise. <b>Key question:</b> How many simultaneous users can share the band before cross-correlation noise floor raises unacceptably? Quick estimate: for M=128 random signals, cross-correlation ≈ 1/√M ≈ 0.088 = −21 dB below autocorrelation peak. Supports ~4–8 simultaneous users before degradation. <b>Action:</b> Add multi-user sim mode — run 4 parallel correlators and plot BER vs. user count.' },
+        { title: '⑩ Preamble as the Weakest LPI Link',
+          html: 'The preamble (sync sequence) is transmitted in the clear before each frame — it is the most exploitable pattern. Standard LoRa uses repeated up-chirps; trivially detected. Even with Perlin chirp, if the preamble structure is fixed, an adversary can fingerprint it. <b>Solution A:</b> Encrypt the preamble itself using seed-derived pseudorandom phase offsets — receiver knows the seed so can invert. <b>Solution B:</b> No dedicated preamble; use a known-plaintext payload header as implicit sync. <b>Solution C:</b> Covert timing — transmit only when the channel has ambient noise bursts (noise-riding). <b>Action:</b> Implement Solution A first — it adds near-zero complexity and breaks preamble detectability completely.' }
+      ]
+    },
+    cn: {
+      title: '💡 发散性思考与可操作后续步骤',
+      boxes: [
+        { title: '① 仿真与现实之间的差距',
+          html: '本仿真使用<b>实数基带点积</b>，隐含假设：IQ下变频已完成、相位已对齐、AFC已校正。真实硬件会增加：<b>(a)</b> IQ不平衡（I/Q通道的增益/相位失配 → 镜像抑制不完美），<b>(b)</b> ADC量化噪声（12-bit ENOB → ~11有效位），<b>(c)</b> 功放非线性（为效率而推到近饱和时产生AM-AM/AM-PM失真），<b>(d)</b> LNA噪声系数（典型的2-4dB直接从链路预算中扣减）。<br><b>行动：</b>首次HackRF测试应测量带真实IQ不平衡的EVM，对照仿真基线校准这些差距。' },
+        { title: '② Perlin噪声参数调优',
+          html: '目前M=128使用10个octave的Perlin噪声。<b>更少octave → 更平滑的chirp → 正交性降低但同步更容易。</b>更多octave → 更锐利的轨迹 → 正交性更好但对定时抖动更敏感。<br><b>行动：</b>在仿真器中添加"octaves"滑块（目前硬编码为10）。扫描2-20个octave，测量互相关矩阵非对角泄漏 vs. 定时误差容忍度。' },
+        { title: '③ 模板预计算与存储策略',
+          html: 'NA=8 M=128时模板需要8×128=1024个浮点数(4KB)。但如果每帧轮换seed，模板必须实时重新生成。<b>方案A：</b>双缓冲——在当前帧期间为下一个seed预计算所有模板。<b>方案B：</b>在MCU上用定点数实现快速Perlin生成器（STM32H7 DSP约2个周期/lerp）。<br><b>行动：</b>在目标MCU上对Perlin生成速度 vs. 内存读取速度进行基准测试。' },
+        { title: '④ Perlin之外的替代非线性函数',
+          html: 'Perlin噪声不是唯一选择。<b>Logistic映射：</b>x[n+1]=r·x[n]·(1-x[n]), r≈3.99达到混沌——计算更简单。<b>Lorenz吸引子：</b>3个耦合ODE，动力学更丰富。<b>稀疏跳频chirp：</b>将M分段，段内跳频。<b>行动：</b>添加"chirp函数"下拉菜单，将logistic映射作为快速测试案例。比较LPI指标（PSD平坦度、循环平稳特征）。' },
+        { title: '⑤ 敌方实际会怎么做？',
+          html: '拥有SDR的对手会尝试：<b>(1) 循环平稳分析：</b>CSS在符号速率=BW/M处存在固有的循环平稳性——即使非线性chirp也能检测到。<b>(2) 长积分能量检测：</b>如果发射功率超过噪底+处理增益，长时间平均会暴露存在（但不暴露内容）。<b>(3) 基于ML的chirp分类：</b>在已知chirp类型的频谱图上训练CNN → 即使没有seed也可能指纹识别Perlin-CSS。<b>缓解措施：</b>在不同seed家族间跳变、发送假传输、使用最小功率控制。' },
+        { title: '⑥ 硬件测试路线图（按顺序）',
+          html: '<b>阶段1（桌面）：</b>STM32H7 + AT86RF215评估板。测试：基带IQ环回，测量EVM vs. SNR。确认实时模板匹配时序。<b>阶段2（有线）：</b>两块板，中间接衰减器（无天线）。扫描SNR -20到+20dB，测量BER vs. 理论值。<b>阶段3（OTA，开阔地）：</b>加天线，100m-1km距离。测量多径免疫性、距离 vs. BER。<b>阶段4（干扰）：</b>用HackRF作为干扰源引入CW/脉冲干扰，测试韧性。' },
+        { title: '⑦ 与现有SDR框架的集成',
+          html: 'GNURadio：编写Python "Perlin CSS调制器"模块（输出IQ流）+ "Perlin CSS解调器"模块（模板匹配）。可直接复用HackRF osmocom source/sink。<b>行动：</b>先原型化调制器模块——只需调用本仿真器中的<code>ifPerlin(seed)</code>和<code>ifToWave()</code>，封装为GNURadio同步模块。' },
+        { title: '⑧ 品质因数：LPI评分',
+          html: '需要一个量化比较LPI的方法。建议：<b>LPI评分 = PSD平坦度 × seed空间大小 × 循环平稳峰值抑制。</b>PSD平坦度 = std(PSD)/mean(PSD)（越低越好）。Seed空间大小 = 2^(seed比特数)（32-bit seed = 40亿种可能）。循环平稳抑制 = 符号速率处相关峰 / 噪底。<b>行动：</b>在仿真中添加自动计算的LPI评分指示器。' },
+        { title: '⑨ 基于Seed正交性的多用户接入',
+          html: 'Perlin-CSS可以像CDMA一样工作：为每架无人机分配不同的seed族。不同seed的chirp之间互相关保持较低（<b>但不保证为零</b>——不像Walsh码那样严格正交）。优势：没有固定码本可被破解。<b>核心问题：</b>多少个用户可以同时共享频段，而不使互相关噪底升高到不可接受？快速估算：对M=128的随机信号，互相关≈1/√M≈0.088=−21dB（低于自相关峰值）。支持约4-8个同时用户，超出后性能下降。<b>行动：</b>添加多用户仿真模式——运行4个并行相关器，绘制BER vs. 用户数。' },
+        { title: '⑩ 前导码是LPI最薄弱的环节',
+          html: '前导码（同步序列）在每帧数据前明文发送——是最容易被利用的模式。标准LoRa使用重复上啁啾，极易检测。即使使用Perlin啁啾，如果前导码结构固定，对手依然可以指纹识别。<b>方案A：</b>用seed派生的伪随机相位偏移加密前导码——接收方知道seed可以反向解密。<b>方案B：</b>无专用前导码；用已知明文的载荷头部作为隐式同步。<b>方案C：</b>隐蔽时序——仅在信道存在环境噪声突发时发送（噪声骑行）。<b>行动：</b>先实现方案A——几乎零额外复杂度，却完全打破前导码可检测性。' }
+      ]
+    }
+  };
+
+  let brainLang = 'en';
+  function renderBrain() {
+    const L = BRAIN[brainLang];
+    const container = document.getElementById('brainContent');
+    container.innerHTML = L.boxes.map(b =>
+      '<div class="info-box" style="font-size:10.5px;line-height:1.6">' +
+      '<b>' + b.title + '</b><br>' + b.html + '</div>'
+    ).join('');
+    document.getElementById('brainLangToggle').textContent = brainLang === 'en' ? 'EN' : '中文';
+    document.getElementById('brainLangToggle').className = 'tog ' + (brainLang === 'en' ? 'on' : 'off');
+  }
+  document.getElementById('brainLangToggle').onclick = function() {
+    brainLang = brainLang === 'en' ? 'cn' : 'en';
+    renderBrain();
+  };
+  renderBrain();
+  </script>
+
+  </div><!-- /max-width wrapper -->
+</body>
+
+</html>

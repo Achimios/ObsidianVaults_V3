@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>双质量谐振子 V6 — 4极点·零点·耦合共振</title>
+<style>
+:root{
+  --bg:#ffffff;--bg2:#f5f5f4;--tx:#1e1e1c;--tx2:#6b6a64;
+  --dbg:#ffebee;--dtx:#d73a4a;--wbg:#fff3cd;--wtx:#d97706;
+  --obg:#e6ffed;--otx:#22863a;
+  --mono:Consolas,Monaco,"Courier New",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1e1e1c;--bg2:#2d2d2a;--tx:#f9f9f8;--tx2:#888780;
+        --dbg:#381b1e;--wbg:#37301b;--obg:#143a20;}
+}
+*{box-sizing:border-box;}
+body{font-family:var(--sans);background:var(--bg);color:var(--tx);
+     margin:0;padding:10px 14px;line-height:1.5;}
+.layout{display:flex;gap:16px;align-items:flex-start;}
+.sidebar{width:440px;min-width:300px;flex-shrink:0;position:sticky;top:10px;
+         max-height:calc(100vh - 20px);overflow-y:auto;padding-right:2px;}
+.main{display:flex;gap:12px;align-items:flex-start;}
+.center-col{flex:1;min-width:380px;max-width:940px;}
+.pole-col{flex-shrink:0;width:min(900px,calc(100vw - 470px - 960px));min-width:380px;
+          position:sticky;top:10px;max-height:calc(100vh - 20px);overflow-y:auto;}
+.mech-wrap canvas{width:100%;height:auto;border-radius:8px;display:block;}
+.pole-wrap canvas{width:100%;height:auto;max-width:900px;aspect-ratio:1/1;border-radius:8px;display:block;}
+.ts-sec{margin-bottom:10px;}
+.ts-sec canvas{width:100%;height:auto;border-radius:8px;display:block;}
+.clb{font-size:12px;color:var(--tx2);margin-bottom:4px;}
+.ci{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx2);}
+.ci span{white-space:nowrap;}.ci input[type=range]{flex:1;min-width:60px;}
+.vd{min-width:82px;text-align:right;font-family:var(--mono);font-size:12px;line-height:1.3;}
+.cgrid{display:flex;flex-direction:column;gap:8px;margin:10px 0;}
+.cgrid-section{margin-top:8px;}
+.cgrid-label{font-size:11px;font-weight:600;color:var(--tx2);
+              text-transform:uppercase;letter-spacing:.05em;
+              margin-bottom:4px;padding:0 2px;}
+.leg{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0;font-size:12px;color:var(--tx2);}
+.fbox{font-size:12px;font-family:var(--mono);color:var(--tx2);
+      margin:8px 0;padding:6px 10px;background:var(--bg2);border-radius:6px;
+      line-height:1.7;}
+.brow{display:flex;flex-direction:column;gap:4px;margin:8px 0;}
+#badge{font-size:12px;padding:3px 10px;border-radius:4px;font-weight:500;display:inline-block;}
+.mts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0;font-size:12px;}
+.mi{padding:5px 8px;background:var(--bg2);border-radius:4px;}
+.ml{font-weight:500;color:var(--tx);}
+h2{font-size:15px;font-weight:700;margin:0 0 6px;line-height:1.3;}
+details{margin:10px 0;}
+summary{cursor:pointer;font-size:13px;font-weight:600;padding:8px 10px;
+        background:var(--bg2);border-radius:6px;list-style:none;user-select:none;}
+summary::-webkit-details-marker{display:none;}
+summary::before{content:"▶ ";font-size:10px;}
+details[open] summary::before{content:"▼ ";}
+.dc{padding:12px 14px;background:var(--bg2);border-radius:0 0 6px 6px;
+    margin-top:2px;font-size:12px;color:var(--tx2);line-height:1.75;}
+.dc h4{color:var(--tx);margin:10px 0 4px;font-size:12px;}
+.dc .m{font-family:var(--mono);}
+.ct{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;}
+.ct th{text-align:left;padding:4px 8px;background:var(--bg);color:var(--tx);
+       font-weight:600;border-bottom:1px solid rgba(128,128,128,.25);}
+.ct td{padding:4px 8px;border-bottom:1px solid rgba(128,128,128,.1);vertical-align:top;}
+.tg-row{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0;}
+.tg-btn{padding:3px 10px;border:1px solid rgba(128,128,128,.3);border-radius:4px;
+        font-size:12px;cursor:pointer;background:var(--bg2);color:var(--tx2);
+        font-family:var(--sans);}
+.tg-btn.on{background:var(--tx2);color:var(--bg);border-color:var(--tx2);}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+<h2>双质量谐振子 V6<br><small style="font-weight:400;font-size:13px">4极点 · 零点 · 动力减振 · Maxwell-Betti互易</small></h2>
+
+<div class="brow">
+  <span id="badge"></span>
+  <div class="fbox" id="poles-display" style="font-size:11px;"></div>
+</div>
+
+<!-- H-type selector -->
+<div style="margin:6px 0;">
+  <div class="cgrid-label">传递函数（决定零点 + 极点图热图）</div>
+  <div class="tg-row">
+    <button class="tg-btn on"  id="tH11">H₁₁ (F→m₁, 观x₁)</button>
+    <button class="tg-btn"     id="tH21">H₂₁ (F→m₁, 观x₂)</button>
+    <button class="tg-btn"     id="tH22">H₂₂ (F→m₂, 观x₂)</button>
+  </div>
+  <div style="font-size:11px;color:var(--tx2);margin-top:3px;" id="h-desc">
+    力在m₁，观测x₁。零点=m₂子系统固有频率（动力减振效应）
+  </div>
+</div>
+
+<div class="cgrid">
+  <div class="cgrid-section">
+    <div class="cgrid-label">质量块 1 (m₁)</div>
+    <div class="ci"><span>质量 m₁</span>
+      <input type="range" min="0.1" max="3.0" step="0.1" value="1.0" id="sm1">
+      <span class="vd" id="lm1">m₁=1.00</span></div>
+    <div class="ci"><span>阻尼 b₁</span>
+      <input type="range" min="0" max="3.0" step="0.05" value="0.3" id="sb1">
+      <span class="vd" id="lb1">0.30</span></div>
+  </div>
+
+  <div class="cgrid-section">
+    <div class="cgrid-label">质量块 2 (m₂)</div>
+    <div class="ci"><span>质量 m₂</span>
+      <input type="range" min="0.1" max="3.0" step="0.1" value="0.5" id="sm2">
+      <span class="vd" id="lm2">m₂=0.50</span></div>
+    <div class="ci"><span>阻尼 b₂</span>
+      <input type="range" min="0" max="3.0" step="0.05" value="0.2" id="sb2">
+      <span class="vd" id="lb2">0.20</span></div>
+  </div>
+
+  <div class="cgrid-section">
+    <div class="cgrid-label">弹簧</div>
+    <div class="ci"><span>k₁ (左端—m₁)</span>
+      <input type="range" min="0" max="6.0" step="0.05" value="1.0" id="sk1">
+      <span class="vd" id="lk1">1.00</span></div>
+    <div class="ci"><span>k₂ (耦合 m₁—m₂)</span>
+      <input type="range" min="0" max="6.0" step="0.05" value="1.5" id="sk2">
+      <span class="vd" id="lk2">1.50</span></div>
+    <div class="ci"><span>k₃ (m₂—右端)</span>
+      <input type="range" min="0" max="6.0" step="0.05" value="0.5" id="sk3">
+      <span class="vd" id="lk3">0.50</span></div>
+  </div>
+
+  <div class="cgrid-section">
+    <div class="cgrid-label">激励 F(t) = F₀·e^(σ_f·t)·cos(ωt)</div>
+    <div class="ci"><span>激励频率 ω</span>
+      <input type="range" min="0" max="5.0" step="0.05" value="1.0" id="sw">
+      <span class="vd" id="lw">1.00 rad/s</span></div>
+    <div class="ci"><span>幅值 F₀</span>
+      <input type="range" min="0" max="2.0" step="0.05" value="0.5" id="sf">
+      <span class="vd" id="lf">0.50</span></div>
+    <div class="ci"><span>σ_f 指数</span>
+      <input type="range" min="-1.5" max="0.5" step="0.05" value="0.0" id="ssigF">
+      <span class="vd" id="lsigF">0.00</span></div>
+    <div style="font-size:11px;color:var(--tx2);margin-top:4px;">
+      施力位置（跟随H-type自动切换）：<span id="force-loc-label" style="font-weight:600;color:var(--tx);">m₁</span>
+    </div>
+  </div>
+
+  <div class="cgrid-section">
+    <div class="cgrid-label">初始条件</div>
+    <div class="ci"><span>x₁(0)</span>
+      <input type="range" min="-2" max="2" step="0.1" value="1.0" id="sx10">
+      <span class="vd" id="lx10">1.00</span></div>
+    <div class="ci"><span>ẋ₁(0)</span>
+      <input type="range" min="-2" max="2" step="0.1" value="0.0" id="sv10">
+      <span class="vd" id="lv10">0.00</span></div>
+    <div class="ci"><span>x₂(0)</span>
+      <input type="range" min="-2" max="2" step="0.1" value="0.0" id="sx20">
+      <span class="vd" id="lx20">0.00</span></div>
+    <div class="ci"><span>ẋ₂(0)</span>
+      <input type="range" min="-2" max="2" step="0.1" value="0.0" id="sv20">
+      <span class="vd" id="lv20">0.00</span></div>
+  </div>
+
+  <div class="cgrid-section">
+    <div class="cgrid-label">视图</div>
+    <div class="ci"><span>播放速度</span>
+      <input type="range" min="0" max="1" step="0.01" value="0.1" id="sspd">
+      <span class="vd" id="lspd">0.10x</span></div>
+    <div class="ci"><span>Y轴范围 ±R</span>
+      <input type="range" min="0.5" max="8" step="0.5" value="4" id="syr">
+      <span class="vd" id="lyr">±4.0</span></div>
+    <div class="ci"><span>极点图范围 ±R</span>
+      <input type="range" min="0.3" max="6.0" step="0.1" value="3.0" id="spoleR">
+      <span class="vd" id="lpoleR">±3.0</span></div>
+    <div class="ci"><span>热图透明度</span>
+      <input type="range" min="0" max="1.0" step="0.05" value="0.6" id="shmAlpha">
+      <span class="vd" id="lhmAlpha">0.60</span></div>
+  </div>
+</div>
+
+<div class="leg">
+  <span id="leg-x1" style="font-weight:500">— x₁(t)</span>
+  <span id="leg-x2" style="font-weight:500">— x₂(t)</span>
+  <span id="leg-f"  style="font-weight:500">— F(t)</span>
+  <span style="color:#888">✕ 极点 &ensp; □ 零点 &ensp; ○ 输入极点</span>
+</div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+<div class="center-col">
+
+<!-- Mechanical diagram -->
+<div class="ts-sec mech-wrap">
+  <div class="clb" id="mech-lbl">|Wall|─k₁─[m₁]─k₂─[m₂]─k₃─|Wall|&ensp;实时位移动画</div>
+  <canvas id="mc"></canvas>
+</div>
+
+<!-- x1 time series -->
+<div class="ts-sec">
+  <div class="clb">x₁(t) — m₁位移（青绿）</div>
+  <canvas id="x1c"></canvas>
+</div>
+
+<!-- x2 time series -->
+<div class="ts-sec">
+  <div class="clb">x₂(t) — m₂位移（天蓝）和激励 F(t)（紫虚线）</div>
+  <canvas id="x2c"></canvas>
+</div>
+
+<!-- Bode magnitude -->
+<div class="ts-sec">
+  <div class="clb" id="bode-lbl">幅频响应 |H(jω)|&ensp;|&ensp;实线=H₁₁，虚线=H₂₁，点线=H₂₂&ensp;|&ensp;▎= 当前激励ω</div>
+  <canvas id="bc"></canvas>
+</div>
+
+<!-- Phase -->
+<div class="ts-sec">
+  <div class="clb" id="phase-lbl">相频响应 ∠H_selected(jω) [°] — 输出滞后激励</div>
+  <canvas id="phc"></canvas>
+</div>
+
+<!-- Educational sections -->
+<details>
+<summary>📐 耦合运动方程 → 传递函数矩阵</summary>
+<div class="dc">
+<h4>▍运动方程</h4>
+<div class="m">
+Wall─k₁─m₁─k₂─m₂─k₃─Wall，各自阻尼 b₁, b₂
+
+m₁ẍ₁ + b₁ẋ₁ + (k₁+k₂)x₁ − k₂x₂ = F₁(t)
+m₂ẍ₂ + b₂ẋ₂ + (k₂+k₃)x₂ − k₂x₁ = F₂(t)
+</div>
+<h4>▍拉氏变换 → 矩阵方程</h4>
+<div class="m">
+P₁(s) = m₁s² + b₁s + (k₁+k₂)
+P₂(s) = m₂s² + b₂s + (k₂+k₃)
+Δ(s) = P₁(s)·P₂(s) − k₂²    ← 4阶，4个极点
+
+[P₁(s),  −k₂  ] [X₁]   [F₁]
+[−k₂,   P₂(s)] [X₂] = [F₂]
+
+H₁₁(s) = X₁/F₁|F₂=0 = P₂(s)/Δ(s)    零点：P₂(s)=0
+H₂₁(s) = X₂/F₁|F₂=0 = k₂/Δ(s)       无有限零点（分子=k₂）
+H₂₂(s) = X₂/F₂|F₁=0 = P₁(s)/Δ(s)    零点：P₁(s)=0
+H₁₂(s) = X₁/F₂|F₁=0 = k₂/Δ(s) = H₂₁(s)  ← Maxwell-Betti 互易
+</div>
+<h4>▍零点的物理含义（动力减振器）</h4>
+H₁₁ 零点 ≈ ±j√((k₂+k₃)/m₂) 是 m₂ 子系统的固有频率。<br>
+当激励 ω = √((k₂+k₃)/m₂) 时：m₂ 共振，吸走所有能量，m₁ 完全静止。<br>
+调节 k₂, k₃, m₂ 使零点对准干扰频率 → <b>主动调谐动力减振器</b>。
+</div>
+</details>
+
+<details>
+<summary>🎵 两个固有模态 + 模态频率分裂</summary>
+<div class="dc">
+<h4>▍无阻尼时的两个模态</h4>
+<div class="m">
+ωn₁ = √((k₁+k₂)/m₁) — m₁ 单独固有频率
+ωn₂ = √((k₂+k₃)/m₂) — m₂ 单独固有频率
+
+耦合后产生两个模态（b₁=b₂=0，极点在虚轴上）：
+Mode 1 (同相)：ω_I  < min(ωn₁, ωn₂) — 两块同向运动
+Mode 2 (反相)：ω_II > max(ωn₁, ωn₂) — 两块反向运动
+
+k₂ 越大 → 耦合越强 → 两峰分得越开
+k₂ → 0  → 弱耦合  → 两峰合并到各自 ωn
+</div>
+<h4>▍实验：把 b₁=b₂=0 看极点位置</h4>
+无阻尼时 4 个极点全在虚轴 → Bode 出现两个无穷大峰 → 极点图热图在虚轴两处爆炸。<br>
+逐渐增大 b → 极点左移进 LHP → 峰值有限 → 系统渐近稳定。
+<h4>▍动力减振器实验步骤</h4>
+1. 设 k₁=1, m₁=1 → ωn₁=√2≈1.41 rad/s<br>
+2. 设激励 ω = 1.41 rad/s（正好在 m₁ 共振点）<br>
+3. 调 k₂, k₃, m₂ 使 √(k₂+k₃)/m₂ = 1.41 → H₁₁ 零点打在激励频率上<br>
+4. 观察 x₁(t) → 稳态幅值趋近 0 （m₂ 替代 m₁ 振动）
+</div>
+</details>
+
+<details>
+<summary>🔄 Maxwell-Betti 互易定理</summary>
+<div class="dc">
+<h4>▍定理陈述</h4>
+对被动线性系统：H₁₂(s) = H₂₁(s)
+即"力在 m₂ 观测 x₁"= "力在 m₁ 观测 x₂"，传递函数完全相同。
+<h4>▍为什么</h4>
+<div class="m">
+Cramers 法则：H₂₁ = 余子式[1,2]/Δ = k₂/Δ
+              H₁₂ = 余子式[2,1]/Δ = k₂/Δ
+余子式[1,2] = 余子式[2,1] ← 矩阵对称（对称质量-弹簧-阻尼系统）
+</div>
+能量角度：在频率 ω 下，从 A 传到 B 的功率 = 从 B 传到 A 的功率（被动守恒）。
+<h4>▍有限零点的规律</h4>
+<table class="ct">
+<tr><th>H_ij</th><th>零点</th><th>物理</th></tr>
+<tr><td>H₁₁</td><td>P₂(s)=0 的根</td><td>m₂子系统固有频率 → 动力减振</td></tr>
+<tr><td>H₂₂</td><td>P₁(s)=0 的根</td><td>m₁子系统固有频率 → 反向减振</td></tr>
+<tr><td>H₂₁ = H₁₂</td><td>无有限零点</td><td>分子=k₂（常数），k₂≠0时能量总能传递</td></tr>
+</table>
+</div>
+</details>
+
+</div><!-- .center-col -->
+
+<!-- RIGHT: pole/zero plot -->
+<div class="pole-col">
+  <div class="clb">s 平面 |H(s)| 热图&ensp;|&ensp;<span id="spc-lbl">✕极点 □零点 ○输入极点 — 可拖动○</span></div>
+  <div class="pole-wrap">
+    <canvas id="spc"></canvas>
+  </div>
+  <div class="fbox" style="font-size:11px;line-height:1.8;" id="mode-info"></div>
+</div><!-- .pole-col -->
+
+</main>
+</div><!-- .layout -->
+
+<script>
+'use strict';
+const PR = Math.min(window.devicePixelRatio||1, 2);
+const dk = window.matchMedia('(prefers-color-scheme:dark)').matches;
+
+/* ---- Colors ---- */
+const bg    = dk?"#1e1e1c":"#ffffff";
+const bg2   = dk?"#2d2d2a":"#f5f5f4";
+const tx    = dk?"#f9f9f8":"#1e1e1c";
+const labC  = dk?"#888780":"#6b6a64";
+const axc   = dk?"#a8a8a0":"#888880";
+const gc    = dk?"rgba(200,200,200,0.12)":"rgba(0,0,0,0.08)";
+const coral  = dk?"#E8593C":"#D85A30";   // m1 / x1
+const teal   = dk?"#1D9E75":"#0F6E56";   // ẋ1 / x1 trace
+const sky    = dk?"#5AB4E8":"#2A8BBF";   // m2 / x2
+const lime   = dk?"#8DD56A":"#5BAD2E";   // mode2 poles
+const gold   = dk?"#F0B95E":"#C8920A";   // zeros
+const purple = dk?"#7F77DD":"#534AB7";   // excitation / input poles
+
+/* ---- Canvas setup ---- */
+const SZW=800, SZM=170, SZX=88, SZB=110, SZPC=700;
+function mkC(id,w,h){
+  const c=document.getElementById(id);
+  c.width=w*PR; c.height=h*PR;
+  const ctx=c.getContext("2d"); ctx.scale(PR,PR); return ctx;
+}
+const mctx  = mkC("mc",  SZW, SZM);
+const x1ctx = mkC("x1c", SZW, SZX);
+const x2ctx = mkC("x2c", SZW, SZX);
+const bctx  = mkC("bc",  SZW, SZB);
+const phctx = mkC("phc", SZW, SZB);
+const sctx  = mkC("spc", SZPC, SZPC);
+
+/* ---- Physics parameters ---- */
+let m1P=1.0, m2P=0.5;
+let k1P=1.0, k2P=1.5, k3P=0.5;
+let b1P=0.3, b2P=0.2;
+let wP=1.0, f0P=0.5, sigFP=0.0;
+let x10P=1.0, v10P=0.0, x20P=0.0, v20P=0.0;
+let hType=11;           // 11, 21, or 22  — which H_ij to analyze
+let speedP=0.1, yR=4.0, poleR=3.0, hmAlpha=0.6;
+
+/* ---- Simulation state ---- */
+let sx1, sv1, sx2, sv2, st;
+const TSLEN=600, DT=0.025;
+let tsX1=[], tsX2=[], tsF=[];
+
+/* ---- Pole/zero state ---- */
+let poles=[];    // [{r,i}] x4 — system poles
+let zeros=[];    // [{r,i}] x0/x2 — depends on hType
+let hmDirty=true;
+let hmImageData=null;
+
+/* ---- Pole drag state ---- */
+let poleTfm={ox:0,oy:0,scl:1};
+let inputDrag=false;
+
+/* ============================================================
+   Complex arithmetic helpers
+   ============================================================ */
+const cmul=(a,b)=>({r:a.r*b.r-a.i*b.i, i:a.r*b.i+a.i*b.r});
+const cadd=(a,b)=>({r:a.r+b.r, i:a.i+b.i});
+const csub=(a,b)=>({r:a.r-b.r, i:a.i-b.i});
+function cdiv(a,b){
+  const d=b.r*b.r+b.i*b.i;
+  if(d<1e-30)return{r:0,i:0};
+  return{r:(a.r*b.r+a.i*b.i)/d, i:(a.i*b.r-a.r*b.i)/d};
+}
+const cabs=(a)=>Math.sqrt(a.r*a.r+a.i*a.i);
+
+/* ---- Evaluate polynomials at complex s ---- */
+// P1(s) = m1*s^2 + b1*s + (k1+k2)
+function evalP1(s){
+  const s2=cmul(s,s);
+  return cadd(cadd({r:m1P*s2.r,i:m1P*s2.i},{r:b1P*s.r,i:b1P*s.i}),{r:k1P+k2P,i:0});
+}
+// P2(s) = m2*s^2 + b2*s + (k2+k3)
+function evalP2(s){
+  const s2=cmul(s,s);
+  return cadd(cadd({r:m2P*s2.r,i:m2P*s2.i},{r:b2P*s.r,i:b2P*s.i}),{r:k2P+k3P,i:0});
+}
+// det(s) = P1(s)*P2(s) - k2^2
+function evalDet(s){
+  const p=cmul(evalP1(s),evalP2(s));
+  return{r:p.r-k2P*k2P,i:p.i};
+}
+// H_ij(s) for current hType
+function evalH(s){
+  const det=evalDet(s);
+  let num;
+  if(hType===11)      num=evalP2(s);
+  else if(hType===22) num=evalP1(s);
+  else                num={r:k2P,i:0};
+  return cdiv(num,det);
+}
+
+/* ---- Durand-Kerner root finder (degree 4) ---- */
+function polyEval4(poly,z){
+  // Horner, poly=[a4,a3,a2,a1,a0] normalized so a4=1
+  let r=0,im=0;
+  for(let k=0;k<poly.length;k++){
+    const nr=r*z.r-im*z.i+poly[k];
+    const ni=r*z.i+im*z.r;
+    r=nr;im=ni;
+  }
+  return{r,i:im};
+}
+function durandKerner4(poly,maxIter=120){
+  const N=4;
+  const R=0.5*(1+Math.max(...poly.slice(1).map(Math.abs)));
+  let z=Array.from({length:N},(_,k)=>{
+    const ang=2*Math.PI*k/N+0.3;
+    return{r:R*Math.cos(ang),i:R*Math.sin(ang)};
+  });
+  for(let iter=0;iter<maxIter;iter++){
+    const nz=z.map((zk,k)=>{
+      const pzk=polyEval4(poly,zk);
+      let den={r:1,i:0};
+      for(let j=0;j<N;j++){
+        if(j===k)continue;
+        den=cmul(den,csub(zk,z[j]));
+      }
+      const corr=cdiv(pzk,den);
+      return{r:zk.r-corr.r,i:zk.i-corr.i};
+    });
+    z=nz;
+  }
+  return z;
+}
+
+/* ---- Compute poles ---- */
+// det(s) = d4*s^4 + d3*s^3 + d2*s^2 + d1*s + d0
+function computePoles(){
+  const d4=m1P*m2P;
+  const d3=m1P*b2P+m2P*b1P;
+  const d2=m1P*(k2P+k3P)+m2P*(k1P+k2P)+b1P*b2P;
+  const d1=b1P*(k2P+k3P)+b2P*(k1P+k2P);
+  const d0=k1P*k2P+k1P*k3P+k2P*k3P;
+  if(d4<1e-10){poles=[];return;}
+  const poly=[1,d3/d4,d2/d4,d1/d4,d0/d4];
+  poles=durandKerner4(poly);
+  // Sort by |Im| ascending so pairs are together
+  poles.sort((a,b)=>Math.abs(a.i)-Math.abs(b.i));
+}
+
+/* ---- Compute zeros for current hType ---- */
+function computeZeros(){
+  zeros=[];
+  let a,b,c;
+  if(hType===11){a=m2P;b=b2P;c=k2P+k3P;}
+  else if(hType===22){a=m1P;b=b1P;c=k1P+k2P;}
+  else return;  // H21: no finite zeros
+  const disc=b*b-4*a*c;
+  if(disc>=0){
+    zeros.push({r:(-b+Math.sqrt(disc))/(2*a),i:0});
+    zeros.push({r:(-b-Math.sqrt(disc))/(2*a),i:0});
+  } else {
+    zeros.push({r:-b/(2*a),i: Math.sqrt(-disc)/(2*a)});
+    zeros.push({r:-b/(2*a),i:-Math.sqrt(-disc)/(2*a)});
+  }
+}
+
+/* ---- RK4 physics step ---- */
+function deriv(x1,v1,x2,v2,t){
+  const F=f0P*Math.exp(sigFP*t)*Math.cos(wP*t);
+  const F1=(hType!==22)?F:0;
+  const F2=(hType===22)?F:0;
+  const ax1=(-(k1P+k2P)*x1+k2P*x2-b1P*v1+F1)/m1P;
+  const ax2=(k2P*x1-(k2P+k3P)*x2-b2P*v2+F2)/m2P;
+  return[v1,ax1,v2,ax2];
+}
+function rk4Step(x1,v1,x2,v2,t){
+  const[a1,b1,c1,d1]=deriv(x1,v1,x2,v2,t);
+  const[a2,b2,c2,d2]=deriv(x1+DT/2*a1,v1+DT/2*b1,x2+DT/2*c1,v2+DT/2*d1,t+DT/2);
+  const[a3,b3,c3,d3]=deriv(x1+DT/2*a2,v1+DT/2*b2,x2+DT/2*c2,v2+DT/2*d2,t+DT/2);
+  const[a4,b4,c4,d4]=deriv(x1+DT*a3,v1+DT*b3,x2+DT*c3,v2+DT*d3,t+DT);
+  return[
+    x1+DT/6*(a1+2*a2+2*a3+a4),
+    v1+DT/6*(b1+2*b2+2*b3+b4),
+    x2+DT/6*(c1+2*c2+2*c3+c4),
+    v2+DT/6*(d1+2*d2+2*d3+d4),
+    t+DT
+  ];
+}
+
+/* ---- Reset simulation ---- */
+function reset(){
+  sx1=x10P;sv1=v10P;sx2=x20P;sv2=v20P;st=0;
+  tsX1=[];tsX2=[];tsF=[];
+}
+
+/* ============================================================
+   Drawing helpers
+   ============================================================ */
+function drawArrow(c,x1,y1,x2,y2,col,lw){
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+  if(len<2)return;
+  const hs=Math.min(9,len*0.38),ang=Math.atan2(dy,dx);
+  c.strokeStyle=col;c.lineWidth=lw||1.8;c.setLineDash([]);
+  c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();
+  c.fillStyle=col;
+  c.beginPath();
+  c.moveTo(x2,y2);
+  c.lineTo(x2-hs*Math.cos(ang-0.42),y2-hs*Math.sin(ang-0.42));
+  c.lineTo(x2-hs*Math.cos(ang+0.42),y2-hs*Math.sin(ang+0.42));
+  c.closePath();c.fill();
+}
+
+// Horizontal spring from (x1,y) to (x2,y)
+function drawSpringH(c,x1,x2,cy,col){
+  const n=8,r=6;
+  const len=x2-x1;
+  if(len<1)return;
+  const seg=len/(n*2+2);
+  c.strokeStyle=col||axc;c.lineWidth=1.2;c.setLineDash([]);
+  c.beginPath();
+  c.moveTo(x1,cy);
+  c.lineTo(x1+seg*0.6,cy);
+  for(let i=0;i<n*2;i++){
+    c.lineTo(x1+seg*(i+1.3),cy+(i%2===0?r:-r));
+  }
+  c.lineTo(x1+seg*(n*2+1.4),cy);
+  c.lineTo(x2,cy);
+  c.stroke();
+}
+
+// Horizontal dashpot at center of [x1..x2] at height y
+function drawDashpotH(c,x1,x2,y,col){
+  const cx=(x1+x2)/2,hw=20,hh=8;
+  c.strokeStyle=col||axc;c.lineWidth=1.1;c.setLineDash([]);
+  // connector lines
+  c.beginPath();c.moveTo(x1,y);c.lineTo(cx-hw,y);c.stroke();
+  c.beginPath();c.moveTo(cx+hw,y);c.lineTo(x2,y);c.stroke();
+  // outer box
+  c.strokeRect(cx-hw,y-hh,hw*2,hh*2);
+  // inner piston (right half)
+  c.beginPath();c.moveTo(cx,y-hh+2);c.lineTo(cx,y+hh-2);c.stroke();
+  c.beginPath();c.moveTo(cx,y);c.lineTo(cx+hw*0.6,y);c.stroke();
+}
+
+function drawMassBlock(c,cx,cy,w,h,col,label){
+  c.fillStyle=col;
+  if(c.roundRect){c.beginPath();c.roundRect(cx-w/2,cy-h/2,w,h,4);c.fill();}
+  else c.fillRect(cx-w/2,cy-h/2,w,h);
+  c.strokeStyle=bg;c.lineWidth=0.8;c.strokeRect(cx-w/2,cy-h/2,w,h);
+  c.fillStyle=bg;c.textAlign='center';c.textBaseline='middle';
+  c.font='bold 11px sans-serif';
+  c.fillText(label,cx,cy);
+}
+
+// Plot a time series into a sub-region of a canvas
+function plotToY(d,mn,mx,y0,ph){return y0+ph-(d-mn)/Math.max(mx-mn,1e-6)*ph*0.84-ph*0.08;}
+function drawLineSeries(ctx,W,data,mn,mx,y0,ph,col,lw,dash){
+  if(data.length<2)return;
+  const len=data.length,denom=Math.max(TSLEN-1,1);
+  ctx.strokeStyle=col;ctx.lineWidth=lw||1.5;ctx.setLineDash(dash||[]);
+  ctx.beginPath();
+  data.forEach((d,i)=>{
+    const px=6+(i+TSLEN-len)/denom*(W-12);
+    i===0?ctx.moveTo(px,plotToY(d,mn,mx,y0,ph)):ctx.lineTo(px,plotToY(d,mn,mx,y0,ph));
+  });
+  ctx.stroke();ctx.setLineDash([]);
+}
+function drawTsAxis(ctx,W,mn,mx,y0,ph){
+  // zero line
+  const zy=plotToY(0,mn,mx,y0,ph);
+  if(mn<0&&mx>0){
+    ctx.strokeStyle=gc;ctx.lineWidth=0.5;ctx.setLineDash([2,4]);
+    ctx.beginPath();ctx.moveTo(6,zy);ctx.lineTo(W-6,zy);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.font='10px sans-serif';ctx.fillStyle=labC;ctx.textAlign='right';
+  ctx.fillText(mx.toFixed(1),W-2,plotToY(mx,mn,mx,y0,ph)+9);
+  ctx.fillText(mn.toFixed(1),W-2,plotToY(mn,mn,mx,y0,ph)-1);
+}
+
+/* ============================================================
+   DRAW: Mechanical diagram
+   ============================================================ */
+function drawMech(){
+  const W=SZW,H=SZM;
+  mctx.clearRect(0,0,W,H);
+  mctx.fillStyle=bg2;
+  if(mctx.roundRect){mctx.beginPath();mctx.roundRect(0,0,W,H,8);mctx.fill();}
+  else mctx.fillRect(0,0,W,H);
+
+  const wallW=12, cy=H*0.44, dampY=cy+34;
+  const mw1=38,mh1=28,mw2=32,mh2=24;
+  const dispScale=Math.min(W*0.08,60)/Math.max(yR,0.5);
+
+  // Equilibrium positions
+  const eq1=W*0.33, eq2=W*0.67;
+  const px1=eq1+sx1*dispScale, px2=eq2+sx2*dispScale;
+
+  // Walls (vertical hatched)
+  function drawWall(x,side){
+    mctx.fillStyle=axc;
+    mctx.fillRect(side==='L'?x:x-wallW,0,wallW,H);
+    mctx.strokeStyle=dk?'rgba(255,255,255,0.15)':'rgba(0,0,0,0.2)';
+    mctx.lineWidth=0.8;
+    for(let y=0;y<H+10;y+=10){
+      mctx.beginPath();
+      if(side==='L'){mctx.moveTo(x+wallW,y);mctx.lineTo(x+wallW+7,y-7);}
+      else{mctx.moveTo(x-wallW,y);mctx.lineTo(x-wallW-7,y-7);}
+      mctx.stroke();
+    }
+  }
+  drawWall(0,'L');
+  drawWall(W,'R');
+
+  // Springs (from wall-faces to mass-faces)
+  drawSpringH(mctx, wallW, px1-mw1/2, cy, axc);
+  drawSpringH(mctx, px1+mw1/2, px2-mw2/2, cy, teal);
+  drawSpringH(mctx, px2+mw2/2, W-wallW, cy, axc);
+
+  // Dashpots below springs
+  if(b1P>0.01) drawDashpotH(mctx, wallW, px1-mw1/2, dampY, coral);
+  if(b2P>0.01) drawDashpotH(mctx, px2+mw2/2, W-wallW, dampY, sky);
+
+  // Force arrow (above the active mass)
+  const fNow=f0P>1e-9?f0P*Math.exp(sigFP*st)*Math.cos(wP*st):0;
+  const fMassX=(hType===22)?px2:px1;
+  const fMassH=(hType===22)?mh2:mh1;
+  if(f0P>1e-9&&Math.abs(fNow)>0.01){
+    const fArrowBase=cy-fMassH/2-4;
+    const fArrowScale=22/Math.max(f0P,0.1);
+    const fTip=fArrowBase-fNow*fArrowScale;
+    drawArrow(mctx,fMassX,fArrowBase,fMassX,Math.max(4,Math.min(fArrowBase-2,fTip)),purple,2.2);
+    mctx.fillStyle=purple;mctx.textAlign='center';mctx.font='9px sans-serif';
+    mctx.fillText('F='+fNow.toFixed(2),fMassX,4+9);
+  }
+
+  // Mass blocks
+  drawMassBlock(mctx,px1,cy,mw1,mh1,coral,'m₁');
+  drawMassBlock(mctx,px2,cy,mw2,mh2,sky,'m₂');
+
+  // Velocity arrows (below masses)
+  const vscl=12/Math.max(yR,0.5);
+  if(Math.abs(sv1)>0.04){
+    const tip=px1+sv1*vscl*4;
+    drawArrow(mctx,px1,cy+mh1/2+4,Math.max(wallW+4,Math.min(W-wallW-4,tip)),cy+mh1/2+4,teal,1.8);
+  }
+  if(Math.abs(sv2)>0.04){
+    const tip=px2+sv2*vscl*4;
+    drawArrow(mctx,px2,cy+mh2/2+4,Math.max(wallW+4,Math.min(W-wallW-4,tip)),cy+mh2/2+4,lime,1.8);
+  }
+
+  // Labels
+  mctx.font='10px sans-serif';mctx.textBaseline='top';
+  mctx.fillStyle=coral;mctx.textAlign='center';
+  mctx.fillText('x₁='+sx1.toFixed(3),px1,cy+mh1/2+14);
+  mctx.fillStyle=sky;mctx.textAlign='center';
+  mctx.fillText('x₂='+sx2.toFixed(3),px2,cy+mh2/2+14);
+
+  // Spring labels
+  mctx.fillStyle=labC;mctx.textAlign='center';mctx.font='9px sans-serif';
+  mctx.fillText('k₁='+k1P.toFixed(2),(wallW+px1-mw1/2)/2,cy-18);
+  mctx.fillText('k₂='+k2P.toFixed(2),(px1+mw1/2+px2-mw2/2)/2,cy-18);
+  mctx.fillText('k₃='+k3P.toFixed(2),(px2+mw2/2+W-wallW)/2,cy-18);
+  if(b1P>0.01){mctx.fillStyle=coral;mctx.fillText('b₁='+b1P.toFixed(2),(wallW+px1-mw1/2)/2,dampY+10);}
+  if(b2P>0.01){mctx.fillStyle=sky;mctx.fillText('b₂='+b2P.toFixed(2),(px2+mw2/2+W-wallW)/2,dampY+10);}
+}
+
+/* ============================================================
+   DRAW: Time series (x1 and x2)
+   ============================================================ */
+function drawTimeSeries(){
+  const W=SZW,H=SZX,ph=H-8,y0=4;
+  const mn=-yR,mx=yR;
+
+  // x1(t)
+  x1ctx.clearRect(0,0,W,H);
+  x1ctx.fillStyle=bg2;x1ctx.fillRect(0,0,W,H);
+  drawTsAxis(x1ctx,W,mn,mx,y0,ph);
+  drawLineSeries(x1ctx,W,tsX1,mn,mx,y0,ph,teal,1.8);
+  x1ctx.fillStyle=teal;x1ctx.textAlign='left';x1ctx.font='10px sans-serif';
+  if(tsX1.length)x1ctx.fillText('x₁='+sx1.toFixed(3),8,12);
+
+  // x2(t) + F(t)
+  x2ctx.clearRect(0,0,W,H);
+  x2ctx.fillStyle=bg2;x2ctx.fillRect(0,0,W,H);
+  drawTsAxis(x2ctx,W,mn,mx,y0,ph);
+  drawLineSeries(x2ctx,W,tsF,mn,mx,y0,ph,purple,1.2,[3,4]);
+  drawLineSeries(x2ctx,W,tsX2,mn,mx,y0,ph,sky,1.8);
+  x2ctx.fillStyle=sky;x2ctx.textAlign='left';x2ctx.font='10px sans-serif';
+  if(tsX2.length)x2ctx.fillText('x₂='+sx2.toFixed(3),8,12);
+}
+
+/* ============================================================
+   DRAW: Bode magnitude (all 3 H functions + ω line)
+   ============================================================ */
+function drawBode(){
+  const W=SZW,H=SZB;
+  bctx.clearRect(0,0,W,H);
+  bctx.fillStyle=bg2;bctx.fillRect(0,0,W,H);
+
+  const wMax=5.5, wMin=0.01;
+  const logMin=-2, logMax=2.5;  // log10 of |H|
+  const xPad=40,yPad=8;
+  const pw=W-xPad-8,ph=H-yPad*2;
+
+  function wx(w){return xPad+(Math.log10(Math.max(w,wMin))-Math.log10(wMin))/(Math.log10(wMax)-Math.log10(wMin))*pw;}
+  function hy(v){const lv=Math.log10(Math.max(v,1e-4));return yPad+ph-(lv-logMin)/(logMax-logMin)*ph;}
+
+  // Grid lines
+  bctx.strokeStyle=gc;bctx.lineWidth=0.5;
+  [0.1,0.2,0.5,1,2,5].forEach(w=>{
+    const x=wx(w);
+    bctx.beginPath();bctx.moveTo(x,yPad);bctx.lineTo(x,yPad+ph);bctx.stroke();
+    bctx.fillStyle=labC;bctx.textAlign='center';bctx.font='9px sans-serif';
+    bctx.fillText(w+'',x,H-2);
+  });
+  [-1,0,1,2].forEach(lv=>{
+    const y=hy(Math.pow(10,lv));
+    bctx.beginPath();bctx.moveTo(xPad,y);bctx.lineTo(W-8,y);bctx.stroke();
+    bctx.fillStyle=labC;bctx.textAlign='right';bctx.font='9px sans-serif';
+    bctx.fillText(lv===0?'1':lv===1?'10':lv===-1?'0.1':'100',xPad-3,y+3);
+  });
+
+  // Evaluate and draw H11, H21, H22
+  const types=[{t:11,c:coral,d:[]},{t:21,c:sky,d:[4,4]},{t:22,c:gold,d:[2,3]}];
+  const savedH=hType;
+
+  types.forEach(({t,c,d,data})=>{
+    hType=t; computeZeros();
+    bctx.strokeStyle=c;bctx.lineWidth=(t===savedH?2.2:1.2);bctx.setLineDash(d);
+    bctx.beginPath();
+    let first=true;
+    for(let i=0;i<=pw;i++){
+      const lw=Math.log10(wMin)+(Math.log10(wMax)-Math.log10(wMin))*i/pw;
+      const ww=Math.pow(10,lw);
+      const s={r:0,i:ww};
+      const h=evalH(s);
+      const mag=cabs(h);
+      const x=xPad+i,y=hy(mag);
+      if(first){bctx.moveTo(x,y);first=false;}else bctx.lineTo(x,y);
+    }
+    bctx.stroke();bctx.setLineDash([]);
+  });
+
+  hType=savedH; computeZeros();
+
+  // Vertical line at current ω
+  if(wP>wMin&&wP<wMax){
+    const xw=wx(wP);
+    bctx.strokeStyle=purple;bctx.lineWidth=1.5;bctx.setLineDash([3,3]);
+    bctx.beginPath();bctx.moveTo(xw,yPad);bctx.lineTo(xw,yPad+ph);bctx.stroke();
+    bctx.setLineDash([]);
+    // |H| at ω
+    const hNow=cabs(evalH({r:sigFP,i:wP}));
+    bctx.fillStyle=purple;bctx.textAlign='left';bctx.font='9px sans-serif';
+    bctx.fillText('|H|='+hNow.toFixed(3),xw+3,yPad+10);
+  }
+
+  // Zero lines (vertical gold dashes)
+  zeros.forEach(z=>{
+    if(Math.abs(z.i)>0.05&&Math.abs(z.i)<wMax){
+      const xz=wx(Math.abs(z.i));
+      bctx.strokeStyle=gold;bctx.lineWidth=1;bctx.setLineDash([1,3]);
+      bctx.beginPath();bctx.moveTo(xz,yPad);bctx.lineTo(xz,yPad+ph);bctx.stroke();
+      bctx.setLineDash([]);
+    }
+  });
+
+  bctx.fillStyle=labC;bctx.font='9px sans-serif';bctx.textAlign='left';
+  bctx.fillText('ω (rad/s)',xPad,H-2);
+}
+
+/* ============================================================
+   DRAW: Phase response (selected H only)
+   ============================================================ */
+function drawPhase(){
+  const W=SZW,H=SZB;
+  phctx.clearRect(0,0,W,H);
+  phctx.fillStyle=bg2;phctx.fillRect(0,0,W,H);
+
+  const wMax=5.5,wMin=0.01;
+  const xPad=40,yPad=8;
+  const pw=W-xPad-8,ph=H-yPad*2;
+
+  function wx(w){return xPad+(Math.log10(Math.max(w,wMin))-Math.log10(wMin))/(Math.log10(wMax)-Math.log10(wMin))*pw;}
+  function phy(deg){return yPad+ph-(-deg+360)/360*ph;}  // 0 at top, -360 at bottom? Let's do [-360,0]
+  // Let's show phase from 0 to -360
+  function phyDeg(deg){return yPad+ph*(1-(deg+360)/360);}  // deg in [-360,0]
+
+  // Grid
+  phctx.strokeStyle=gc;phctx.lineWidth=0.5;
+  [-90,-180,-270,-360].forEach(deg=>{
+    const y=phyDeg(deg);
+    phctx.beginPath();phctx.moveTo(xPad,y);phctx.lineTo(W-8,y);phctx.stroke();
+    phctx.fillStyle=labC;phctx.textAlign='right';phctx.font='9px sans-serif';
+    phctx.fillText(deg+'°',xPad-3,y+3);
+  });
+  [0.1,0.2,0.5,1,2,5].forEach(w=>{
+    const x=wx(w);
+    phctx.beginPath();phctx.moveTo(x,yPad);phctx.lineTo(x,yPad+ph);phctx.stroke();
+    phctx.fillStyle=labC;phctx.textAlign='center';phctx.font='9px sans-serif';
+    phctx.fillText(w+'',x,H-2);
+  });
+
+  // Zero phase line
+  const y0=phyDeg(0);
+  phctx.strokeStyle=gc;phctx.lineWidth=0.5;phctx.setLineDash([2,4]);
+  phctx.beginPath();phctx.moveTo(xPad,y0);phctx.lineTo(W-8,y0);phctx.stroke();
+  phctx.setLineDash([]);
+
+  // Phase curve
+  const col=hType===11?coral:hType===21?sky:gold;
+  phctx.strokeStyle=col;phctx.lineWidth=1.8;
+  phctx.beginPath();
+  let prevAng=0,first=true;
+  for(let i=0;i<=pw;i++){
+    const lw=Math.log10(wMin)+(Math.log10(wMax)-Math.log10(wMin))*i/pw;
+    const ww=Math.pow(10,lw);
+    const s={r:0,i:ww};
+    const h=evalH(s);
+    let ang=Math.atan2(h.i,h.r)*180/Math.PI;
+    // unwrap
+    if(!first){
+      while(ang-prevAng>180)ang-=360;
+      while(ang-prevAng<-180)ang+=360;
+    }
+    prevAng=ang;
+    const y=phyDeg(Math.max(-360,Math.min(0,ang)));
+    if(first){phctx.moveTo(xPad+i,y);first=false;}else phctx.lineTo(xPad+i,y);
+  }
+  phctx.stroke();
+
+  if(wP>wMin&&wP<wMax){
+    const xw=wx(wP);
+    phctx.strokeStyle=purple;phctx.lineWidth=1.2;phctx.setLineDash([3,3]);
+    phctx.beginPath();phctx.moveTo(xw,yPad);phctx.lineTo(xw,yPad+ph);phctx.stroke();
+    phctx.setLineDash([]);
+  }
+  phctx.fillStyle=labC;phctx.font='9px sans-serif';phctx.textAlign='left';
+  phctx.fillText('ω (rad/s)',xPad,H-2);
+}
+
+/* ============================================================
+   DRAW: Pole/zero map with heatmap
+   ============================================================ */
+const HMAP_STEP=4;
+
+function buildHeatmap(){
+  const W=SZPC,H=SZPC;
+  const R=poleR;
+  const id=sctx.createImageData(W*PR,H*PR);
+  const pxW=W*PR,pxH=H*PR;
+  for(let py=0;py<pxH;py+=HMAP_STEP){
+    const im=((pxH/2-py)/(pxH/2))*R;
+    for(let px=0;px<pxW;px+=HMAP_STEP){
+      const re=((px-pxW/2)/(pxW/2))*R;
+      const s={r:re,i:im};
+      const h=evalH(s);
+      const mag=cabs(h);
+      const logMag=Math.log10(1+mag);
+      const t=Math.min(1,logMag/2.5);
+      // Color ramp: blue→cyan→green→yellow→red
+      let r2,g2,b2;
+      if(t<0.25){const u=t/0.25;r2=0;g2=Math.round(255*u);b2=255;}
+      else if(t<0.5){const u=(t-0.25)/0.25;r2=0;g2=255;b2=Math.round(255*(1-u));}
+      else if(t<0.75){const u=(t-0.5)/0.25;r2=Math.round(255*u);g2=255;b2=0;}
+      else{const u=(t-0.75)/0.25;r2=255;g2=Math.round(255*(1-u));b2=0;}
+      const alpha=Math.round(hmAlpha*255);
+      for(let dy=0;dy<HMAP_STEP&&py+dy<pxH;dy++){
+        for(let dx=0;dx<HMAP_STEP&&px+dx<pxW;dx++){
+          const idx=((py+dy)*pxW+(px+dx))*4;
+          id.data[idx]=r2;id.data[idx+1]=g2;id.data[idx+2]=b2;id.data[idx+3]=alpha;
+        }
+      }
+    }
+  }
+  hmImageData=id;
+  hmDirty=false;
+}
+
+function drawPoleMap(){
+  const W=SZPC,H=SZPC;
+  sctx.clearRect(0,0,W,H);
+  sctx.fillStyle=bg2;sctx.fillRect(0,0,W,H);
+
+  const R=poleR;
+  const cx=W/2,cy=H/2;
+  const scl=W/(2*R);
+
+  // Convert complex → canvas coords
+  function toX(re){return cx+re*scl;}
+  function toY(im){return cy-im*scl;}
+
+  // Heatmap
+  if(hmDirty)buildHeatmap();
+  if(hmImageData){
+    // draw ImageData at 1/PR scale (canvas is already scaled by PR via ctx.scale)
+    const tmpC=document.createElement('canvas');
+    tmpC.width=W*PR;tmpC.height=H*PR;
+    tmpC.getContext('2d').putImageData(hmImageData,0,0);
+    sctx.save();sctx.scale(1/PR,1/PR);
+    sctx.drawImage(tmpC,0,0);
+    sctx.restore();
+  }
+
+  // Background tint for RHP (danger zone)
+  sctx.fillStyle=dk?'rgba(200,60,40,0.06)':'rgba(220,80,60,0.05)';
+  sctx.fillRect(cx,0,W-cx,H);
+
+  // Axes
+  sctx.strokeStyle=axc;sctx.lineWidth=1;sctx.setLineDash([]);
+  sctx.beginPath();sctx.moveTo(0,cy);sctx.lineTo(W,cy);sctx.stroke();
+  sctx.beginPath();sctx.moveTo(cx,0);sctx.lineTo(cx,H);sctx.stroke();
+
+  // Imaginary axis label
+  sctx.fillStyle=labC;sctx.font='11px sans-serif';sctx.textAlign='left';
+  sctx.fillText('jω',cx+4,12);
+  sctx.textAlign='center';
+  sctx.fillText('σ',W-6,cy-4);
+  // Grid + tick labels
+  sctx.strokeStyle=gc;sctx.lineWidth=0.5;sctx.setLineDash([2,4]);
+  const step=Math.ceil(R/4*10)/10;
+  for(let v=-R;v<=R+0.01;v+=step){
+    const xv=toX(v),yv=toY(v);
+    sctx.beginPath();sctx.moveTo(xv,0);sctx.lineTo(xv,H);sctx.stroke();
+    sctx.beginPath();sctx.moveTo(0,yv);sctx.lineTo(W,yv);sctx.stroke();
+    if(Math.abs(v)>0.05){
+      sctx.fillStyle=labC;sctx.textAlign='center';sctx.font='9px sans-serif';
+      sctx.fillText(v.toFixed(1),xv,cy+12);
+      sctx.fillText(v.toFixed(1),cx-18,yv+3);
+    }
+  }
+  sctx.setLineDash([]);
+
+  // Draw poles (×)
+  function drawCross(x,y,size,col,lw){
+    sctx.strokeStyle=col;sctx.lineWidth=lw||2.5;
+    sctx.beginPath();sctx.moveTo(x-size,y-size);sctx.lineTo(x+size,y+size);sctx.stroke();
+    sctx.beginPath();sctx.moveTo(x+size,y-size);sctx.lineTo(x-size,y+size);sctx.stroke();
+  }
+  // Draw zeros (□)
+  function drawSquare(x,y,size,col){
+    sctx.strokeStyle=col;sctx.lineWidth=2;
+    sctx.strokeRect(x-size,y-size,size*2,size*2);
+  }
+  // Draw circle (○)
+  function drawCirc(x,y,size,col){
+    sctx.strokeStyle=col;sctx.lineWidth=2.2;
+    sctx.beginPath();sctx.arc(x,y,size,0,Math.PI*2);sctx.stroke();
+  }
+
+  // Poles — sorted so first 2 have lower |Im| (Mode 1) and last 2 have higher (Mode 2)
+  const poleColors=[coral,coral,lime,lime];
+  poles.forEach((p,i)=>{
+    const px=toX(p.r),py=toY(p.i);
+    if(px<-20||px>W+20||py<-20||py>H+20)return;
+    drawCross(px,py,7,poleColors[i]||coral);
+    sctx.fillStyle=poleColors[i]||coral;sctx.textAlign='left';sctx.font='9px sans-serif';
+    sctx.fillText('p'+(i+1)+': '+(p.r>=0?'+':'')+p.r.toFixed(3)+(p.i>=0?'+j':'-j')+Math.abs(p.i).toFixed(3),px+9,py-2);
+  });
+
+  // Zeros (□)
+  zeros.forEach((z,i)=>{
+    const zx=toX(z.r),zy=toY(z.i);
+    if(zx<-20||zx>W+20||zy<-20||zy>H+20)return;
+    drawSquare(zx,zy,7,gold);
+    sctx.fillStyle=gold;sctx.textAlign='left';sctx.font='9px sans-serif';
+    sctx.fillText('z'+(i+1)+': '+(z.r>=0?'+':'')+z.r.toFixed(3)+(z.i>=0?'+j':'-j')+Math.abs(z.i).toFixed(3),zx+9,zy-2);
+  });
+
+  // Input poles ○ at s_f = sigFP ± j*wP
+  const ipx=toX(sigFP), ipy_pos=toY(wP), ipy_neg=toY(-wP);
+  drawCirc(ipx,ipy_pos,8,purple);
+  drawCirc(ipx,ipy_neg,8,purple);
+  sctx.fillStyle=purple;sctx.textAlign='left';sctx.font='9px sans-serif';
+  sctx.fillText('s_f='+sigFP.toFixed(2)+(wP>=0?'+j':'-j')+Math.abs(wP).toFixed(2),ipx+10,ipy_pos-2);
+
+  // Colorbar legend (right edge)
+  const cbx=W-16,cby=30,cbH=H-60;
+  const grad=sctx.createLinearGradient(0,cby,0,cby+cbH);
+  grad.addColorStop(0,'red');
+  grad.addColorStop(0.25,'yellow');
+  grad.addColorStop(0.5,'lime');
+  grad.addColorStop(0.75,'cyan');
+  grad.addColorStop(1,'blue');
+  sctx.fillStyle=grad;sctx.fillRect(cbx,cby,10,cbH);
+  sctx.fillStyle=labC;sctx.font='9px sans-serif';sctx.textAlign='right';
+  sctx.fillText('high',cbx-2,cby+8);
+  sctx.fillText('|H|',cbx-2,cby+cbH/2+3);
+  sctx.fillText('low',cbx-2,cby+cbH);
+}
+
+/* ============================================================
+   Update info panels
+   ============================================================ */
+function updateInfoPanels(){
+  // poles-display
+  let html='';
+  const modeCol=[coral,coral,lime,lime];
+  const modeLabel=['Mode1','Mode1','Mode2','Mode2'];
+  poles.forEach((p,i)=>{
+    const omega=Math.abs(p.i).toFixed(3);
+    const sigma=p.r.toFixed(3);
+    html+=`<span style="color:${modeCol[i]}">${modeLabel[i]} p${i+1}: σ=${sigma}, ω=${omega} rad/s</span><br>`;
+  });
+  zeros.forEach((z,i)=>{
+    html+=`<span style="color:${gold}">Zero z${i+1}: σ=${z.r.toFixed(3)}, ω=${z.i.toFixed(3)} rad/s</span><br>`;
+  });
+  const hNow=evalH({r:sigFP,i:wP});
+  html+=`<span style="color:${purple}">H(s_f): |H|=${cabs(hNow).toFixed(4)}, ∠H=${(Math.atan2(hNow.i,hNow.r)*180/Math.PI).toFixed(1)}°</span>`;
+  document.getElementById('poles-display').innerHTML=html;
+
+  // mode-info
+  let mi='';
+  if(poles.length>=4){
+    const wd1=Math.abs(poles[0].i),wd2=Math.abs(poles[2].i);
+    const sig1=Math.abs(poles[0].r),sig2=Math.abs(poles[2].r);
+    mi+=`Mode 1: ωd=${wd1.toFixed(3)} rad/s, σ=${sig1.toFixed(3)} → T½=${sig1>1e-6?(0.693/sig1).toFixed(2):'∞'} s\n`;
+    mi+=`Mode 2: ωd=${wd2.toFixed(3)} rad/s, σ=${sig2.toFixed(3)} → T½=${sig2>1e-6?(0.693/sig2).toFixed(2):'∞'} s\n`;
+    const wn1=Math.sqrt(poles[0].r*poles[0].r+poles[0].i*poles[0].i);
+    const wn2=Math.sqrt(poles[2].r*poles[2].r+poles[2].i*poles[2].i);
+    mi+=`|p₁|=ωn₁=${wn1.toFixed(3)} rad/s\n`;
+    mi+=`|p₂|=ωn₂=${wn2.toFixed(3)} rad/s`;
+  }
+  document.getElementById('mode-info').textContent=mi;
+
+  // badge
+  const allLHP=poles.every(p=>p.r<0);
+  const anyRHP=poles.some(p=>p.r>1e-4);
+  const badge=document.getElementById('badge');
+  if(anyRHP){badge.textContent='⚠ 不稳定 (极点在 RHP)';badge.style.background='var(--dbg)';badge.style.color='var(--dtx)';}
+  else if(allLHP){badge.textContent='✓ 渐近稳定 (所有极点在 LHP)';badge.style.background='var(--obg)';badge.style.color='var(--otx)';}
+  else{badge.textContent='～ 临界稳定 (极点在虚轴)';badge.style.background='var(--wbg)';badge.style.color='var(--wtx)';}
+}
+
+/* ============================================================
+   Legend colors
+   ============================================================ */
+function updateLegendColors(){
+  document.getElementById('leg-x1').style.color=teal;
+  document.getElementById('leg-x2').style.color=sky;
+  document.getElementById('leg-f').style.color=purple;
+}
+
+/* ============================================================
+   Animation loop
+   ============================================================ */
+let animFrame;
+let lastT=null;
+const STEP_MAX=60;
+
+function animate(ts){
+  animFrame=requestAnimationFrame(animate);
+  if(!lastT){lastT=ts;return;}
+  const dt=Math.min(ts-lastT,100)/1000;
+  lastT=ts;
+
+  const steps=Math.max(1,Math.min(STEP_MAX,Math.round(speedP*dt/DT)));
+  for(let i=0;i<steps;i++){
+    const F=f0P*Math.exp(sigFP*st)*Math.cos(wP*st);
+    tsX1.push(sx1);tsX2.push(sx2);tsF.push(F);
+    if(tsX1.length>TSLEN){tsX1.shift();tsX2.shift();tsF.shift();}
+    [sx1,sv1,sx2,sv2,st]=rk4Step(sx1,sv1,sx2,sv2,st);
+  }
+
+  drawMech();
+  drawTimeSeries();
+  drawBode();
+  drawPhase();
+  drawPoleMap();
+  updateInfoPanels();
+}
+
+/* ============================================================
+   Pole plot drag (input poles ○)
+   ============================================================ */
+const spcCanvas=document.getElementById('spc');
+spcCanvas.addEventListener('mousedown',e=>{
+  const rect=spcCanvas.getBoundingClientRect();
+  const cssX=(e.clientX-rect.left),cssY=(e.clientY-rect.top);
+  const W=SZPC,H=SZPC,R=poleR;
+  const cx=W/2,cy=H/2;
+  const scl=W/(2*R);
+  const canX=cssX/rect.width*W, canY=cssY/rect.height*H;
+  // Input pole positions in canvas coords
+  const ipx=cx+sigFP*scl, ipy=cy-wP*scl, ipyn=cy+wP*scl;
+  const d1=Math.hypot(canX-ipx,canY-ipy), d2=Math.hypot(canX-ipx,canY-ipyn);
+  if(Math.min(d1,d2)<18){
+    inputDrag=true;
+    spcCanvas.style.cursor='grabbing';
+  }
+});
+spcCanvas.addEventListener('mousemove',e=>{
+  if(!inputDrag)return;
+  const rect=spcCanvas.getBoundingClientRect();
+  const cssX=e.clientX-rect.left, cssY=e.clientY-rect.top;
+  const W=SZPC,H=SZPC,R=poleR;
+  const scl=W/(2*R);
+  const canX=cssX/rect.width*W, canY=cssY/rect.height*H;
+  sigFP=Math.max(-3,Math.min(2,(canX-W/2)/scl));
+  wP=Math.max(0,Math.min(5,(H/2-canY)/scl));
+  document.getElementById('ssigF').value=sigFP.toFixed(2);
+  document.getElementById('sw').value=wP.toFixed(2);
+  document.getElementById('lsigF').textContent=sigFP.toFixed(2);
+  document.getElementById('lw').innerHTML=wP.toFixed(2)+' rad/s';
+  hmDirty=true;
+  reset();
+});
+spcCanvas.addEventListener('mouseup',()=>{inputDrag=false;spcCanvas.style.cursor='';});
+spcCanvas.addEventListener('mouseleave',()=>{inputDrag=false;});
+
+/* ============================================================
+   Event handlers
+   ============================================================ */
+function onParamChange(){computePoles();computeZeros();hmDirty=true;reset();}
+
+// H-type buttons
+function setHType(t){
+  hType=t;
+  computeZeros();
+  hmDirty=true;
+  reset();
+  document.getElementById('tH11').classList.toggle('on',t===11);
+  document.getElementById('tH21').classList.toggle('on',t===21);
+  document.getElementById('tH22').classList.toggle('on',t===22);
+  const descs={
+    11:'力在m₁，观测x₁。零点=m₂子系统固有频率（动力减振效应）',
+    21:'力在m₁，观测x₂。无有限零点（分子=k₂常数）— H₁₂=H₂₁（互易）',
+    22:'力在m₂，观测x₂。零点=m₁子系统固有频率（互易减振效应）'
+  };
+  document.getElementById('h-desc').textContent=descs[t];
+  document.getElementById('force-loc-label').textContent=t===22?'m₂':'m₁';
+}
+document.getElementById('tH11').onclick=()=>setHType(11);
+document.getElementById('tH21').onclick=()=>setHType(21);
+document.getElementById('tH22').onclick=()=>setHType(22);
+
+// Physical params
+document.getElementById('sm1').oninput=function(){m1P=+this.value;document.getElementById('lm1').textContent='m₁='+m1P.toFixed(2);onParamChange();};
+document.getElementById('sb1').oninput=function(){b1P=+this.value;document.getElementById('lb1').textContent=b1P.toFixed(2);onParamChange();};
+document.getElementById('sm2').oninput=function(){m2P=+this.value;document.getElementById('lm2').textContent='m₂='+m2P.toFixed(2);onParamChange();};
+document.getElementById('sb2').oninput=function(){b2P=+this.value;document.getElementById('lb2').textContent=b2P.toFixed(2);onParamChange();};
+document.getElementById('sk1').oninput=function(){k1P=+this.value;document.getElementById('lk1').textContent=k1P.toFixed(2);onParamChange();};
+document.getElementById('sk2').oninput=function(){k2P=+this.value;document.getElementById('lk2').textContent=k2P.toFixed(2);onParamChange();};
+document.getElementById('sk3').oninput=function(){k3P=+this.value;document.getElementById('lk3').textContent=k3P.toFixed(2);onParamChange();};
+
+// Excitation
+document.getElementById('sw').oninput=function(){wP=+this.value;document.getElementById('lw').innerHTML=wP.toFixed(2)+' rad/s';hmDirty=true;reset();};
+document.getElementById('sf').oninput=function(){f0P=+this.value;document.getElementById('lf').textContent=f0P.toFixed(2);reset();};
+document.getElementById('ssigF').oninput=function(){sigFP=+this.value;document.getElementById('lsigF').textContent=sigFP.toFixed(2);hmDirty=true;reset();};
+
+// Initial conditions
+document.getElementById('sx10').oninput=function(){x10P=+this.value;document.getElementById('lx10').textContent=x10P.toFixed(2);reset();};
+document.getElementById('sv10').oninput=function(){v10P=+this.value;document.getElementById('lv10').textContent=v10P.toFixed(2);reset();};
+document.getElementById('sx20').oninput=function(){x20P=+this.value;document.getElementById('lx20').textContent=x20P.toFixed(2);reset();};
+document.getElementById('sv20').oninput=function(){v20P=+this.value;document.getElementById('lv20').textContent=v20P.toFixed(2);reset();};
+
+// View
+document.getElementById('sspd').oninput=function(){
+  speedP=+this.value;
+  document.getElementById('lspd').textContent=speedP===0?'0x (暂停)':speedP.toFixed(2)+'x';
+};
+document.getElementById('syr').oninput=function(){yR=+this.value;document.getElementById('lyr').textContent='±'+yR.toFixed(1);};
+document.getElementById('spoleR').oninput=function(){poleR=+this.value;document.getElementById('lpoleR').textContent='±'+poleR.toFixed(1);hmDirty=true;};
+document.getElementById('shmAlpha').oninput=function(){hmAlpha=+this.value;document.getElementById('lhmAlpha').textContent=hmAlpha.toFixed(2);hmDirty=true;};
+
+/* ============================================================
+   Init
+   ============================================================ */
+updateLegendColors();
+computePoles();
+computeZeros();
+reset();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

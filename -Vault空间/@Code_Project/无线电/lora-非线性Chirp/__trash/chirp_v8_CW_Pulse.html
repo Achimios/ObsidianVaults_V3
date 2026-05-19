@@ -1,0 +1,932 @@
+
+<!DOCTYPE html><html><head>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans,sans-serif);background:var(--color-background-primary,#fff);font-size:12px}
+.root{padding:6px 0;display:flex;flex-direction:column;gap:8px}
+.ctrl{display:flex;flex-wrap:wrap;gap:4px 9px;align-items:center;padding:6px 10px;background:var(--color-background-secondary,#f5f5f3);border-radius:8px}
+.ctrl label{font-size:11px;color:var(--color-text-secondary,#666);white-space:nowrap}
+.ctrl select,.ctrl input[type=range]{font-size:11px;vertical-align:middle}
+.ctrl input[type=range]{width:58px}
+.ctrl button{padding:2px 8px;border-radius:4px;border:1px solid var(--color-border-tertiary,#ddd);background:var(--color-background-secondary,#eee);color:var(--color-text-primary,#222);font-size:11px;cursor:pointer}
+.val{font-size:11px;font-weight:700;min-width:30px;color:var(--color-text-primary,#222);display:inline-block}
+.tog{padding:2px 8px;border-radius:4px;border:1.5px solid #aaa;font-size:11px;cursor:pointer;font-weight:600;transition:background .12s,color .12s}
+.tog.on{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.tog.off{background:var(--color-background-secondary,#eee);color:var(--color-text-secondary,#666)}
+.panel{background:var(--color-background-primary,#fff);border:.5px solid var(--color-border-tertiary,#e0e0e0);border-radius:8px;padding:8px 10px}
+.ptitle{font-size:12.5px;font-weight:600;margin-bottom:1px;color:var(--color-text-primary,#222)}
+.psub{font-size:10px;color:var(--color-text-tertiary,#999);margin-bottom:5px;line-height:1.5}
+.info-box{background:var(--color-background-secondary,#f5f5f3);border-radius:6px;padding:7px 10px;font-size:10.5px;color:var(--color-text-secondary,#666);line-height:1.7}
+.info-box b{color:var(--color-text-primary,#222)}
+canvas{display:block;border-radius:3px}
+.two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.three-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:8px}
+.sgrid{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}
+.sc{width:34px;height:26px;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9.5px;line-height:1.2;cursor:pointer}
+.cbar{height:6px;border-radius:3px;margin-top:3px;background:linear-gradient(to right,#042C53,#185FA5,#1D9E75,#EF9F27,#D85A30)}
+.cbar-lbl{display:flex;justify-content:space-between;font-size:9px;color:var(--color-text-tertiary);margin-top:1px}
+.badge{display:flex;flex-wrap:wrap;gap:5px}
+.bp{font-size:10px;padding:2px 6px;border-radius:3px;background:var(--color-background-secondary,#f0f0ee);color:var(--color-text-secondary,#555)}
+.bp b{color:var(--color-text-primary,#222)}
+.dv{width:1px;height:14px;background:var(--color-border-tertiary,#ddd);margin:0 2px;display:inline-block;vertical-align:middle}
+.audio-bar{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--color-background-secondary,#f5f5f3);border-radius:8px;flex-wrap:wrap}
+</style></head><body>
+<div class="root">
+
+<!-- A: 基础信号 -->
+<div class="ctrl">
+  <label>调频</label>
+  <select id="ct"><option value="linear">线性Chirp</option><option value="perlin">Perlin(LPI)</option><option value="zc">Zadoff-Chu</option></select>
+  <label>识别</label>
+  <select id="modeSel"><option value="phase">相移</option><option value="wave">波形切换</option></select>
+  <label>SF</label>
+  <select id="sfSel"><option value="6">SF6 M=64</option><option value="7" selected>SF7 M=128</option><option value="8">SF8 M=256</option></select>
+  <span class="dv"></span>
+  <button class="tog off" id="mwBtn">多波形</button>
+  <span class="dv"></span>
+  <label>SNR</label><input type="range" id="snr" min="-20" max="20" value="5" step="1"><span class="val" id="snrv">5dB</span>
+  <label>波形种</label><input type="range" id="cs" min="0" max="99" value="7"><span class="val" id="csv">7</span>
+  <label>消息种</label><input type="range" id="ms" min="0" max="99" value="42"><span class="val" id="msv">42</span>
+  <label>噪声种</label><input type="range" id="ns" min="0" max="99" value="0"><span class="val" id="nsv">0</span>
+  <button id="berBtn">BER×200</button>
+</div>
+
+<!-- B: 扩频 -->
+<div class="ctrl">
+  <b style="font-size:11px">扩频：</b>
+  <button class="tog off" id="dsssBtn">DSSS</button>
+  <label>Chip×</label>
+  <select id="chipRate"><option value="2">×2(宽)</option><option value="4" selected>×4</option><option value="8">×8(窄)</option></select>
+  <label>PN种</label><input type="range" id="pnSeed" min="0" max="99" value="0"><span class="val" id="pnSeedV">0</span>
+  <span class="dv"></span>
+  <button class="tog off" id="cpBtn">CP循环前缀</button>
+  <label>长度</label><input type="range" id="cpLen" min="4" max="32" value="16" step="4"><span class="val" id="cpLenV">16pt</span>
+</div>
+
+<!-- C: 干扰 -->
+<div class="ctrl">
+  <b style="font-size:11px">干扰：</b>
+  <button class="tog off" id="cwBtn">CW窄带</button>
+  <label>频率Hz</label><input type="range" id="cwFreq" min="10" max="490" value="200" step="10"><span class="val" id="cwFreqV">200Hz</span>
+  <label>JSR dB</label><input type="range" id="cwJSR" min="-20" max="30" value="0" step="1"><span class="val" id="cwJSRV">0dB</span>
+  <span class="dv"></span>
+  <button class="tog off" id="impBtn">脉冲干扰</button>
+  <label>类型</label>
+  <select id="impType"><option value="motor">电机EMI(周期)</option><option value="random">随机脉冲</option></select>
+  <label>幅度</label><input type="range" id="impAmp" min="0.1" max="5" value="1" step="0.1"><span class="val" id="impAmpV">1.0</span>
+  <label id="impFreqLabel">频率Hz</label><input type="range" id="impFreq" min="10" max="490" value="233" step="1"><span class="val" id="impFreqV">233Hz</span>
+</div>
+
+<!-- 音频 -->
+<div class="audio-bar">
+  <b style="font-size:11px">🔊</b>
+  <button id="playTxBtn">▶ TX</button>
+  <button id="playRxBtn">▶ RX</button>
+  <button id="stopBtn">■ 停</button>
+  <label>频率×</label>
+  <select id="audioScale"><option value="1">×1原始</option><option value="4">×4</option><option value="8" selected>×8</option><option value="16">×16</option></select>
+  <label>sym数</label>
+  <select id="audioSyms"><option value="4">4sym</option><option value="8" selected>8sym</option><option value="20">全20</option></select>
+  <span class="val" id="audioInfo" style="font-size:10px;min-width:120px"></span>
+</div>
+
+<!-- Badge -->
+<div class="panel" style="padding:5px 10px"><div class="badge" id="badge"></div></div>
+
+<!-- 多径/多普勒免疫说明 -->
+<div class="panel">
+  <div class="ptitle">📡 信道免疫性说明（多径 & 多普勒）</div>
+  <div class="info-box">
+    <b>多径：</b>100m反射真实时延 = 0.33μs，@500kHz采样率仅0.17个样本，round后为0——反射波直接叠加进主信号，匹配滤波将其一并处理，无ISI。频率选择性衰落需要时延 &gt; 1/BW = 2μs（对应 &gt;600m路径差），无人机场景几乎不存在。<b>CSS长symbol天然免疫多径。</b>
+    <br><b>多普勒：</b>v=100m/s @2.4GHz → fd=800Hz。下变频后基带500kHz偏移800Hz = 0.16%，等效到仿真500Hz带宽 = 0.8Hz偏移 = 0.1个FFT bin，完全淹没在chirp相关峰主瓣内（主瓣宽约2bin）。<b>CSS对多普勒天然鲁棒，无需补偿。</b>
+    <br><b>真正的威胁：</b>2.4GHz频段的WiFi/蓝牙窄带干扰（持续CW）和电机EMI脉冲干扰——这才是无人机SDR的主要对手，见下方干扰分析。
+  </div>
+</div>
+
+<!-- ① 波形 -->
+<div class="panel">
+  <div class="ptitle">① 时域波形
+    <span style="float:right;display:flex;gap:4px;align-items:center">
+      <button id="wavPrev">◀</button>
+      <span class="val" id="wavPage" style="font-size:10px;min-width:54px;text-align:center">sym 0–3</span>
+      <button id="wavNext">▶</button>
+    </span>
+  </div>
+  <div class="psub">黑=TX，橙=RX；红竖线=脉冲干扰位置；CW叠加后RX振幅包络可见调制纹路</div>
+  <canvas id="wc" style="width:100%;height:150px"></canvas>
+</div>
+
+<!-- ② 时频谱 -->
+<div class="panel">
+  <div class="ptitle">② 时频谱（Hann 64pt，87.5%重叠）</div>
+  <div class="psub">CW干扰 → 水平亮线（固定频率）；脉冲干扰 → 竖向亮条（宽带瞬态）；白线=TX瞬时频率轨迹</div>
+  <canvas id="sc" style="width:100%;height:240px"></canvas>
+  <div class="cbar"></div><div class="cbar-lbl"><span>低</span><span>高</span></div>
+</div>
+
+<!-- ③ FFT -->
+<div class="panel">
+  <div class="ptitle">③ 全局功率谱（监听者视角）</div>
+  <div class="psub">CW → 尖锐谱线（频率可识别）；脉冲 → 宽带抬升；DSSS → 谱更平坦（LPI↑）</div>
+  <canvas id="fc" style="width:100%;height:120px"></canvas>
+</div>
+
+<!-- ⑦ 干扰分析 -->
+<div class="panel">
+  <div class="ptitle">⑦ 干扰分析</div>
+  <div class="psub">左：CW频率扫描BER曲线（横轴=干扰频率，纵轴=BER，展示chirp对不同频率CW的抑制能力）；右：匹配滤波相关输出（含干扰 vs 无干扰对比）</div>
+  <div class="two-col">
+    <div>
+      <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:3px">CW频率扫描BER（当前SNR，JSR固定）<button id="scanBtn" style="margin-left:6px;padding:1px 7px;font-size:10px">扫描</button></div>
+      <canvas id="scanCanvas" style="width:100%;height:160px;background:var(--color-background-secondary,#f5f5f3)"></canvas>
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:3px">匹配滤波相关（蓝=无干扰，橙=含干扰）</div>
+      <canvas id="cmpCanvas" style="width:100%;height:160px;background:var(--color-background-secondary,#f5f5f3)"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ④⑤⑥ -->
+<div class="three-col">
+  <div class="panel">
+    <div class="ptitle">④ 匹配滤波相关（当前sym）</div>
+    <div class="psub">8模板互相关；绿✓=正确，红✗=误判；CW会均匀抬高底噪</div>
+    <canvas id="cc" style="width:100%;height:185px"></canvas>
+    <div style="margin-top:3px;font-size:10px">sym：<select id="ss" style="font-size:10px"></select></div>
+  </div>
+  <div class="panel">
+    <div class="ptitle">⑤ 判决网格 &amp; BER</div>
+    <div class="psub">大=解码，小=发送；绿=正确，红=误码</div>
+    <div class="sgrid" id="sg"></div>
+    <div style="margin-top:6px">
+      <div style="font-size:10px;color:var(--color-text-secondary)">单次BER</div>
+      <div id="b1" style="font-size:20px;font-weight:700;color:var(--color-text-primary)">—</div>
+      <div id="bN" style="font-size:10px;margin-top:3px;color:var(--color-text-secondary)">按BER×200得统计均值</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ptitle">⑥ 模板互相关矩阵</div>
+    <div class="psub">非对角越暗=越正交；DSSS改善均匀性</div>
+    <canvas id="xc" style="width:100%;height:185px"></canvas>
+    <div class="cbar" style="background:linear-gradient(to right,#042C53,#185FA5,#D85A30)"></div>
+    <div class="cbar-lbl"><span>低(正交)</span><span>高(干扰)</span></div>
+  </div>
+</div>
+
+</div><!-- root -->
+<script>
+// ═══════════════════════════════════════════
+// 常数
+// ═══════════════════════════════════════════
+const FS=1000,NA=8,NTX=20,FL=80,FH=420;
+let M=128,SH=[];
+function updateSH(){SH=Array.from({length:NA},(_,i)=>Math.floor(i*M/NA));}
+updateSH();
+
+let G={
+  sel:0,wavePage:0,
+  multiWave:false,cpOn:false,cpLen:16,
+  dsssOn:false,chipRate:4,pnSeed:0,
+  cwOn:false,cwFreq:200,cwJSR:0,
+  impOn:false,impType:'motor',impAmp:1.0,impFreq:233,
+  identMode:'phase',snr:5,
+  msg:null,tx:null,rx:null,rxClean:null,
+  tmpls:null,dec:null,corrs:null,freqs:null,symLen:M,
+  impPositions:[]
+};
+let audioNode=null;
+
+// ═══ RNG & Perlin ════════════════════════
+function mkRng(s){
+  let v=(Math.imul(s|0,2654435761)^0xDEADBEEF)>>>0;
+  return()=>{v=((Math.imul(v,1664525)+1013904223)>>>0);return v/0x100000000;};
+}
+function smoothPerlin(len,nc,seed){
+  const r=mkRng(seed),c=Array.from({length:nc+2},()=>r()*2-1);
+  return Float32Array.from({length:len},(_,i)=>{
+    const t=i/(len-1)*nc,gi=~~t,f=t-gi,sf=f*f*(3-2*f);
+    return c[gi]*(1-sf)+c[gi+1]*sf;
+  });
+}
+function genMsg(seed){const r=mkRng(seed);return Uint8Array.from({length:NTX},()=>~~(r()*NA));}
+
+// ═══ 波形生成 ════════════════════════════
+function ifLinear(){return Float32Array.from({length:M},(_,n)=>FL+(FH-FL)*n/M);}
+function ifPerlin(seed){
+  const p=smoothPerlin(M,10,seed);
+  return Float32Array.from({length:M},(_,n)=>FL+(FH-FL)*(p[n]+1)/2);
+}
+function ifToWave(freq){
+  const b=new Float32Array(M);let ph=0;
+  for(let n=0;n<M;n++){b[n]=Math.cos(ph);ph+=2*Math.PI*freq[n]/FS;}
+  return b;
+}
+function makeZCwave(root){
+  const b=new Float32Array(M);
+  for(let n=0;n<M;n++){
+    const nn=n%127,ph=-Math.PI*(root%127+1)*nn*(nn+1)/127;
+    b[n]=Math.cos(ph+2*Math.PI*((FL+FH)/2)*n/FS);
+  }
+  return b;
+}
+function makePNcode(len,seed,cr){
+  const r=mkRng(seed*1234+7),chips=Math.ceil(len/cr);
+  const c=Array.from({length:chips},()=>r()>0.5?1:-1);
+  return Float32Array.from({length:len},(_,n)=>c[~~(n/cr)]);
+}
+function applyDSSS(wave,on,cr,pnSeed,si){
+  if(!on)return wave;
+  const pn=makePNcode(M,pnSeed*100+si,cr);
+  return Float32Array.from(wave,(_,n)=>wave[n]*pn[n]);
+}
+function normalize(arr){
+  let n=0;arr.forEach(v=>n+=v*v);n=Math.sqrt(n)||1;
+  return Float32Array.from(arr,v=>v/n);
+}
+function addCP(wave,on,cpLen){
+  if(!on)return wave;
+  const out=new Float32Array(cpLen+M);
+  for(let i=0;i<cpLen;i++)out[i]=wave[M-cpLen+i];
+  for(let i=0;i<M;i++)out[cpLen+i]=wave[i];
+  return out;
+}
+function makeBaseWave(type,cSeed,waveIdx,symIdx,multiWave){
+  if(type==='zc')return makeZCwave(cSeed+waveIdx*7);
+  if(type==='linear'){
+    if(G.identMode==='wave'){
+      const f0=FL+(FH-FL)*waveIdx/(NA*2),f1=FH-(FH-FL)*waveIdx/(NA*2);
+      return ifToWave(Float32Array.from({length:M},(_,n)=>f0+(f1-f0)*n/M));
+    }
+    return ifToWave(ifLinear());
+  }
+  const seed=multiWave?(cSeed*1000+symIdx*NA+waveIdx+1):(cSeed*100+waveIdx+1);
+  return ifToWave(ifPerlin(seed));
+}
+
+// ═══ 构建TX + 模板 ═══════════════════════
+function buildAll(p){
+  const{type,cSeed,msg,multiWave,identMode,cpOn,cpLen,dsssOn,chipRate,pnSeed}=p;
+  const symLen=cpOn?M+cpLen:M;
+  const tmpls=Array.from({length:NTX},(_,si)=>{
+    if(identMode==='wave'){
+      return Array.from({length:NA},(_,k)=>{
+        let w=makeBaseWave(type,cSeed,k,si,multiWave);
+        w=applyDSSS(w,dsssOn,chipRate,pnSeed,si);
+        return normalize(w);
+      });
+    } else {
+      let base=makeBaseWave(type,cSeed,0,si,multiWave);
+      base=applyDSSS(base,dsssOn,chipRate,pnSeed,si);
+      return Array.from({length:NA},(_,k)=>{
+        const t=new Float32Array(M),s=SH[k];
+        for(let n=0;n<M;n++)t[n]=base[(n+s)%M];
+        return normalize(t);
+      });
+    }
+  });
+  const tx=new Float32Array(NTX*symLen);
+  for(let si=0;si<NTX;si++){
+    const core=tmpls[si][msg[si]],withCP=addCP(core,cpOn,cpLen);
+    for(let n=0;n<symLen;n++)tx[si*symLen+n]=withCP[n];
+  }
+  const freqs=Array.from({length:NTX},(_,si)=>{
+    if(type==='zc')return Float32Array.from({length:M},()=>(FL+FH)/2);
+    if(type==='linear')return ifLinear();
+    const seed=multiWave?(cSeed*100+si+1):cSeed;
+    return ifPerlin(seed);
+  });
+  return{tmpls,tx,freqs,symLen};
+}
+
+// ═══ CW窄带干扰 ══════════════════════════
+// 持续叠加到整段RX，相位随机
+function applyCW(sig,on,freq,jsr_db){
+  if(!on)return sig;
+  const jsr=Math.pow(10,jsr_db/20); // 幅度比
+  let sigPwr=0;sig.forEach(v=>sigPwr+=v*v);sigPwr/=sig.length||1;
+  const amp=Math.sqrt(sigPwr)*jsr;
+  const phi0=Math.random()*2*Math.PI;
+  const out=new Float32Array(sig.length);
+  for(let n=0;n<sig.length;n++)
+    out[n]=sig[n]+amp*Math.cos(2*Math.PI*freq*n/FS+phi0);
+  return out;
+}
+
+// ═══ 脉冲干扰 ════════════════════════════
+// 返回 {out, positions}
+function applyImpulse(sig,on,type,amp,freq){
+  if(!on)return{out:sig,positions:[]};
+  const out=new Float32Array(sig);
+  const positions=[];
+  const pulseWidth=Math.max(2,Math.round(FS/freq*0.05)); // 脉冲宽度=5%周期
+
+  if(type==='motor'){
+    // 周期性脉冲，频率=电机换相频率
+    const period=Math.round(FS/freq);
+    const offset=Math.round(Math.random()*period); // 随机初相
+    for(let n=offset;n<sig.length;n+=period){
+      positions.push(n);
+      for(let k=0;k<pulseWidth&&n+k<sig.length;k++){
+        const env=Math.exp(-4*k/pulseWidth); // 指数衰减脉冲形状
+        out[n+k]+=amp*env;
+      }
+    }
+  } else {
+    // 随机脉冲（泊松过程，每样本概率=freq/FS）
+    const prob=Math.min(freq/FS,0.1);
+    const r=mkRng(54321);
+    for(let n=0;n<sig.length;n++){
+      if(r()<prob){
+        positions.push(n);
+        for(let k=0;k<pulseWidth&&n+k<sig.length;k++){
+          const env=Math.exp(-4*k/pulseWidth);
+          out[n+k]+=amp*env*(r()>0.5?1:-1);
+        }
+      }
+    }
+  }
+  return{out,positions};
+}
+
+// ═══ AWGN ════════════════════════════════
+function awgn(sig,snr_db,nSeed){
+  if(snr_db>=20)return new Float32Array(sig);
+  const r=mkRng(nSeed+99991);
+  const snrL=Math.pow(10,snr_db/10);
+  let pw=0;sig.forEach(v=>pw+=v*v);pw/=sig.length||1;
+  const sg=Math.sqrt(pw/Math.max(snrL,1e-9));
+  const out=new Float32Array(sig.length);
+  for(let i=0;i<sig.length;i+=2){
+    const u1=Math.max(1e-15,r()),u2=r(),mag=sg*Math.sqrt(-2*Math.log(u1));
+    out[i]=sig[i]+mag*Math.cos(2*Math.PI*u2);
+    if(i+1<sig.length)out[i+1]=sig[i+1]+mag*Math.sin(2*Math.PI*u2);
+  }
+  return out;
+}
+
+// ═══ 解调 ════════════════════════════════
+function demod(rx,tmpls,p){
+  const{cpOn,cpLen,symLen}=p;
+  const dec=new Uint8Array(NTX),corrs=[];
+  for(let si=0;si<NTX;si++){
+    const start=si*symLen+(cpOn?cpLen:0);
+    const blk=rx.slice(start,start+M);
+    const cv=tmpls[si].map(tm=>{let s=0;for(let n=0;n<M;n++)s+=blk[n]*tm[n];return Math.abs(s);});
+    corrs.push(cv);
+    let best=0;cv.forEach((v,i)=>{if(v>cv[best])best=i;});
+    dec[si]=best;
+  }
+  return{dec,corrs};
+}
+
+// ═══ FFT ════════════════════════════════
+function nextPow2(n){let p=1;while(p<n)p<<=1;return p;}
+function fftIP(re,im){
+  const N=re.length;
+  for(let i=1,j=0;i<N;i++){
+    let bit=N>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;
+    if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}
+  }
+  for(let len=2;len<=N;len<<=1){
+    const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);
+    for(let i=0;i<N;i+=len){
+      let cr=1,ci=0;
+      for(let j=0;j<len/2;j++){
+        const ur=re[i+j],ui=im[i+j],vr=re[i+j+len/2]*cr-im[i+j+len/2]*ci,vi=re[i+j+len/2]*ci+im[i+j+len/2]*cr;
+        re[i+j]=ur+vr;im[i+j]=ui+vi;re[i+j+len/2]=ur-vr;im[i+j+len/2]=ui-vi;
+        const nr=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nr;
+      }
+    }
+  }
+}
+
+// ═══ 色映射 ══════════════════════════════
+function cmap(v){
+  const s=[[4,44,83],[24,95,165],[29,158,117],[239,159,39],[216,90,48]];
+  v=Math.max(0,Math.min(1,v));
+  const t=v*(s.length-1),i=Math.min(~~t,s.length-2),f=t-i,a=s[i],b=s[i+1];
+  return[~~(a[0]+f*(b[0]-a[0])),~~(a[1]+f*(b[1]-a[1])),~~(a[2]+f*(b[2]-a[2]))];
+}
+function cmapBR(v){
+  v=Math.max(0,Math.min(1,v));
+  return[~~(4+v*212),~~(44+v*46),~~(83-v*35)];
+}
+
+// ═══ Canvas工具 ══════════════════════════
+function setupCV(id,PH){
+  const cv=document.getElementById(id);
+  const dpr=devicePixelRatio||1,PW=cv.offsetWidth||700;
+  cv.width=PW*dpr;cv.height=PH*dpr;cv.style.height=PH+'px';
+  const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+  return{ctx,PW,PH};
+}
+
+// ═══ ① 波形 ══════════════════════════════
+function drawWave(){
+  if(!G.tx)return;
+  const{tx,rx,msg,symLen,impPositions,cpLen}=G;
+  const{cpOn}=G;
+  const{ctx,PW,PH}=setupCV('wc',150);
+  const bg=getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary')||'#f5f5f3';
+  ctx.fillStyle=bg;ctx.fillRect(0,0,PW,PH);
+  const pg=G.wavePage,SHOW=4,st=pg*SHOW*symLen;
+  const slRx=rx.slice(st,st+SHOW*symLen),slTx=tx.slice(st,st+SHOW*symLen);
+  const LEN=slRx.length;
+  let mx=0;slRx.forEach(v=>{if(Math.abs(v)>mx)mx=Math.abs(v);});mx=Math.max(mx,.1);
+  const mid=PH/2,ys=mid*.84/mx;
+  if(cpOn){
+    for(let s=0;s<SHOW;s++){
+      const x0=s*symLen/LEN*PW,x1=(s*symLen+cpLen)/LEN*PW;
+      ctx.fillStyle='rgba(0,200,180,.12)';ctx.fillRect(x0,0,x1-x0,PH);
+      ctx.strokeStyle='rgba(0,170,150,.3)';ctx.lineWidth=.5;ctx.setLineDash([]);
+      ctx.beginPath();ctx.moveTo(x1,0);ctx.lineTo(x1,PH);ctx.stroke();
+    }
+  }
+  for(let s=0;s<=SHOW;s++){
+    const x=s*symLen/LEN*PW;
+    ctx.strokeStyle='rgba(128,128,128,.18)';ctx.lineWidth=.5;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,PH);ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  function line(arr,col,al,lw){
+    ctx.save();ctx.strokeStyle=col;ctx.globalAlpha=al;ctx.lineWidth=lw;ctx.beginPath();
+    for(let i=0;i<arr.length;i++){const x=i/LEN*PW,y=mid-arr[i]*ys;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+    ctx.stroke();ctx.restore();
+  }
+  line(slRx,'#D85A30',.7,1);line(slTx,'#1a1a1a',.88,1.5);
+  // 脉冲位置标注
+  ctx.strokeStyle='rgba(216,30,30,.6)';ctx.lineWidth=1;ctx.setLineDash([]);
+  impPositions.forEach(pos=>{
+    const relPos=pos-st;
+    if(relPos>=0&&relPos<LEN){
+      const x=relPos/LEN*PW;
+      ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,PH);ctx.stroke();
+    }
+  });
+  ctx.fillStyle='rgba(50,50,50,.7)';ctx.font='10px sans-serif';ctx.setLineDash([]);
+  for(let s=0;s<SHOW;s++){
+    const si=pg*SHOW+s;
+    if(si<NTX)ctx.fillText('s'+si+'['+msg[si]+']',s*symLen/LEN*PW+4,13);
+  }
+  if(cpOn){ctx.fillStyle='rgba(0,140,120,.8)';ctx.font='9px sans-serif';ctx.fillText('CP='+G.cpLen+'pt',3,PH-3);}
+  document.getElementById('wavPage').textContent='sym '+(pg*SHOW)+'–'+Math.min(pg*SHOW+SHOW-1,NTX-1);
+}
+
+// ═══ ② 时频谱 ════════════════════════════
+function drawSpec(){
+  if(!G.rx)return;
+  const{rx,freqs,msg,symLen}=G;
+  const type=document.getElementById('ct').value;
+  const cv=document.getElementById('sc'),PW=cv.offsetWidth||700,PH=240;
+  const WIN=64,HOP=8,NF=WIN/2+1;
+  const win=Float32Array.from({length:WIN},(_,n)=>0.5*(1-Math.cos(2*Math.PI*n/(WIN-1))));
+  const nFr=~~((rx.length-WIN)/HOP)+1;
+  const spec=new Float32Array(nFr*NF);
+  for(let f=0;f<nFr;f++){
+    const s0=f*HOP;
+    for(let k=0;k<NF;k++){
+      let re=0,im=0;
+      for(let n=0;n<WIN&&s0+n<rx.length;n++){
+        const v=rx[s0+n]*win[n],a=2*Math.PI*k*n/WIN;
+        re+=v*Math.cos(a);im-=v*Math.sin(a);
+      }
+      spec[f*NF+k]=Math.sqrt(re*re+im*im);
+    }
+  }
+  let mx=0;spec.forEach(v=>{if(v>mx)mx=v;});mx=mx||1;
+  const ofc=document.createElement('canvas');ofc.width=nFr;ofc.height=NF;
+  const octx=ofc.getContext('2d');
+  const img=octx.createImageData(nFr,NF);
+  for(let f=0;f<nFr;f++)for(let k=0;k<NF;k++){
+    const v=spec[f*NF+k]/mx,row=NF-1-k,idx=(row*nFr+f)*4;
+    const[r,g,b]=cmap(Math.pow(Math.max(0,v),.35));
+    img.data[idx]=r;img.data[idx+1]=g;img.data[idx+2]=b;img.data[idx+3]=255;
+  }
+  octx.putImageData(img,0,0);
+  const dpr=devicePixelRatio||1;
+  cv.width=PW*dpr;cv.height=PH*dpr;cv.style.height=PH+'px';
+  const ctx=cv.getContext('2d');
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(ofc,0,0,nFr,NF,0,0,cv.width,cv.height);
+  ctx.scale(dpr,dpr);
+  for(let si=0;si<NTX;si++){
+    const shift=G.identMode==='phase'?SH[msg[si]]:0,freq=freqs[si];
+    ctx.strokeStyle=si%2===0?'rgba(255,255,255,.82)':'rgba(160,220,255,.75)';
+    ctx.lineWidth=1.6;ctx.setLineDash([]);ctx.beginPath();
+    if(type==='zc'){
+      const y=(1-(FL+FH)/2/(FS/2))*PH;
+      const x0=si*symLen/HOP/nFr*PW,x1=(si*symLen+M)/HOP/nFr*PW;
+      ctx.moveTo(x0,y);ctx.lineTo(x1,y);
+    } else {
+      for(let n=0;n<M;n++){
+        const fx=(si*symLen+n)/HOP/nFr*PW,f=freq[(n+shift)%M],fy=(1-f/(FS/2))*PH;
+        const prev=n>0?freq[(n+shift-1+M)%M]:f;
+        if(n===0||Math.abs(f-prev)>(FH-FL)*.4)ctx.moveTo(fx,fy);else ctx.lineTo(fx,fy);
+      }
+    }
+    ctx.stroke();
+  }
+  ctx.fillStyle='rgba(255,255,255,.72)';ctx.font='9px sans-serif';
+  [0,100,200,300,400,500].forEach(f=>{
+    const y=(1-f/(FS/2))*PH;ctx.fillText(f+'Hz',2,Math.max(9,Math.min(PH-2,y+3)));
+  });
+  for(let si=0;si<=NTX;si++){
+    const x=si*symLen/HOP/nFr*PW;if(x<PW)ctx.fillText('s'+si,x+1,PH-2);
+  }
+}
+
+// ═══ ③ FFT功率谱 ═════════════════════════
+function drawFFT(){
+  if(!G.rx)return;
+  const{ctx,PW,PH}=setupCV('fc',120);
+  const bg=getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary')||'#f5f5f3';
+  ctx.fillStyle=bg;ctx.fillRect(0,0,PW,PH);
+  const rx=G.rx,N=nextPow2(rx.length);
+  const re=new Float32Array(N),im=new Float32Array(N);
+  for(let i=0;i<rx.length;i++){const w=0.5*(1-Math.cos(2*Math.PI*i/(rx.length-1)));re[i]=rx[i]*w;}
+  fftIP(re,im);
+  const half=N/2,pwr=Float32Array.from({length:half},(_,k)=>re[k]*re[k]+im[k]*im[k]);
+  const sm=new Float32Array(half);
+  for(let k=0;k<half;k++){let s=0,c=0;for(let d=-3;d<=3;d++){const kk=k+d;if(kk>=0&&kk<half){s+=pwr[kk];c++;}}sm[k]=s/c;}
+  let mxP=0;sm.forEach(v=>{if(v>mxP)mxP=v;});mxP=mxP||1;
+  const pad=22;
+  ctx.fillStyle='rgba(24,95,165,.15)';ctx.beginPath();ctx.moveTo(pad,PH-pad);
+  for(let k=0;k<half;k++){
+    const x=pad+(k/half)*(PW-pad*2),y=PH-pad-(sm[k]/mxP)*(PH-pad*2)*.86;
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(PW-pad,PH-pad);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#185FA5';ctx.lineWidth=1.5;ctx.setLineDash([]);ctx.beginPath();
+  for(let k=0;k<half;k++){
+    const x=pad+(k/half)*(PW-pad*2),y=PH-pad-(sm[k]/mxP)*(PH-pad*2)*.86;
+    k===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  // CW频率标线
+  if(G.cwOn){
+    const x=pad+(G.cwFreq/(FS/2))*(PW-pad*2);
+    ctx.strokeStyle='rgba(239,159,39,.9)';ctx.lineWidth=1.5;ctx.setLineDash([3,2]);
+    ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,PH-pad);ctx.stroke();
+    ctx.setLineDash([]);ctx.fillStyle='#EF9F27';ctx.font='9px sans-serif';
+    ctx.fillText('CW '+G.cwFreq+'Hz',x+2,pad+9);
+  }
+  [FL,FH].forEach((f,i)=>{
+    const x=pad+(f/(FS/2))*(PW-pad*2);
+    ctx.strokeStyle=i===0?'rgba(29,158,117,.6)':'rgba(216,90,48,.6)';
+    ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,PH-pad);ctx.stroke();
+    ctx.setLineDash([]);ctx.fillStyle=i===0?'#1D9E75':'#D85A30';ctx.font='9px sans-serif';ctx.fillText(f+'Hz',x+2,pad+20);
+  });
+  ctx.strokeStyle='rgba(128,128,128,.3)';ctx.lineWidth=.5;ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(pad,PH-pad);ctx.lineTo(PW-pad,PH-pad);ctx.stroke();
+  ctx.fillStyle='rgba(80,80,80,.6)';ctx.font='9px sans-serif';
+  [0,100,200,300,400,500].forEach(f=>{const x=pad+(f/(FS/2))*(PW-pad*2);ctx.fillText(f,x-5,PH-pad+9);});
+}
+
+// ═══ ⑦ 干扰分析 - CW扫描 ═══════════════
+function runCWScan(){
+  const btn=document.getElementById('scanBtn');
+  btn.disabled=true;btn.textContent='扫描中...';
+  setTimeout(()=>{
+    const type=document.getElementById('ct').value;
+    const snr=+document.getElementById('snr').value;
+    const sf=+document.getElementById('sfSel').value;M=1<<sf;updateSH();
+    const cSeed=+document.getElementById('cs').value;
+    const{multiWave,cpOn,cpLen,dsssOn,chipRate,pnSeed,identMode,cwJSR}=G;
+    const freqSteps=20;
+    const freqs_scan=Array.from({length:freqSteps},(_,i)=>~~(20+i*(460/freqSteps)));
+    const bers=freqs_scan.map(cwF=>{
+      let err=0;
+      for(let trial=0;trial<40;trial++){
+        const msg=genMsg(trial);
+        const{tmpls,tx,symLen}=buildAll({type,cSeed,msg,multiWave,identMode,cpOn,cpLen,dsssOn,chipRate,pnSeed});
+        let rx=awgn(tx,snr,trial*17+3);
+        rx=applyCW(rx,true,cwF,cwJSR);
+        const{dec}=demod(rx,tmpls,{cpOn,cpLen,symLen});
+        for(let i=0;i<NTX;i++)if(dec[i]!==msg[i])err++;
+      }
+      return err/(40*NTX);
+    });
+    drawCWScan(freqs_scan,bers);
+    btn.disabled=false;btn.textContent='扫描';
+  },10);
+}
+
+function drawCWScan(freqs_scan,bers){
+  const{ctx,PW,PH}=setupCV('scanCanvas',160);
+  const bg=getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary')||'#f5f5f3';
+  ctx.fillStyle=bg;ctx.fillRect(0,0,PW,PH);
+  const pad=24,W=PW-pad*2,H=PH-pad*2;
+  // 轴
+  ctx.strokeStyle='rgba(128,128,128,.3)';ctx.lineWidth=.5;ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(pad,pad);ctx.lineTo(pad,PH-pad);ctx.lineTo(PW-pad,PH-pad);ctx.stroke();
+  // BER曲线
+  ctx.strokeStyle='#D85A30';ctx.lineWidth=1.5;ctx.setLineDash([]);ctx.beginPath();
+  freqs_scan.forEach((f,i)=>{
+    const x=pad+f/500*W,y=PH-pad-bers[i]*H;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    ctx.fillStyle='#D85A30';ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();
+  });
+  ctx.stroke();
+  // 随机猜基线
+  ctx.strokeStyle='rgba(128,128,128,.5)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(pad,PH-pad-H/NA);ctx.lineTo(PW-pad,PH-pad-H/NA);ctx.stroke();
+  ctx.setLineDash([]);ctx.fillStyle='rgba(100,100,100,.6)';ctx.font='8px sans-serif';
+  ctx.fillText('随机猜 '+(100/NA).toFixed(0)+'%',pad+2,PH-pad-H/NA-2);
+  // FL/FH标线
+  [FL,FH].forEach((f,i)=>{
+    const x=pad+f/500*W;
+    ctx.strokeStyle=i===0?'rgba(29,158,117,.5)':'rgba(216,90,48,.5)';
+    ctx.lineWidth=.8;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,PH-pad);ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  // Y轴刻度
+  ctx.fillStyle='rgba(80,80,80,.7)';ctx.font='8px sans-serif';
+  [0,25,50,75,100].forEach(pct=>{
+    const y=PH-pad-pct/100*H;
+    ctx.fillText(pct+'%',1,y+3);
+  });
+  ctx.fillText('BER',pad,pad-4);
+  ctx.fillText('CW频率(Hz)',PW-50,PH-4);
+  [0,100,200,300,400,500].forEach(f=>{
+    ctx.fillText(f,pad+f/500*W-8,PH-pad+10);
+  });
+}
+
+// ═══ ⑦ 干扰分析 - 相关对比 ══════════════
+function drawCmpCorr(){
+  if(!G.corrs||!G.tmpls)return;
+  const{ctx,PW,PH}=setupCV('cmpCanvas',160);
+  const bg=getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary')||'#f5f5f3';
+  ctx.fillStyle=bg;ctx.fillRect(0,0,PW,PH);
+
+  // 计算无干扰版本的相关
+  const si=G.sel,symLen=G.symLen,cpOn=G.cpOn,cpLen=G.cpLen;
+  const startIdx=si*symLen+(cpOn?cpLen:0);
+  const blkClean=G.rxClean?G.rxClean.slice(startIdx,startIdx+M):null;
+  const blkDirty=G.rx.slice(startIdx,startIdx+M);
+  const tm=G.tmpls[si];
+
+  const corrClean=blkClean?tm.map(t=>{let s=0;for(let n=0;n<M;n++)s+=blkClean[n]*t[n];return Math.abs(s);}):null;
+  const corrDirty=tm.map(t=>{let s=0;for(let n=0;n<M;n++)s+=blkDirty[n]*t[n];return Math.abs(s);});
+
+  let mx=Math.max(...corrDirty,.01);
+  if(corrClean)corrClean.forEach(v=>{if(v>mx)mx=v;});
+
+  const bH=~~((PH-16)/NA)-1,bW=(PW-8)/2-4;
+  for(let i=0;i<NA;i++){
+    const y=4+i*(bH+1);
+    const isC=i===G.msg[si];
+    // 无干扰（蓝）
+    if(corrClean){
+      const bw=corrClean[i]/mx*bW;
+      ctx.fillStyle=isC?'rgba(24,95,165,.7)':'rgba(24,95,165,.25)';
+      ctx.fillRect(4,y,bw,bH);
+    }
+    // 含干扰（橙）
+    const bw2=corrDirty[i]/mx*bW;
+    ctx.fillStyle=isC?'rgba(216,90,48,.7)':'rgba(216,90,48,.25)';
+    ctx.fillRect(4+bW+8,y,bw2,bH);
+    // 标签
+    ctx.fillStyle='rgba(80,80,80,.7)';ctx.font='8px sans-serif';
+    ctx.fillText(i,(corrClean?bW:0)+bW+8+bw2+2,y+bH/2+2);
+  }
+  ctx.fillStyle='rgba(24,95,165,.8)';ctx.font='9px sans-serif';ctx.fillText('无干扰',4,PH-2);
+  ctx.fillStyle='rgba(216,90,48,.8)';ctx.fillText('含干扰',4+bW+8,PH-2);
+}
+
+// ═══ ④ 相关条 ════════════════════════════
+function drawCorr(){
+  if(!G.corrs)return;
+  const{ctx,PW,PH}=setupCV('cc',185);
+  const bg=getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary')||'#f5f5f3';
+  ctx.fillStyle=bg;ctx.fillRect(0,0,PW,PH);
+  const corrs=G.corrs[G.sel],correct=G.msg[G.sel],decoded=G.dec[G.sel];
+  const mx=Math.max(...corrs,.01),bH=~~((PH-26)/NA)-2,bW=PW-56;
+  for(let i=0;i<NA;i++){
+    const y=3+i*(bH+2),bw=corrs[i]/mx*bW;
+    const isC=i===correct,isD=i===decoded;
+    ctx.fillStyle='rgba(128,128,128,.1)';ctx.fillRect(52,y,bW,bH);
+    ctx.fillStyle=isC?'#1D9E75':isD?'#D85A30':'#185FA5';
+    ctx.globalAlpha=isC||isD?.82:.2;ctx.fillRect(52,y,Math.max(0,bw),bH);ctx.globalAlpha=1;
+    ctx.fillStyle=isC?'#1D9E75':isD&&!isC?'#D85A30':'var(--color-text-secondary,#888)';
+    ctx.font='bold 9px sans-serif';
+    ctx.fillText((G.identMode==='wave'?'W':'Ph')+i+(isC?' ✓':'')+(isD&&!isC?' ✗':''),2,y+bH/2+3);
+    ctx.fillStyle='var(--color-text-primary,#333)';ctx.font='9px sans-serif';
+    ctx.fillText(corrs[i].toFixed(3),52+bw+2,y+bH/2+3);
+  }
+  const pg=~~(10*Math.log10(M));
+  ctx.fillStyle='rgba(90,90,90,.6)';ctx.font='8.5px sans-serif';
+  ctx.fillText('+'+pg+'dB增益 SNR:'+(G.snr+pg)+'dB',3,PH-4);
+}
+
+// ═══ ⑤ 判决网格 ══════════════════════════
+function updateGrid(){
+  const sg=document.getElementById('sg');sg.innerHTML='';
+  for(let i=0;i<NTX;i++){
+    const ok=G.dec[i]===G.msg[i];
+    const d=document.createElement('div');d.className='sc';
+    d.style.cssText='background:'+(ok?'rgba(29,158,117,.18)':'rgba(216,90,48,.18)')+';border:1px solid '+(ok?'rgba(29,158,117,.45)':'rgba(216,90,48,.45)');
+    d.innerHTML='<b style="color:'+(ok?'#1D9E75':'#D85A30')+'">'+G.dec[i]+'</b><span style="opacity:.4;font-size:8.5px">'+G.msg[i]+'</span>';
+    d.onclick=(ii=>()=>{G.sel=ii;document.getElementById('ss').value=ii;drawCorr();drawCmpCorr();})(i);
+    sg.appendChild(d);
+  }
+}
+
+// ═══ ⑥ 互相关矩阵 ════════════════════════
+function drawXCorr(){
+  if(!G.tmpls)return;
+  const{ctx,PW,PH}=setupCV('xc',185);
+  const tmpls=G.tmpls[0],cW=(PW-18)/NA,cH=(PH-18)/NA;
+  for(let i=0;i<NA;i++)for(let j=0;j<NA;j++){
+    let s=0;for(let n=0;n<M;n++)s+=tmpls[i][n]*tmpls[j][n];
+    const v=Math.abs(s),x=9+j*cW,y=9+i*cH;
+    const[r,g,b]=cmapBR(Math.pow(v,.5));
+    ctx.fillStyle=`rgb(${r},${g},${b})`;ctx.fillRect(x,y,cW-1,cH-1);
+    if(cW>20){
+      ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='8px sans-serif';
+      ctx.fillText(v.toFixed(2),x+2,y+cH/2+3);
+    }
+  }
+  ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='8px sans-serif';
+  for(let i=0;i<NA;i++){ctx.fillText(i,9+i*cW+cW/2-3,8);ctx.fillText(i,1,9+i*cH+cH/2+3);}
+}
+
+// ═══ Badge ════════════════════════════════
+function updateBadge(){
+  const type=document.getElementById('ct').value;
+  const{multiWave,cpOn,cpLen,dsssOn,chipRate,cwOn,cwFreq,cwJSR,impOn,impType,impAmp,impFreq,identMode}=G;
+  const sf=Math.log2(M)|0,symLen=cpOn?M+cpLen:M;
+  const rb=(Math.log2(NA)*FS/symLen).toFixed(1),toa=(NTX*symLen/FS*1000).toFixed(0);
+  const pg=(10*Math.log10(M)).toFixed(1);
+  const typeL=type==='zc'?'ZC':type==='linear'?'线性Chirp':(multiWave?'Perlin多波形':'Perlin');
+  let h=`<span class="bp">SF<b>${sf}</b></span><span class="bp">M=<b>${M}pt</b></span>`+
+    `<span class="bp">BW<b>${FH-FL}Hz</b></span><span class="bp">码率<b>${rb}bit/s</b></span>`+
+    `<span class="bp">ToA<b>${toa}ms</b></span><span class="bp">增益<b>+${pg}dB</b></span>`+
+    `<span class="bp">调制<b>${typeL}</b></span><span class="bp">识别<b>${identMode==='wave'?'波形切换':'相移'}</b></span>`;
+  if(cpOn)h+=`<span class="bp">CP<b>${cpLen}pt</b></span>`;
+  if(dsssOn)h+=`<span class="bp">DSSS<b>×${chipRate}</b></span>`;
+  if(cwOn)h+=`<span class="bp" style="color:#EF9F27">CW<b>${cwFreq}Hz JSR${cwJSR>0?'+':''}${cwJSR}dB</b></span>`;
+  if(impOn)h+=`<span class="bp" style="color:#D85A30">脉冲<b>${impType==='motor'?'电机':'随机'} ×${impAmp}</b></span>`;
+  document.getElementById('badge').innerHTML=h;
+}
+
+// ═══ 音频 ════════════════════════════════
+function playAudio(sig,scale,nSyms,symLen){
+  if(audioNode){try{audioNode.stop();}catch(e){}audioNode=null;}
+  const targetFS=44100,playLen=Math.min(nSyms*symLen,sig.length);
+  const resFS=targetFS/scale;
+  const nOut=Math.round(playLen*resFS/FS);
+  const ac=new AudioContext({sampleRate:targetFS});
+  const buf=ac.createBuffer(1,nOut,targetFS);
+  const data=buf.getChannelData(0);
+  for(let i=0;i<nOut;i++){
+    const src=i*FS/resFS,si=~~src,f=src-si;
+    data[i]=si+1<playLen?sig[si]*(1-f)+sig[si+1]*f:(si<playLen?sig[si]:0);
+  }
+  const fade=Math.min(200,nOut/4)|0;
+  for(let i=0;i<fade;i++){data[i]*=i/fade;data[nOut-1-i]*=i/fade;}
+  const src2=ac.createBufferSource();src2.buffer=buf;src2.connect(ac.destination);src2.start();
+  audioNode=src2;
+  const durMs=(nOut/targetFS*1000).toFixed(0);
+  document.getElementById('audioInfo').textContent=`${durMs}ms | ×${scale} | ${FL*scale}–${FH*scale}Hz`;
+  src2.onended=()=>{document.getElementById('audioInfo').textContent='播放完毕';audioNode=null;};
+}
+
+// ═══ 主渲染 ═══════════════════════════════
+function render(){
+  const type=document.getElementById('ct').value;
+  const snr=+document.getElementById('snr').value;
+  const sf=+document.getElementById('sfSel').value;M=1<<sf;updateSH();
+  const cSeed=+document.getElementById('cs').value;
+  const mSeed=+document.getElementById('ms').value;
+  const nSeed=+document.getElementById('ns').value;
+  const identMode=document.getElementById('modeSel').value;
+  G.identMode=identMode;G.snr=snr;
+
+  document.getElementById('snrv').textContent=snr>=20?'OFF':snr+'dB';
+  document.getElementById('csv').textContent=cSeed;
+  document.getElementById('msv').textContent=mSeed;
+  document.getElementById('nsv').textContent=nSeed;
+  // 脉冲标签更新
+  document.getElementById('impFreqLabel').textContent=G.impType==='motor'?'电机Hz':'脉冲/s';
+
+  const{multiWave,cpOn,cpLen,dsssOn,chipRate,pnSeed,cwOn,cwFreq,cwJSR,impOn,impType,impAmp,impFreq}=G;
+  const msg=genMsg(mSeed);
+  const{tmpls,tx,freqs,symLen}=buildAll({type,cSeed,msg,multiWave,identMode,cpOn,cpLen,dsssOn,chipRate,pnSeed});
+
+  // 干净RX（只有噪声，用于对比）
+  const rxClean=awgn(tx,snr,nSeed);
+
+  // 含干扰RX
+  let rx=new Float32Array(rxClean);
+  rx=applyCW(rx,cwOn,cwFreq,cwJSR);
+  const{out:rxImp,positions}=applyImpulse(rx,impOn,impType,impAmp,impFreq);
+  rx=rxImp;
+
+  const{dec,corrs}=demod(rx,tmpls,{cpOn,cpLen,symLen});
+  Object.assign(G,{msg,tx,rx,rxClean,tmpls,dec,corrs,freqs,symLen,impPositions:positions});
+
+  let errs=0;for(let i=0;i<NTX;i++)if(dec[i]!==msg[i])errs++;
+  document.getElementById('b1').textContent=(errs/NTX*100).toFixed(1)+'% ('+errs+'/'+NTX+')';
+
+  updateBadge();
+  drawWave();drawSpec();drawFFT();
+  updateGrid();drawCorr();drawXCorr();drawCmpCorr();
+}
+
+// ═══ BER×200 ══════════════════════════════
+document.getElementById('berBtn').onclick=()=>{
+  const btn=document.getElementById('berBtn');btn.disabled=true;btn.textContent='运算中...';
+  setTimeout(()=>{
+    const type=document.getElementById('ct').value;
+    const snr=+document.getElementById('snr').value;
+    const sf=+document.getElementById('sfSel').value;M=1<<sf;updateSH();
+    const cSeed=+document.getElementById('cs').value;
+    const{multiWave,cpOn,cpLen,dsssOn,chipRate,pnSeed,cwOn,cwFreq,cwJSR,impOn,impType,impAmp,impFreq,identMode}=G;
+    let totErr=0;
+    for(let trial=0;trial<200;trial++){
+      const msg=genMsg(trial);
+      const{tmpls,tx,symLen}=buildAll({type,cSeed,msg,multiWave,identMode,cpOn,cpLen,dsssOn,chipRate,pnSeed});
+      let rx=awgn(tx,snr,trial*17+3);
+      rx=applyCW(rx,cwOn,cwFreq,cwJSR);
+      const{out:rxI}=applyImpulse(rx,impOn,impType,impAmp,impFreq);
+      const{dec}=demod(rxI,tmpls,{cpOn,cpLen,symLen});
+      for(let i=0;i<NTX;i++)if(dec[i]!==msg[i])totErr++;
+    }
+    const avg=totErr/(200*NTX);
+    document.getElementById('bN').innerHTML='200次BER：<b>'+(avg*100).toFixed(2)+'%</b> | 误码'+totErr+'/'+(200*NTX)+' | 随机猜'+(100/NA).toFixed(1)+'%';
+    btn.disabled=false;btn.textContent='BER×200';
+  },15);
+};
+
+// ═══ 开关绑定 ════════════════════════════
+function togBtn(id,key,label,cb){
+  document.getElementById(id).onclick=function(){
+    G[key]=!G[key];
+    this.textContent=label+' '+(G[key]?'ON':'OFF');
+    this.className='tog '+(G[key]?'on':'off');
+    if(cb)cb(G[key]);schedule();
+  };
+}
+togBtn('mwBtn','multiWave','多波形',on=>{if(on)document.getElementById('ct').value='perlin';});
+togBtn('cpBtn','cpOn','CP循环前缀');
+togBtn('dsssBtn','dsssOn','DSSS');
+togBtn('cwBtn','cwOn','CW窄带');
+togBtn('impBtn','impOn','脉冲干扰');
+
+// 数值控件
+[
+  ['cpLen','cpLen','cpLenV',v=>v+'pt',v=>+v],
+  ['pnSeed','pnSeed','pnSeedV',v=>v,v=>+v],
+  ['cwFreq','cwFreq','cwFreqV',v=>v+'Hz',v=>+v],
+  ['cwJSR','cwJSR','cwJSRV',v=>(v>=0?'+':'')+v+'dB',v=>+v],
+  ['impAmp','impAmp','impAmpV',v=>(+v).toFixed(1),v=>+v],
+  ['impFreq','impFreq','impFreqV',v=>v+'Hz',v=>+v],
+].forEach(([id,key,lid,fmt,xfm])=>{
+  document.getElementById(id).addEventListener('input',function(){
+    G[key]=xfm(this.value);
+    document.getElementById(lid).textContent=fmt(G[key]);
+    schedule();
+  });
+});
+document.getElementById('impType').onchange=function(){G.impType=this.value;schedule();};
+document.getElementById('chipRate').onchange=function(){G.chipRate=+this.value;schedule();};
+
+// 波形翻页
+document.getElementById('wavPrev').onclick=()=>{if(G.wavePage>0){G.wavePage--;drawWave();}};
+document.getElementById('wavNext').onclick=()=>{if((G.wavePage+1)*4<NTX){G.wavePage++;drawWave();}};
+
+// Symbol选择
+const ss=document.getElementById('ss');
+for(let i=0;i<NTX;i++){const o=document.createElement('option');o.value=i;o.textContent='sym '+i;ss.appendChild(o);}
+ss.onchange=()=>{G.sel=+ss.value;drawCorr();drawCmpCorr();};
+
+// 主控件
+['ct','sfSel','modeSel'].forEach(id=>document.getElementById(id).addEventListener('change',schedule));
+['snr','cs','ms','ns'].forEach(id=>document.getElementById(id).addEventListener('input',schedule));
+
+// 音频
+document.getElementById('playTxBtn').onclick=()=>{
+  if(!G.tx)return;
+  playAudio(G.tx,+document.getElementById('audioScale').value,+document.getElementById('audioSyms').value,G.symLen);
+};
+document.getElementById('playRxBtn').onclick=()=>{
+  if(!G.rx)return;
+  playAudio(G.rx,+document.getElementById('audioScale').value,+document.getElementById('audioSyms').value,G.symLen);
+};
+document.getElementById('stopBtn').onclick=()=>{
+  if(audioNode){try{audioNode.stop();}catch(e){}audioNode=null;}
+  document.getElementById('audioInfo').textContent='已停止';
+};
+
+// CW扫描
+document.getElementById('scanBtn').onclick=runCWScan;
+
+window.addEventListener('resize',()=>{clearTimeout(_t);_t=setTimeout(render,200);});
+let _t;
+function schedule(){clearTimeout(_t);_t=setTimeout(render,100);}
+setTimeout(render,130);
+</script>
+</body></html>

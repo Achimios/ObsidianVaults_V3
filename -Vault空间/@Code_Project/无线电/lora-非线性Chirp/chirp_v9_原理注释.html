@@ -1,0 +1,2166 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    /* ══════════════════════════════════════════════════════
+   镜之边缘主题 — 手动修改区域（id=theme）
+   大量纯白 + ME红强调 + 冰蓝图表 + 玻璃感透明度
+   ══════════════════════════════════════════════════════ */
+    :root {
+      /* 背景层 */
+      --color-background-primary: #F7F7F5;
+      /* 主背景：接近纯白 */
+      --color-background-secondary: #EDEDEB;
+      /* 次级背景：浅灰 */
+      /* 文字 */
+      --color-text-primary: #1A1A1A;
+      --color-text-secondary: #6A6A6A;
+      --color-text-tertiary: #A0A0A0;
+      /* 边框 */
+      --color-border-tertiary: rgba(0, 0, 0, 0.09);
+      /* 强调色 */
+      --me-red: #E8321A;
+      /* Mirror's Edge 红 */
+      --me-orange: #F5A623;
+      /* 次强调橙 */
+      --me-blue: #1A8FE3;
+      /* 清透蓝 */
+      --me-green: #2ECC71;
+      /* 正确薄荷绿 */
+      /* 图表专用（改这里控制所有canvas颜色） */
+      --chart-tx: #2A2A2A;
+      /* TX 波形 */
+      --chart-rx: #E8321A;
+      /* RX 波形 */
+      --chart-correct: #2ECC71;
+      --chart-wrong: #E8321A;
+      --chart-cw: #F5A623;
+      --chart-pulse: #9B59B6;
+    }
+
+    /* ══ 主题区域结束 ══ */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: var(--font-sans, sans-serif);
+      background: var(--color-background-primary, #fff);
+      font-size: 12px
+    }
+
+    .ctrl {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 6px 8px;
+      background: var(--color-background-secondary, #f5f5f3);
+      border-radius: 8px
+    }
+
+    .ctrl label {
+      font-size: 11px;
+      color: var(--color-text-secondary, #666);
+      white-space: nowrap
+    }
+
+    .ctrl select,
+    .ctrl input[type=range] {
+      font-size: 11px;
+      vertical-align: middle
+    }
+
+    .ctrl input[type=range] {
+      flex: 1;
+      min-width: 0
+    }
+
+    .ctrl-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .ctrl-row label {
+      min-width: 48px
+    }
+
+    input[type=range] {
+      accent-color: #8693a8
+    }
+
+    .ctrl button {
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--color-border-tertiary, #ddd);
+      background: var(--color-background-secondary, #eee);
+      color: var(--color-text-primary, #222);
+      font-size: 11px;
+      cursor: pointer
+    }
+
+    .val {
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 30px;
+      color: var(--color-text-primary, #222);
+      display: inline-block
+    }
+
+    .tog {
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1.5px solid #aaa;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background .12s, color .12s
+    }
+
+    .tog.on {
+      background: var(--me-red, #E8321A);
+      color: #fff;
+      border-color: var(--me-red, #E8321A)
+    }
+
+    .tog.off {
+      background: var(--color-background-secondary, #eee);
+      color: var(--color-text-secondary, #666)
+    }
+
+    .panel {
+      background: var(--color-background-primary, #fff);
+      border: .5px solid var(--color-border-tertiary, #e0e0e0);
+      border-radius: 8px;
+      padding: 8px 10px
+    }
+
+    .ptitle {
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 1px;
+      color: var(--color-text-primary, #222)
+    }
+
+    .psub {
+      font-size: 10px;
+      color: var(--color-text-tertiary, #999);
+      margin-bottom: 5px;
+      line-height: 1.5
+    }
+
+    .info-box {
+      background: var(--color-background-secondary, #f5f5f3);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 10.5px;
+      color: var(--color-text-secondary, #666);
+      line-height: 1.7
+    }
+
+    .info-box b {
+      color: var(--color-text-primary, #222)
+    }
+
+    canvas {
+      display: block;
+      border-radius: 3px
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px
+    }
+
+    .sgrid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      margin-top: 3px
+    }
+
+    .sc {
+      width: 34px;
+      height: 26px;
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 9.5px;
+      line-height: 1.2;
+      cursor: pointer
+    }
+
+    .cbar {
+      height: 6px;
+      border-radius: 3px;
+      margin-top: 3px;
+      background: linear-gradient(to right, #042C53, #185FA5, #1D9E75, #EF9F27, #D85A30)
+    }
+
+    .cbar-lbl {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--color-text-tertiary);
+      margin-top: 1px
+    }
+
+    .badge {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px
+    }
+
+    .bp {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--color-background-secondary, #f0f0ee);
+      color: var(--color-text-secondary, #555)
+    }
+
+    .bp b {
+      color: var(--color-text-primary, #222)
+    }
+
+    .dv {
+      width: 1px;
+      height: 14px;
+      background: var(--color-border-tertiary, #ddd);
+      margin: 0 2px;
+      display: inline-block;
+      vertical-align: middle
+    }
+
+    .audio-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: var(--color-background-secondary, #f5f5f3);
+      border-radius: 8px;
+      flex-wrap: wrap
+    }
+
+    /* ══ 左侧sticky布局 ══ */
+    .app-layout {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 6px 0 6px 6px;
+    }
+
+    .main-plots {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 6px 4px 6px 0;
+    }
+
+    body {
+      overflow-y: scroll;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-layout">
+    <div class="sidebar"><!-- ═══ 左侧参数栏 ═══ -->
+      <div style="color:#1A8FE3;font-size:10px;padding:2px 4px 4px 4px;line-height:1.4">本仿真器采样频为现实的10∕₁₀₀₀，仿真500Hz对应现实500kHz，数学上等效</div>
+
+      <!-- A: 基础信号 -->
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <label>调频</label>
+          <select id="ct">
+            <option value="linear">线性Chirp</option>
+            <option value="perlin">Perlin(LPI)</option>
+            <option value="zc">Zadoff-Chu</option>
+          </select>
+        </div>
+        <div class="ctrl-row">
+          <label>识别</label>
+          <select id="modeSel">
+            <option value="phase">相移</option>
+            <option value="wave">波形切换</option>
+          </select>
+          <button class="tog off" id="mwBtn" style="margin-left:4px">多波形</button>
+        </div>
+        <div class="ctrl-row">
+          <label>SF</label>
+          <select id="sfSel">
+            <option value="6">SF6 M=64</option>
+            <option value="7" selected>SF7 M=128</option>
+            <option value="8">SF8 M=256</option>
+          </select>
+        </div>
+        <div class="ctrl-row">
+          <label>SNR</label><input type="range" id="snr" min="-20" max="20" value="5" step="1"><span class="val"
+            id="snrv">5dB</span>
+        </div>
+        <div class="ctrl-row">
+          <label>波形种</label><input type="range" id="cs" min="0" max="99" value="7"><span class="val" id="csv">7</span>
+        </div>
+        <div class="ctrl-row">
+          <label>消息种</label><input type="range" id="ms" min="0" max="99" value="42"><span class="val" id="msv">42</span>
+        </div>
+        <div class="ctrl-row">
+          <label>噪声种</label><input type="range" id="ns" min="0" max="99" value="0"><span class="val" id="nsv">0</span>
+        </div>
+        <button id="berBtn">BER×200</button>
+      </div>
+
+      <!-- B: 扩频 -->
+      <div class="ctrl">
+        <b style="font-size:11px">扩频</b>
+        <div class="ctrl-row">
+          <button class="tog off" id="dsssBtn">DSSS</button>
+          <label style="margin-left:6px">Chip×</label>
+          <select id="chipRate">
+            <option value="2">×2(宽)</option>
+            <option value="4" selected>×4</option>
+            <option value="8">×8(窄)</option>
+          </select>
+        </div>
+        <div class="ctrl-row">
+          <label>PN种</label><input type="range" id="pnSeed" min="0" max="99" value="0"><span class="val"
+            id="pnSeedV">0</span>
+        </div>
+        <div class="ctrl-row"
+          style="border-top:1px solid var(--color-border-tertiary,#ddd);padding-top:5px;margin-top:1px">
+          <button class="tog off" id="cpBtn">CP循环前缀</button>
+        </div>
+        <div class="ctrl-row">
+          <label>长度</label><input type="range" id="cpLen" min="4" max="32" value="16" step="4"><span class="val"
+            id="cpLenV">16pt</span>
+        </div>
+      </div>
+
+      <!-- C: 干扰 -->
+      <div class="ctrl">
+        <b style="font-size:11px">干扰</b>
+        <div class="ctrl-row">
+          <button class="tog off" id="cwBtn">CW窄带</button>
+        </div>
+        <div class="ctrl-row">
+          <label>频率Hz</label><input type="range" id="cwFreq" min="10" max="490" value="200" step="10"><span class="val"
+            id="cwFreqV">200Hz</span>
+        </div>
+        <div class="ctrl-row">
+          <label>JSR dB</label><input type="range" id="cwJSR" min="-20" max="30" value="0" step="1"><span class="val"
+            id="cwJSRV">0dB</span>
+        </div>
+        <div class="ctrl-row"
+          style="border-top:1px solid var(--color-border-tertiary,#ddd);padding-top:5px;margin-top:1px">
+          <button class="tog off" id="impBtn">脉冲干扰</button>
+        </div>
+        <div class="ctrl-row">
+          <label>类型</label>
+          <select id="impType">
+            <option value="motor">谐波EMI(周期)</option>
+            <option value="random">随机脉冲</option>
+          </select>
+        </div>
+        <div class="ctrl-row">
+          <label>幅度</label><input type="range" id="impAmp" min="0.1" max="5" value="1" step="0.1"><span class="val"
+            id="impAmpV">1.0</span>
+        </div>
+        <div class="ctrl-row">
+          <label id="impFreqLabel">频率Hz</label><input type="range" id="impFreq" min="10" max="490" value="233"
+            step="1"><span class="val" id="impFreqV">233Hz</span>
+        </div>
+      </div>
+
+      <!-- 音频 -->
+      <div class="audio-bar">
+        <b style="font-size:11px">🔊</b>
+        <button id="playTxBtn">▶ TX</button>
+        <button id="playRxBtn">▶ RX</button>
+        <button id="stopBtn">■ 停</button>
+        <label>频率×</label>
+        <select id="audioScale">
+          <option value="1" selected>×1原始</option>
+          <option value="4">×4</option>
+          <option value="8">×8</option>
+          <option value="16">×16</option>
+        </select>
+        <label>sym数</label>
+        <select id="audioSyms">
+          <option value="4">4sym</option>
+          <option value="8" selected>8sym</option>
+          <option value="20">全20</option>
+        </select>
+        <label>时长×</label>
+        <select id="durMult">
+          <option value="0.5">×0.5快</option>
+          <option value="1" selected>×1正常</option>
+          <option value="2">×2慢</option>
+          <option value="4">×4很慢</option>
+        </select>
+        <span class="val" id="audioInfo" style="font-size:10px;min-width:140px"></span>
+      </div>
+
+      <!-- Badge -->
+      <div class="panel" style="padding:5px 10px">
+        <div class="badge" id="badge"></div>
+      </div>
+
+      <!-- 多径/多普勒免疫说明 -->
+      <div class="panel" style="font-size:9.5px">
+        <div class="ptitle" style="font-size:11px">📡 信道免疫性（多径 &amp; 多普勒）</div>
+        <div class="info-box" style="font-size:9.5px;line-height:1.6">
+          <b>多径：</b>(反射路径比接收路径长)100m反射真实时延 = 0.33μs，@500kHz采样率仅0.17个样本，round后为0——反射波直接叠加进主信号，匹配滤波将其一并处理，无ISI。频率选择性衰落需要时延 &gt; 1/BW =
+          2μs（对应 &gt;600m路径差），可能只有城市高楼环境存在。<b>CSS长symbol天然免疫多径。</b>
+          <br><b>多普勒：</b>v=100m/s @2.4GHz → fd=800Hz。下变频后基带500kHz偏移800Hz = 0.16%，等效到仿真500Hz带宽 = 0.8Hz偏移 = 0.1个FFT
+          bin，完全淹没在chirp相关峰主瓣内（主瓣宽约2bin）。<b>CSS对多普勒天然鲁棒，无需补偿。</b>
+          <br><b>相位偏移：</b>在传统线性chirp"共轭相乘+FFT"时对ASD毫无影响，只同步影响乘积相位</b>
+          <br><b>频率偏移：</b>传统线性chirp时同步影响乘积频率。非线性chirp里我还没算。通过前导码纠正</b>
+          <br><b>真正的威胁：</b>2.4GHz频段的WiFi/蓝牙窄带干扰（持续CW）和谐波EMI脉冲干扰——这才是无人机SDR的主要对手，见下方干扰分析。
+        </div>
+      </div>
+
+    </div><!-- /sidebar -->
+    <div class="main-plots"><!-- ═══ 右侧图表区 ═══ -->
+
+      <!-- ① 波形 -->
+      <div class="panel">
+        <div class="ptitle">① 时域波形 <small style="font-weight:normal;color:var(--color-text-tertiary)">— 基带，单边带变频（SSB）</small>
+          <span style="float:right;display:flex;gap:4px;align-items:center">
+            <button id="wavPrev">◀</button>
+            <span class="val" id="wavPage" style="font-size:10px;min-width:54px;text-align:center">sym 0–3</span>
+            <button id="wavNext">▶</button>
+          </span>
+        </div>
+        <div class="psub">黑=TX，橙=RX；红竖线=脉冲干扰位置；CW叠加后RX振幅包络可见调制纹路</div>
+        <canvas id="wc" style="width:100%;height:150px"></canvas>
+      </div>
+
+      <!-- ② 时频谱 -->
+      <div class="panel">
+        <div class="ptitle">② 时频谱（Hann 64pt，87.5%重叠）<small style="font-weight:normal;color:var(--color-text-tertiary)">— 基带，单边带变频（SSB）</small>
+          <button id="splitBtn" class="tog off" style="float:right;padding:1px 7px;font-size:10px">上下分图</button>
+        </div>
+        <div class="psub">CW干扰 → 水平亮线（固定频率）；脉冲干扰 → 竖向亮条（宽带瞬态）；白线=TX瞬时频率轨迹</div>
+        <canvas id="sc" style="width:100%;height:240px"></canvas>
+        <canvas id="sc2" style="width:100%;height:200px;display:none;margin-top:4px"></canvas>
+        <div class="cbar"></div>
+        <div class="cbar-lbl"><span>低</span><span>高</span></div>
+      </div>
+
+      <!-- ③ FFT -->
+      <div class="panel">
+        <div class="ptitle">③ 全局功率谱（监听者视角）</div>
+        <div class="psub">CW → 尖锐谱线（频率可识别）；脉冲 → 宽带抬升；DSSS → 谱更平坦（LPI↑）</div>
+        <canvas id="fc" style="width:100%;height:120px"></canvas>
+      </div>
+
+      <!-- ④⑤⑥ -->
+      <div class="three-col">
+        <div class="panel">
+          <div class="ptitle">④ 匹配滤波相关（当前sym）</div>
+          <div class="psub">8模板互相关；绿✓=正确，红✗=误判；CW会均匀抬高底噪</div>
+          <canvas id="cc" style="width:100%;height:185px"></canvas>
+          <div style="margin-top:3px;font-size:10px">sym：<select id="ss" style="font-size:10px"></select></div>
+        </div>
+        <div class="panel">
+          <div class="ptitle">⑤ 判决网格 &amp; BER</div>
+          <div class="psub">大=解码，小=发送；绿=正确，红=误码</div>
+          <div class="sgrid" id="sg"></div>
+          <div style="margin-top:6px">
+            <div style="font-size:10px;color:var(--color-text-secondary)">单次BER</div>
+            <div id="b1" style="font-size:20px;font-weight:700;color:var(--color-text-primary)">—</div>
+            <div id="bN" style="font-size:10px;margin-top:3px;color:var(--color-text-secondary)">按BER×200得统计均值</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ptitle">⑥ 模板互相关矩阵</div>
+          <div class="psub">非对角越暗=越正交；优先选择更正交的组</div>
+          <canvas id="xc" style="width:100%;height:185px"></canvas>
+          <div class="cbar" style="background:linear-gradient(to right,#042C53,#185FA5,#D85A30)"></div>
+          <div class="cbar-lbl"><span>低(正交)</span><span>高(干扰)</span></div>
+        </div>
+      </div>
+
+      <!-- ⑦ 干扰分析 - 仅CW扫描，不常用放底部 -->
+      <div class="panel">
+        <div class="ptitle">⑦ CW频率扫描 BER</div>
+        <div class="psub">开启CW干扰后，横向扫描所有干扰频率，看哪个频率对chirp BER影响最大（理论上应平坦，处处受+21dB处理增益保护）。需要JSR &gt; +21dB
+          才能看到明显BER上升。<button id="scanBtn" style="margin-left:8px;padding:1px 7px;font-size:10px">扫描</button></div>
+        <canvas id="scanCanvas"
+          style="width:100%;height:160px;background:var(--color-background-secondary,#f5f5f3)"></canvas>
+      </div>
+
+    </div><!-- /main-plots -->
+  </div><!-- /app-layout end -->
+
+  <div>
+
+  <!-- 📊 非线性Chirp LPI原理与参数权衡说明 -->
+  <div class="panel" style="margin:0 4px 8px 4px">
+    <div class="ptitle">📊 非线性Chirp CSS 原理 · LPI价值与工程权衡</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(500px,1fr));gap:16px;margin-top:8px">
+
+      <div class="info-box">
+        <b>为什么非线性Chirp有LPI优势？</b>
+        <br>标准LoRa（线性Chirp）的频率轨迹是解析的 <code>f(t) = FL + (FH-FL)·t/M</code>，任何SDR只需做一次dechirp+FFT即可识别。
+        <br>Perlin/非线性Chirp的轨迹由seed决定，不知道seed就无法构造解析dechirp，达到<b>LPI (Low Probability of Intercept)</b>。敌方只能看到宽带频谱上的一团扩散信号，无法区分信号与噪声——这才是真正的<b>LPD (Low Probability of Detection)</b>。
+        <br><b>代价：</b>接收端必须存全套模板（NA×M个样本），无法用`共轭相乘再FFT`加速。当NA较小时（≤16）代价可接受。
+        <br><b>现实LPI Chirp通讯参考系统：</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">系统</td>
+            <td style="text-align:left">波形</td>
+            <td style="text-align:left">场景</td>
+          </tr>
+          <tr>
+            <td><b>FMCW RadCom（77GHz汽车雷达）</b></td>
+            <td>线性chirp，感知+通讯同波形</td>
+            <td>量产汽车，TI/NXP芯片组</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>LoRa/LoRaWAN</b></td>
+            <td>线性CSS（NA=M，dechirp+FFT）</td>
+            <td>IoT传感，最大规模商用CSS系统</td>
+          </tr>
+          <tr>
+            <td><b>APART项目</b></td>
+            <td>自适应非线性chirp</td>
+            <td>BLOS空地战术链路，2010s</td>
+          </tr>
+          <tr style="background:rgba(232,50,26,.04)">
+            <td><b>Link 16 / SINCGARS</b></td>
+            <td>跳频+直扩（非chirp）</td>
+            <td>美军战术数据链，对比基准</td>
+          </tr>
+          <tr>
+            <td><b>军用FHSS+chirp混合</b></td>
+            <td>跳频段+段内chirp</td>
+            <td>保密，细节未公开</td>
+          </tr>
+        </table>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">维度</td>
+            <td>标准LoRa</td>
+            <td>我们的非线性chirp</td>
+          </tr>
+          <tr><td>LPI程度</td><td>中（频谱平坦，轨迹线性可预测）</td><td style="color:var(--me-green)">高（Perlin轨迹不可解析复现）</td></tr>
+          <tr><td>抗窄带干扰</td><td>+21dB处理增益</td><td>同等级 + 额外轨迹随机性</td></tr>
+          <tr><td>解调复杂度</td><td>极低（dechirp+FFT）</td><td>中（NA模板点积，约1.7×开销）</td></tr>
+          <tr><td>适用</td><td>全球IoT生态</td><td style="color:var(--me-blue)">无人机专用战术链路</td></tr>
+        </table>
+        <small>定位更接近 APART (Adaptive Phonon-Activated Radio Transceivers)  风格：高LPI优先，牺牲少量解调复杂度。Perlin chirp的轨迹只有收发双方知道seed——没有seed无法复现波形，标准LoRa的线性chirp任何SDR都能识别。
+          <br>其实LPI真正的瓶颈不在遥控链路，而在图传OFDM不好隐藏，一个鸡贼想法是低混乱场景(如东欧平原)中无人机/机械狗检测画面，压缩语义发回场景和目标信息重建3D地图，就像特斯拉的屏幕一样。树枝钢筋等障碍要注意标注
+        <br><b>可预注入合适噪声</b></small>
+      </div>
+
+      <div class="info-box">
+        <b>🔧 如何硬件实现？——从仿真到实机的工程路径</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">阶段</td>
+            <td>平台</td>
+            <td>做什么</td>
+            <td>难度</td>
+            <td>目的</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.06)">
+            <td><b>① 算法验证</b><br><small>← 当前阶段</small></td>
+            <td>Python / 本HTML仿真器</td>
+            <td>完整链路仿真，CW干扰/噪声/参数权衡</td>
+            <td style="color:var(--me-green)">低</td>
+            <td>确认算法正确性</td>
+          </tr>
+          <tr>
+            <td><b>② SDR空口验证</b></td>
+            <td>HackRF One + GNURadio + Python</td>
+            <td>真实空口收发，验证多径/频偏/时延鲁棒性；Python生成Perlin模板，GNURadio做IQ采集</td>
+            <td style="color:var(--me-orange)">中</td>
+            <td>暴露仿真忽略的真实信道问题</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>③ MCU嵌入式原型</b></td>
+            <td>STM32H7 + AT86RF215</td>
+            <td>C语言实现匹配滤波；AT86RF215提供IQ接口（400-900MHz，BW可达4MHz）</td>
+            <td style="color:var(--me-orange)">中高</td>
+            <td>验证实时性和功耗</td>
+          </tr>
+          <tr>
+            <td><b>④ 产品化</b></td>
+            <td>FPGA (Artix-7 / Zynq)</td>
+            <td>并行模板匹配流水线，支持大NA；或 STM32+FPGA协处理</td>
+            <td style="color:var(--me-red)">高</td>
+            <td>小型化/量产/最终硬件</td>
+          </tr>
+        </table>
+        <b>RF前端芯片选型（IQ接口 = 必须，SX1276不行）：</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">芯片</td>
+            <td>频段</td>
+            <td>IQ接口</td>
+            <td>最大BW</td>
+            <td>备注</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.06)">
+            <td><b>AT86RF215</b>（Microchip）</td>
+            <td>400-900 / 2.4GHz</td>
+            <td style="color:var(--me-green)">✅ SPI IQ流</td>
+            <td>4 MHz</td>
+            <td style="color:var(--me-green)">最推荐：双频+IQ+嵌入式可驱动</td>
+          </tr>
+          <tr>
+            <td><b>CC1101</b>（TI）</td>
+            <td>300-928MHz</td>
+            <td style="color:var(--me-red)">❌ 无IQ，只FSK</td>
+            <td>800 kHz</td>
+            <td>BW太窄，不适合CSS</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>HackRF One</b>（Great Scott）</td>
+            <td>1MHz-6GHz</td>
+            <td style="color:var(--me-green)">✅ USB IQ流</td>
+            <td>20 MHz</td>
+            <td>SDR开发用，不适合飞机载</td>
+          </tr>
+          <tr>
+            <td><b>ADRV9002</b>（ADI）</td>
+            <td>30MHz-6GHz</td>
+            <td style="color:var(--me-green)">✅ LVDS IQ</td>
+            <td>40 MHz</td>
+            <td>高性能，需FPGA，产品级选项</td>
+          </tr>
+        </table>
+        <b>STM32H7 实时能力估算（M=128, NA=8, BW=500kHz）：</b>
+        ADC采样率≈4Msps（IQ各2M）；每符号点积 128×8=1024 次复数乘加；
+        STM32H7 @ 480MHz 有 DSP 扩展指令，<b>单符号处理约 0.1ms，实时裕量充足</b>（符号时长=0.256ms）。
+        NA≤16时STM32H7完全可以跑，NA>32建议加FPGA协处理器。
+        <br><small style="color:var(--color-text-tertiary)">手搓模拟电路生成Perlin chirp几乎不可行：需要精确时变频率控制，纯模拟精度无法保证。全数字基带+RF前端芯片是唯一实用路径。</small>
+      </div>
+
+      <div class="info-box">
+        <b>增大M → 灵敏度提升（处理增益）</b><br>
+        处理增益 = 10·log₁₀(M)，与NA无关。M的来源有两种：
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">路径</td>
+            <td>M增大方式</td>
+            <td>符号时长</td>
+            <td>代价</td>
+          </tr>
+          <tr>
+            <td><b>A. 快ADC</b></td>
+            <td>FS×2，T不变 → M×2</td>
+            <td>不变</td>
+            <td>ADC功耗/成本×2</td>
+          </tr>
+          <tr>
+            <td><b>B. 长symbol</b></td>
+            <td>FS不变，T×2 → M×2</td>
+            <td>×2（更长）</td>
+            <td>数据率÷2，延迟×2</td>
+          </tr>
+        </table>
+        两种路径都给+3dB。区别是花ADC钱还是花时间。
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:6px">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">M</td>
+            <td>处理增益</td>
+            <td>实际时长 (BW=500kHz)</td>
+            <td>备注</td>
+          </tr>
+          <tr>
+            <td>64 (SF6)</td>
+            <td>+18.1 dB</td>
+            <td>128 μs</td>
+            <td></td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.07)">
+            <td><b>128 (SF7)</b></td>
+            <td><b>+21.1 dB</b></td>
+            <td><b>256 μs</b></td>
+            <td>← 当前</td>
+          </tr>
+          <tr>
+            <td>256 (SF8)</td>
+            <td>+24.1 dB</td>
+            <td>512 μs</td>
+            <td>M×2 = +3dB</td>
+          </tr>
+          <tr>
+            <td>512</td>
+            <td>+27.1 dB</td>
+            <td>1.024 ms</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>1024</td>
+            <td>+30.1 dB</td>
+            <td>2.048 ms</td>
+            <td></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="info-box">
+        <b>M与NA同时翻倍 vs 只翻倍M：</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">操作</td>
+            <td>灵敏度</td>
+            <td>bits/sym</td>
+            <td>计算量</td>
+            <td>原因</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.06)">
+            <td>M×2（NA不变）</td>
+            <td style="color:var(--me-green)"><b>+3dB</b></td>
+            <td>不变</td>
+            <td>×2</td>
+            <td>积分时间×2，噪声±抵消更充分</td>
+          </tr>
+          <tr>
+            <td>NA×2（M不变）</td>
+            <td style="color:var(--color-text-secondary)"><b>0（无影响）</b></td>
+            <td>+1 bit</td>
+            <td>×2</td>
+            <td>NA与处理增益完全无关，只扩展符号字母表</td>
+          </tr>
+          <tr>
+            <td>M×2 且 NA×2</td>
+            <td style="color:var(--me-green)"><b>+3dB</b></td>
+            <td>+1 bit</td>
+            <td>×4</td>
+            <td>增益来自M，NA仅贡献1bit/sym，4倍算力</td>
+          </tr>
+        </table>
+        <b>结论：灵敏度只由M（积分样本数）决定，NA（符号模板数）对灵敏度没有任何贡献。</b> 想要更灵敏 → 加大M；想要更高阶调制 → 加大NA（但NA>16开始让非线性chirp失去意义）。
+      </div>
+
+      <div class="info-box"
+        style="border-left:3px solid var(--me-orange);background:rgba(245,166,35,.06)">
+        <b>⚠️ 反直觉：BW增大（M不变）→ 灵敏度反而下降！SX1276 实测印证</b>
+        <br>SX1276 数据手册实测：SF7/BW125→-124dBm，SF7/BW500→-118dBm（4×BW=-6dB灵敏度，恰好 10log₁₀(4)=6dB）。<br><small style="color:var(--color-text-tertiary)">数据来源：Semtech SX1276/77/78/79 Datasheet Rev.7，Table 16 Receiver Characteristics（<a href="https://www.semtech.com/products/wireless-rf/lora-connect/sx1276" target="_blank">产品页面</a>可下载最新版）</small>
+        <br><br>根本原因（RF系统）：总噪声功率 N = N₀ × BW。BW×2，ADC采样率×2，符号时长 T = M/BW 减半，积分时间变短，SNR下降3dB；同时更宽ADC带宽混入更多噪声。净效果：BW×k →
+        灵敏度 -10log₁₀(k) dB。
+        <br><br><b>BW增大的真正价值（非灵敏度）：</b><br>
+        <b style="color:var(--me-green)">✅ 数据率提升！</b> CSS正交性条件要求 Tₛ = M/BW。BW×2 → Tₛ减半 → 每秒发更多符号 → 数据率翻倍。
+        <small>ADC采样点数M不变，但时钟频率跟着BW等比加快，符号在更短时间内完成。</small>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">BW变化</td>
+            <td>M变化</td>
+            <td>灵敏度</td>
+            <td>数据率</td>
+            <td>LPI程度</td>
+            <td>抗CW能力</td>
+            <td>ADC要求</td>
+          </tr>
+          <tr>
+            <td>BW×2</td>
+            <td>M不变</td>
+            <td style="color:var(--me-red)">-3dB（变差）</td>
+            <td style="color:var(--me-green)">×2（提升）</td>
+            <td>↑↑（更宽扩散）</td>
+            <td>↑↑（更多频率分集）</td>
+            <td>快×2</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.06)">
+            <td>BW×2</td>
+            <td>M×2</td>
+            <td style="color:var(--me-green)">不变（等比）</td>
+            <td style="color:var(--me-green)">×2（提升）</td>
+            <td>↑↑</td>
+            <td>↑↑</td>
+            <td>快×2，时长×1</td>
+          </tr>
+          <tr>
+            <td>BW不变</td>
+            <td>M×2</td>
+            <td style="color:var(--me-green)">+3dB（提升）</td>
+            <td style="color:var(--me-red)">÷2（降低）</td>
+            <td>不变</td>
+            <td>不变</td>
+            <td>不变，时长×2</td>
+          </tr>
+        </table>
+        <b>结论：</b>扩宽BW的真正价值是<b>数据率↑</b>、LPI（更低PSD）和频率分集（抗窄带干扰），但灵敏度下降。要提灵敏度必须增大M（更快ADC或更长symbol）。
+      </div>
+
+      <div class="info-box">
+        <b>NA（符号模板数）的权衡：M=128 固定，不同NA对比</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:6px">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">NA</td>
+            <td>bits/sym</td>
+            <td>模板点积</td>
+            <td>实数FFT(线性)</td>
+            <td>比值</td>
+            <td>处理增益</td>
+            <td>适用场景</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>3 bits</td>
+            <td>8×128=<b>1,024</b></td>
+            <td rowspan="5" style="text-align:center;vertical-align:middle">M+M/2·log₂M<br>=<b>576</b></td>
+            <td>1.78×</td>
+            <td>+21.1 dB</td>
+            <td style="color:var(--me-green)">← 当前，单片机可跑</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td>16</td>
+            <td>4 bits</td>
+            <td>16×128=<b>2,048</b></td>
+            <td>3.6×</td>
+            <td>+21.1 dB</td>
+            <td style="color:var(--me-green)">单片机可跑</td>
+          </tr>
+          <tr>
+            <td>32</td>
+            <td>5 bits</td>
+            <td>32×128=<b>4,096</b></td>
+            <td>7.1×</td>
+            <td>+21.1 dB</td>
+            <td>DSP合适</td>
+          </tr>
+          <tr>
+            <td>64</td>
+            <td>6 bits</td>
+            <td>64×128=<b>8,192</b></td>
+            <td>14.2×</td>
+            <td>+21.1 dB</td>
+            <td>FPGA加速建议</td>
+          </tr>
+          <tr style="background:rgba(232,50,26,.06)">
+            <td>128=M <small style="color:var(--me-red)">(标准LoRa)</small></td>
+            <td>7 bits</td>
+            <td>128×128=<b>16,384</b></td>
+            <td>28.4×</td>
+            <td>+21.1 dB</td>
+            <td style="color:var(--me-red)">FPGA必需，非线性无意义<br><small>Semtech用共轭相乘+FFT等价此NA=M情形</small></td>
+          </tr>
+        </table>
+        <br>
+        <b>结论：</b>处理增益 <u>只由M决定</u>，与NA无关。NA只影响每符号bit数和计算量。对于非线性Chirp，<b>NA≤16是最佳工程甜点</b>——LPI完整，单片机可实时运行，数据率合理（3-4
+        bits/sym × 1kHz/128 ≈ 23-31 bps）。NA>32后模板匹配开销让非线性设计失去意义，不如改回线性Chirp用FFT。
+      </div>
+
+      <div class="info-box" style="border-left:3px solid var(--me-blue);background:rgba(26,143,227,.04)">
+        <b>📶 近距高干扰 vs 远距低干扰——噪声来源不同</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:6px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">场景</td>
+            <td>信号S</td>
+            <td>噪声N来源</td>
+            <td>SNR限制因素</td>
+            <td>应对策略</td>
+          </tr>
+          <tr>
+            <td><b>近距高干扰</b><br><small>城区/遮挡/密集環境</small></td>
+            <td style="color:var(--me-green)">高（路损小）</td>
+            <td>多径脱落、邻信道RF干扰、<br>同频消耗、WiFi谐波</td>
+            <td>LNA不是瓶颢，<br>环境干扰为主</td>
+            <td>扩频处理增益、抗CW能力</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>远距低干扰</b><br><small>BLOS空地/开阔信道</small></td>
+            <td style="color:var(--me-red)">弱（路损大）</td>
+            <td>热噪声kTB + LNA噪声系数F</td>
+            <td>N = kTBF，<br>LNA的F直接决定灵敏度</td>
+            <td>大M提升处理增益、优化LNA NF</td>
+          </tr>
+        </table>
+        <b>根本因：</b>N = k·T·B·F。近距时S强，外部干扰远超热噪声（F无意义）；远距时干扰消失，N回归热噪声，F每差1dB灵敏度就差1dB。
+        <br>对我们无人机战术链路：<b>BLOS主场景属于远距低干扰，LNA质量和M的大小是第一优先级。城区近距备用链路则更依赖抗干扰能力（即处理增益+展频宽度）。</b>
+      </div>
+
+      <div class="info-box" style="border-left:3px solid var(--me-green);background:rgba(46,204,113,.04)">
+        <b>📶 IQ下变频与模板匹配的关系</b>
+        <br>标准LoRa的共轭相乘（conjugate multiply）同时完成了IQ解调和dechirp，两步合一。我们的模板匹配把这两步分开：
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:6px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">环节</td>
+            <td>标准LoRa</td>
+            <td>我们的非线性chirp</td>
+          </tr>
+          <tr>
+            <td><b>下变频</b></td>
+            <td>IQ两路（必须）</td>
+            <td>IQ两路（<b>仍然必须</b>，抑制镜像干扰）</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.04)">
+            <td><b>解调核心</b></td>
+            <td>r(t)·s*(t)（共轭相乘，利用Q路）→ |FFT|</td>
+            <td>|∑(I_r+jQ_r)·(I_t−jQ_t)|（复数点积取模）</td>
+          </tr>
+          <tr>
+            <td><b>相位偏移φ的影响</b></td>
+            <td>取模后消除，<b>无影响</b></td>
+            <td>复数取模后消除，<b>无影响</b>（实数点积则乘以cosφ！）</td>
+          </tr>
+          <tr style="background:rgba(232,50,26,.04)">
+            <td><b>频率偏移主要来源</b></td>
+            <td colspan="2">晶振精度（普通±20ppm→±18kHz @ 915MHz）远大于多普勒（无人机20m/sⅉ61Hz）。需前导码AFC补唇。</td>
+          </tr>
+        </table>
+        <b>注：</b>本页动画直接在基带实数上演示（隐含“IQ下变频已完成、相位对齐”）。硬件实现时存复数模板 I_t+jQ_t，做复数点积取模，相位偏移自动消除。
+      </div>
+
+    </div><!-- /原理面板 grid 结束 -->
+  </div><!-- /📊 原理面板结束 -->
+
+  <!-- 📐 匹配滤波原理动画 - 全宽面板 -->
+  <div class="panel" style="margin:0 4px 8px 4px">
+    <div class="ptitle">📐 匹配滤波相关检测 · 分步动画</div>
+    <div class="psub" style="max-width:900px">
+      <b>完整接收流水线：</b>① IQ下变频(抑制镜像) → ② STFT监测信号存在 → ③ 前导码（已知模板）自相关峰 → 定时同步 → ④ 截取M=128点symbol块 → ⑤ 匹配滤波（<b>本动画演示此步，隐含IQ已完成</b>）。
+      <br>每次接收到一个symbol（共M=128个样本），与NA个预存符号模板逐点相乘后累加。只有"正确相位"的模板能与接收波形<b>相干叠加</b>到最大值，错误相位因chirp正交性相消趋近0。
+      噪声随机±抵消，M次平均后SNR提升 +10log₁₀(128)=<b>+21dB</b>。
+      <br>行①=模板，行②=接收信号，行③=逐点乘积（动画推进），行④=累积积分（相关值），行⑤=NA条结果对比
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+      <button id="explainPlayBtn">▶ 动画</button>
+      <button id="explainResetBtn">↺ 重置</button>
+      <label style="font-size:11px">符号：<select id="explainSym" style="font-size:11px"></select></label>
+      <label style="font-size:11px">对比模板：<select id="explainTmpl" style="font-size:11px"></select></label>
+      <span id="explainInfo" style="font-size:10px;color:var(--color-text-secondary)"></span>
+    </div>
+    <canvas id="explainCV" style="width:100%;height:460px"></canvas>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════
+    // 常数
+    // ═══════════════════════════════════════════
+    const FS = 1000, NA = 8, NTX = 20, FL = 80, FH = 420;
+    let M = 128, SH = [];
+    function updateSH() { SH = Array.from({ length: NA }, (_, i) => Math.floor(i * M / NA)); }
+    updateSH();
+
+    let G = {
+      sel: 0, wavePage: 0,
+      multiWave: false, cpOn: false, cpLen: 16,
+      dsssOn: false, chipRate: 4, pnSeed: 0,
+      cwOn: false, cwFreq: 200, cwJSR: 0,
+      impOn: false, impType: 'motor', impAmp: 1.0, impFreq: 233,
+      identMode: 'phase', snr: 5, stftSplit: false,
+      msg: null, tx: null, rx: null, rxClean: null,
+      tmpls: null, dec: null, corrs: null, freqs: null, symLen: M,
+      impPositions: []
+    };
+    let audioNode = null;
+
+    // ═══ RNG & Perlin ════════════════════════
+    function mkRng(s) {
+      let v = (Math.imul(s | 0, 2654435761) ^ 0xDEADBEEF) >>> 0;
+      return () => { v = ((Math.imul(v, 1664525) + 1013904223) >>> 0); return v / 0x100000000; };
+    }
+    function smoothPerlin(len, nc, seed) {
+      const r = mkRng(seed), c = Array.from({ length: nc + 2 }, () => r() * 2 - 1);
+      return Float32Array.from({ length: len }, (_, i) => {
+        const t = i / (len - 1) * nc, gi = ~~t, f = t - gi, sf = f * f * (3 - 2 * f);
+        return c[gi] * (1 - sf) + c[gi + 1] * sf;
+      });
+    }
+    function genMsg(seed) { const r = mkRng(seed); return Uint8Array.from({ length: NTX }, () => ~~(r() * NA)); }
+
+    // ═══ 波形生成 ════════════════════════════
+    function ifLinear() { return Float32Array.from({ length: M }, (_, n) => FL + (FH - FL) * n / M); }
+    function ifPerlin(seed) {
+      const p = smoothPerlin(M, 10, seed);
+      return Float32Array.from({ length: M }, (_, n) => FL + (FH - FL) * (p[n] + 1) / 2);
+    }
+    function ifToWave(freq) {
+      const b = new Float32Array(M); let ph = 0;
+      for (let n = 0; n < M; n++) { b[n] = Math.cos(ph); ph += 2 * Math.PI * freq[n] / FS; }
+      return b;
+    }
+    function makeZCwave(root) {
+      const b = new Float32Array(M);
+      for (let n = 0; n < M; n++) {
+        const nn = n % 127, ph = -Math.PI * (root % 127 + 1) * nn * (nn + 1) / 127;
+        b[n] = Math.cos(ph + 2 * Math.PI * ((FL + FH) / 2) * n / FS);
+      }
+      return b;
+    }
+    function makePNcode(len, seed, cr) {
+      const r = mkRng(seed * 1234 + 7), chips = Math.ceil(len / cr);
+      const c = Array.from({ length: chips }, () => r() > 0.5 ? 1 : -1);
+      return Float32Array.from({ length: len }, (_, n) => c[~~(n / cr)]);
+    }
+    function applyDSSS(wave, on, cr, pnSeed, si) {
+      if (!on) return wave;
+      const pn = makePNcode(M, pnSeed * 100 + si, cr);
+      return Float32Array.from(wave, (_, n) => wave[n] * pn[n]);
+    }
+    function normalize(arr) {
+      let n = 0; arr.forEach(v => n += v * v); n = Math.sqrt(n) || 1;
+      return Float32Array.from(arr, v => v / n);
+    }
+    function addCP(wave, on, cpLen) {
+      if (!on) return wave;
+      const out = new Float32Array(cpLen + M);
+      for (let i = 0; i < cpLen; i++)out[i] = wave[M - cpLen + i];
+      for (let i = 0; i < M; i++)out[cpLen + i] = wave[i];
+      return out;
+    }
+    function makeBaseWave(type, cSeed, waveIdx, symIdx, multiWave) {
+      if (type === 'zc') return makeZCwave(cSeed + waveIdx * 7);
+      if (type === 'linear') {
+        if (G.identMode === 'wave') {
+          const f0 = FL + (FH - FL) * waveIdx / (NA * 2), f1 = FH - (FH - FL) * waveIdx / (NA * 2);
+          return ifToWave(Float32Array.from({ length: M }, (_, n) => f0 + (f1 - f0) * n / M));
+        }
+        return ifToWave(ifLinear());
+      }
+      const seed = multiWave ? (cSeed * 1000 + symIdx * NA + waveIdx + 1) : (cSeed * 100 + waveIdx + 1);
+      return ifToWave(ifPerlin(seed));
+    }
+
+    // ═══ 构建TX + 模板 ═══════════════════════
+    function buildAll(p) {
+      const { type, cSeed, msg, multiWave, identMode, cpOn, cpLen, dsssOn, chipRate, pnSeed } = p;
+      const symLen = cpOn ? M + cpLen : M;
+      const tmpls = Array.from({ length: NTX }, (_, si) => {
+        if (identMode === 'wave') {
+          return Array.from({ length: NA }, (_, k) => {
+            let w = makeBaseWave(type, cSeed, k, si, multiWave);
+            w = applyDSSS(w, dsssOn, chipRate, pnSeed, si);
+            return normalize(w);
+          });
+        } else {
+          let base = makeBaseWave(type, cSeed, 0, si, multiWave);
+          base = applyDSSS(base, dsssOn, chipRate, pnSeed, si);
+          return Array.from({ length: NA }, (_, k) => {
+            const t = new Float32Array(M), s = SH[k];
+            for (let n = 0; n < M; n++)t[n] = base[(n + s) % M];
+            return normalize(t);
+          });
+        }
+      });
+      const tx = new Float32Array(NTX * symLen);
+      for (let si = 0; si < NTX; si++) {
+        const core = tmpls[si][msg[si]], withCP = addCP(core, cpOn, cpLen);
+        for (let n = 0; n < symLen; n++)tx[si * symLen + n] = withCP[n];
+      }
+      const freqs = Array.from({ length: NTX }, (_, si) => {
+        if (type === 'zc') return Float32Array.from({ length: M }, () => (FL + FH) / 2);
+        if (type === 'linear') return ifLinear();
+        const seed = multiWave ? (cSeed * 100 + si + 1) : cSeed;
+        return ifPerlin(seed);
+      });
+      return { tmpls, tx, freqs, symLen };
+    }
+
+    // ═══ CW窄带干扰 ══════════════════════════
+    // 持续叠加到整段RX，相位随机
+    function applyCW(sig, on, freq, jsr_db) {
+      if (!on) return sig;
+      const jsr = Math.pow(10, jsr_db / 20); // 幅度比
+      let sigPwr = 0; sig.forEach(v => sigPwr += v * v); sigPwr /= sig.length || 1;
+      const amp = Math.sqrt(sigPwr) * jsr;
+      const phi0 = Math.random() * 2 * Math.PI;
+      const out = new Float32Array(sig.length);
+      for (let n = 0; n < sig.length; n++)
+        out[n] = sig[n] + amp * Math.cos(2 * Math.PI * freq * n / FS + phi0);
+      return out;
+    }
+
+    // ═══ 脉冲干扰 ════════════════════════════
+    // 返回 {out, positions}
+    function applyImpulse(sig, on, type, amp, freq) {
+      if (!on) return { out: sig, positions: [] };
+      const out = new Float32Array(sig);
+      const positions = [];
+      const pulseWidth = Math.max(2, Math.round(FS / freq * 0.05)); // 脉冲宽度=5%周期
+
+      if (type === 'motor') {
+        // 周期性脉冲，频率=某种在基带上的谐波
+        const period = Math.round(FS / freq);
+        const offset = Math.round(Math.random() * period); // 随机初相
+        for (let n = offset; n < sig.length; n += period) {
+          positions.push(n);
+          for (let k = 0; k < pulseWidth && n + k < sig.length; k++) {
+            const env = Math.exp(-4 * k / pulseWidth); // 指数衰减脉冲形状
+            out[n + k] += amp * env;
+          }
+        }
+      } else {
+        // 随机脉冲（泊松过程，每样本概率=freq/FS）
+        const prob = Math.min(freq / FS, 0.1);
+        const r = mkRng(54321);
+        for (let n = 0; n < sig.length; n++) {
+          if (r() < prob) {
+            positions.push(n);
+            for (let k = 0; k < pulseWidth && n + k < sig.length; k++) {
+              const env = Math.exp(-4 * k / pulseWidth);
+              out[n + k] += amp * env * (r() > 0.5 ? 1 : -1);
+            }
+          }
+        }
+      }
+      return { out, positions };
+    }
+
+    // ═══ AWGN ════════════════════════════════
+    function awgn(sig, snr_db, nSeed) {
+      if (snr_db >= 20) return new Float32Array(sig);
+      const r = mkRng(nSeed + 99991);
+      const snrL = Math.pow(10, snr_db / 10);
+      let pw = 0; sig.forEach(v => pw += v * v); pw /= sig.length || 1;
+      const sg = Math.sqrt(pw / Math.max(snrL, 1e-9));
+      const out = new Float32Array(sig.length);
+      for (let i = 0; i < sig.length; i += 2) {
+        const u1 = Math.max(1e-15, r()), u2 = r(), mag = sg * Math.sqrt(-2 * Math.log(u1));
+        out[i] = sig[i] + mag * Math.cos(2 * Math.PI * u2);
+        if (i + 1 < sig.length) out[i + 1] = sig[i + 1] + mag * Math.sin(2 * Math.PI * u2);
+      }
+      return out;
+    }
+
+    // ═══ 解调 ════════════════════════════════
+    function demod(rx, tmpls, p) {
+      const { cpOn, cpLen, symLen } = p;
+      const dec = new Uint8Array(NTX), corrs = [];
+      for (let si = 0; si < NTX; si++) {
+        const start = si * symLen + (cpOn ? cpLen : 0);
+        const blk = rx.slice(start, start + M);
+        const cv = tmpls[si].map(tm => { let s = 0; for (let n = 0; n < M; n++)s += blk[n] * tm[n]; return Math.abs(s); });
+        corrs.push(cv);
+        let best = 0; cv.forEach((v, i) => { if (v > cv[best]) best = i; });
+        dec[si] = best;
+      }
+      return { dec, corrs };
+    }
+
+    // ═══ FFT ════════════════════════════════
+    function nextPow2(n) { let p = 1; while (p < n) p <<= 1; return p; }
+    function fftIP(re, im) {
+      const N = re.length;
+      for (let i = 1, j = 0; i < N; i++) {
+        let bit = N >> 1; for (; j & bit; bit >>= 1)j ^= bit; j ^= bit;
+        if (i < j) { [re[i], re[j]] = [re[j], re[i]];[im[i], im[j]] = [im[j], im[i]]; }
+      }
+      for (let len = 2; len <= N; len <<= 1) {
+        const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+        for (let i = 0; i < N; i += len) {
+          let cr = 1, ci = 0;
+          for (let j = 0; j < len / 2; j++) {
+            const ur = re[i + j], ui = im[i + j], vr = re[i + j + len / 2] * cr - im[i + j + len / 2] * ci, vi = re[i + j + len / 2] * ci + im[i + j + len / 2] * cr;
+            re[i + j] = ur + vr; im[i + j] = ui + vi; re[i + j + len / 2] = ur - vr; im[i + j + len / 2] = ui - vi;
+            const nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr;
+          }
+        }
+      }
+    }
+
+    // ═══ 色映射 ══════════════════════════════
+    function cmap(v) {
+      const s = [[4, 44, 83], [24, 95, 165], [29, 158, 117], [239, 159, 39], [216, 90, 48]];
+      v = Math.max(0, Math.min(1, v));
+      const t = v * (s.length - 1), i = Math.min(~~t, s.length - 2), f = t - i, a = s[i], b = s[i + 1];
+      return [~~(a[0] + f * (b[0] - a[0])), ~~(a[1] + f * (b[1] - a[1])), ~~(a[2] + f * (b[2] - a[2]))];
+    }
+    function cmapBR(v) {
+      v = Math.max(0, Math.min(1, v));
+      return [~~(4 + v * 212), ~~(44 + v * 46), ~~(83 - v * 35)];
+    }
+
+    // ═══ Canvas工具 ══════════════════════════
+    function setupCV(id, PH) {
+      const cv = document.getElementById(id);
+      const dpr = devicePixelRatio || 1, PW = cv.offsetWidth || 700;
+      cv.width = PW * dpr; cv.height = PH * dpr; cv.style.height = PH + 'px';
+      const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+      return { ctx, PW, PH };
+    }
+
+    // ═══ ① 波形 ══════════════════════════════
+    function drawWave() {
+      if (!G.tx) return;
+      const { tx, rx, msg, symLen, impPositions, cpLen } = G;
+      const { cpOn } = G;
+      const { ctx, PW, PH } = setupCV('wc', 150);
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, PW, PH);
+      const pg = G.wavePage, SHOW = 4, st = pg * SHOW * symLen;
+      const slRx = rx.slice(st, st + SHOW * symLen), slTx = tx.slice(st, st + SHOW * symLen);
+      const LEN = slRx.length;
+      let mx = 0; slRx.forEach(v => { if (Math.abs(v) > mx) mx = Math.abs(v); }); mx = Math.max(mx, .1);
+      const mid = PH / 2, ys = mid * .84 / mx;
+      if (cpOn) {
+        for (let s = 0; s < SHOW; s++) {
+          const x0 = s * symLen / LEN * PW, x1 = (s * symLen + cpLen) / LEN * PW;
+          ctx.fillStyle = 'rgba(0,200,180,.12)'; ctx.fillRect(x0, 0, x1 - x0, PH);
+          ctx.strokeStyle = 'rgba(0,170,150,.3)'; ctx.lineWidth = .5; ctx.setLineDash([]);
+          ctx.beginPath(); ctx.moveTo(x1, 0); ctx.lineTo(x1, PH); ctx.stroke();
+        }
+      }
+      for (let s = 0; s <= SHOW; s++) {
+        const x = s * symLen / LEN * PW;
+        ctx.strokeStyle = 'rgba(128,128,128,.18)'; ctx.lineWidth = .5; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, PH); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      function line(arr, col, al, lw) {
+        ctx.save(); ctx.strokeStyle = col; ctx.globalAlpha = al; ctx.lineWidth = lw; ctx.beginPath();
+        for (let i = 0; i < arr.length; i++) { const x = i / LEN * PW, y = mid - arr[i] * ys; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+        ctx.stroke(); ctx.restore();
+      }
+      line(slRx, '#D85A30', .7, 1); line(slTx, '#1a1a1a', .88, 1.5);
+      // 脉冲位置标注
+      ctx.strokeStyle = 'rgba(216,30,30,.6)'; ctx.lineWidth = 1; ctx.setLineDash([]);
+      impPositions.forEach(pos => {
+        const relPos = pos - st;
+        if (relPos >= 0 && relPos < LEN) {
+          const x = relPos / LEN * PW;
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, PH); ctx.stroke();
+        }
+      });
+      ctx.fillStyle = 'rgba(50,50,50,.7)'; ctx.font = '10px sans-serif'; ctx.setLineDash([]);
+      for (let s = 0; s < SHOW; s++) {
+        const si = pg * SHOW + s;
+        if (si < NTX) ctx.fillText('s' + si + '[' + msg[si] + ']', s * symLen / LEN * PW + 4, 13);
+      }
+      if (cpOn) { ctx.fillStyle = 'rgba(0,140,120,.8)'; ctx.font = '9px sans-serif'; ctx.fillText('CP=' + G.cpLen + 'pt', 3, PH - 3); }
+      document.getElementById('wavPage').textContent = 'sym ' + (pg * SHOW) + '–' + Math.min(pg * SHOW + SHOW - 1, NTX - 1);
+    }
+
+    // ═══ ② 时频谱 ════════════════════════════
+    function drawSpec() {
+      if (!G.rx) return;
+      const { rx, freqs, msg, symLen } = G;
+      const type = document.getElementById('ct').value;
+      const WIN = 64, HOP = 8, NF = WIN / 2 + 1;
+      const win = Float32Array.from({ length: WIN }, (_, n) => 0.5 * (1 - Math.cos(2 * Math.PI * n / (WIN - 1))));
+      const nFr = ~~((rx.length - WIN) / HOP) + 1;
+      const spec = new Float32Array(nFr * NF);
+      for (let f = 0; f < nFr; f++) {
+        const s0 = f * HOP;
+        for (let k = 0; k < NF; k++) {
+          let re = 0, im = 0;
+          for (let n = 0; n < WIN && s0 + n < rx.length; n++) {
+            const v = rx[s0 + n] * win[n], a = 2 * Math.PI * k * n / WIN;
+            re += v * Math.cos(a); im -= v * Math.sin(a);
+          }
+          spec[f * NF + k] = Math.sqrt(re * re + im * im);
+        }
+      }
+      let mx = 0; spec.forEach(v => { if (v > mx) mx = v; }); mx = mx || 1;
+      const ofc = document.createElement('canvas'); ofc.width = nFr; ofc.height = NF;
+      const octx = ofc.getContext('2d');
+      const img = octx.createImageData(nFr, NF);
+      for (let f = 0; f < nFr; f++)for (let k = 0; k < NF; k++) {
+        const v = spec[f * NF + k] / mx, row = NF - 1 - k, idx = (row * nFr + f) * 4;
+        const [r, g, b] = cmap(Math.pow(Math.max(0, v), .35));
+        img.data[idx] = r; img.data[idx + 1] = g; img.data[idx + 2] = b; img.data[idx + 3] = 255;
+      }
+      octx.putImageData(img, 0, 0);
+
+      // helper: 画单个canvas， frStart~frEnd 范围， siStart~siEnd 的sym轨迹
+      function paintCV(cvId, height, frStart, frEnd, siStart, siEnd) {
+        const cv = document.getElementById(cvId);
+        const PW = cv.offsetWidth || 700, PH = height;
+        const dpr = devicePixelRatio || 1;
+        cv.width = PW * dpr; cv.height = PH * dpr; cv.style.height = PH + 'px';
+        const ctx = cv.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        const srcW = frEnd - frStart;
+        ctx.drawImage(ofc, frStart, 0, srcW, NF, 0, 0, cv.width, cv.height);
+        ctx.scale(dpr, dpr);
+        for (let si = siStart; si < siEnd; si++) {
+          const shift = G.identMode === 'phase' ? SH[msg[si]] : 0, freq = freqs[si];
+          ctx.strokeStyle = si % 2 === 0 ? 'rgba(255,255,255,.82)' : 'rgba(160,220,255,.75)';
+          ctx.lineWidth = 1.6; ctx.setLineDash([]); ctx.beginPath();
+          if (type === 'zc') {
+            const y = (1 - (FL + FH) / 2 / (FS / 2)) * PH;
+            const x0 = (si * symLen / HOP - frStart) / srcW * PW, x1 = ((si * symLen + M) / HOP - frStart) / srcW * PW;
+            ctx.moveTo(x0, y); ctx.lineTo(x1, y);
+          } else {
+            for (let n = 0; n < M; n++) {
+              const fx = ((si * symLen + n) / HOP - frStart) / srcW * PW, f = freq[(n + shift) % M], fy = (1 - f / (FS / 2)) * PH;
+              const prev = n > 0 ? freq[(n + shift - 1 + M) % M] : f;
+              if (n === 0 || Math.abs(f - prev) > (FH - FL) * .4) ctx.moveTo(fx, fy); else ctx.lineTo(fx, fy);
+            }
+          }
+          ctx.stroke();
+        }
+        ctx.fillStyle = 'rgba(255,255,255,.72)'; ctx.font = '9px sans-serif';
+        [0, 100, 200, 300, 400, 500].forEach(f => {
+          const y = (1 - f / (FS / 2)) * PH; ctx.fillText(f + 'Hz', 2, Math.max(9, Math.min(PH - 2, y + 3)));
+        });
+        for (let si = siStart; si <= siEnd; si++) {
+          const x = (si * symLen / HOP - frStart) / srcW * PW; if (x >= 0 && x < PW) ctx.fillText('s' + si, x + 1, PH - 2);
+        }
+      }
+
+      const cv1 = document.getElementById('sc'), cv2 = document.getElementById('sc2');
+      if (!G.stftSplit) {
+        cv2.style.display = 'none';
+        cv1.style.height = '240px';
+        paintCV('sc', 240, 0, nFr, 0, NTX);
+      } else {
+        cv1.style.height = '200px';
+        cv2.style.display = 'block';
+        const half = ~~(nFr / 2), halfSym = ~~(NTX / 2);
+        paintCV('sc', 200, 0, half, 0, halfSym);
+        paintCV('sc2', 200, half, nFr, halfSym, NTX);
+      }
+    }
+
+    // ═══ ③ FFT功率谱 ═════════════════════════
+    function drawFFT() {
+      if (!G.rx) return;
+      const { ctx, PW, PH } = setupCV('fc', 120);
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, PW, PH);
+      const rx = G.rx, N = nextPow2(rx.length);
+      const re = new Float32Array(N), im = new Float32Array(N);
+      for (let i = 0; i < rx.length; i++) { const w = 0.5 * (1 - Math.cos(2 * Math.PI * i / (rx.length - 1))); re[i] = rx[i] * w; }
+      fftIP(re, im);
+      const half = N / 2, pwr = Float32Array.from({ length: half }, (_, k) => re[k] * re[k] + im[k] * im[k]);
+      const sm = new Float32Array(half);
+      for (let k = 0; k < half; k++) { let s = 0, c = 0; for (let d = -3; d <= 3; d++) { const kk = k + d; if (kk >= 0 && kk < half) { s += pwr[kk]; c++; } } sm[k] = s / c; }
+      let mxP = 0; sm.forEach(v => { if (v > mxP) mxP = v; }); mxP = mxP || 1;
+      const pad = 22;
+      ctx.fillStyle = 'rgba(24,95,165,.15)'; ctx.beginPath(); ctx.moveTo(pad, PH - pad);
+      for (let k = 0; k < half; k++) {
+        const x = pad + (k / half) * (PW - pad * 2), y = PH - pad - (sm[k] / mxP) * (PH - pad * 2) * .86;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(PW - pad, PH - pad); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#185FA5'; ctx.lineWidth = 1.5; ctx.setLineDash([]); ctx.beginPath();
+      for (let k = 0; k < half; k++) {
+        const x = pad + (k / half) * (PW - pad * 2), y = PH - pad - (sm[k] / mxP) * (PH - pad * 2) * .86;
+        k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      // CW频率标线
+      if (G.cwOn) {
+        const x = pad + (G.cwFreq / (FS / 2)) * (PW - pad * 2);
+        ctx.strokeStyle = 'rgba(239,159,39,.9)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 2]);
+        ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, PH - pad); ctx.stroke();
+        ctx.setLineDash([]); ctx.fillStyle = '#EF9F27'; ctx.font = '9px sans-serif';
+        ctx.fillText('CW ' + G.cwFreq + 'Hz', x + 2, pad + 9);
+      }
+      [FL, FH].forEach((f, i) => {
+        const x = pad + (f / (FS / 2)) * (PW - pad * 2);
+        ctx.strokeStyle = i === 0 ? 'rgba(29,158,117,.6)' : 'rgba(216,90,48,.6)';
+        ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, PH - pad); ctx.stroke();
+        ctx.setLineDash([]); ctx.fillStyle = i === 0 ? '#1D9E75' : '#D85A30'; ctx.font = '9px sans-serif'; ctx.fillText(f + 'Hz', x + 2, pad + 20);
+      });
+      ctx.strokeStyle = 'rgba(128,128,128,.3)'; ctx.lineWidth = .5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(pad, PH - pad); ctx.lineTo(PW - pad, PH - pad); ctx.stroke();
+      ctx.fillStyle = 'rgba(80,80,80,.6)'; ctx.font = '9px sans-serif';
+      [0, 100, 200, 300, 400, 500].forEach(f => { const x = pad + (f / (FS / 2)) * (PW - pad * 2); ctx.fillText(f, x - 5, PH - pad + 9); });
+    }
+
+    // ═══ ⑦ 干扰分析 - CW扫描 ═══════════════
+    function runCWScan() {
+      const btn = document.getElementById('scanBtn');
+      btn.disabled = true; btn.textContent = '扫描中...';
+      setTimeout(() => {
+        const type = document.getElementById('ct').value;
+        const snr = +document.getElementById('snr').value;
+        const sf = +document.getElementById('sfSel').value; M = 1 << sf; updateSH();
+        const cSeed = +document.getElementById('cs').value;
+        const { multiWave, cpOn, cpLen, dsssOn, chipRate, pnSeed, identMode, cwJSR } = G;
+        const freqSteps = 20;
+        const freqs_scan = Array.from({ length: freqSteps }, (_, i) => ~~(20 + i * (460 / freqSteps)));
+        const bers = freqs_scan.map(cwF => {
+          let err = 0;
+          for (let trial = 0; trial < 40; trial++) {
+            const msg = genMsg(trial);
+            const { tmpls, tx, symLen } = buildAll({ type, cSeed, msg, multiWave, identMode, cpOn, cpLen, dsssOn, chipRate, pnSeed });
+            let rx = awgn(tx, snr, trial * 17 + 3);
+            rx = applyCW(rx, true, cwF, cwJSR);
+            const { dec } = demod(rx, tmpls, { cpOn, cpLen, symLen });
+            for (let i = 0; i < NTX; i++)if (dec[i] !== msg[i]) err++;
+          }
+          return err / (40 * NTX);
+        });
+        drawCWScan(freqs_scan, bers);
+        btn.disabled = false; btn.textContent = '扫描';
+      }, 10);
+    }
+
+    function drawCWScan(freqs_scan, bers) {
+      const { ctx, PW, PH } = setupCV('scanCanvas', 160);
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, PW, PH);
+      const pad = 24, W = PW - pad * 2, H = PH - pad * 2;
+      // 轴
+      ctx.strokeStyle = 'rgba(128,128,128,.3)'; ctx.lineWidth = .5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, PH - pad); ctx.lineTo(PW - pad, PH - pad); ctx.stroke();
+      // BER曲线
+      ctx.strokeStyle = '#D85A30'; ctx.lineWidth = 1.5; ctx.setLineDash([]); ctx.beginPath();
+      freqs_scan.forEach((f, i) => {
+        const x = pad + f / 500 * W, y = PH - pad - bers[i] * H;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        ctx.fillStyle = '#D85A30'; ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.stroke();
+      // 随机猜基线
+      ctx.strokeStyle = 'rgba(128,128,128,.5)'; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(pad, PH - pad - H / NA); ctx.lineTo(PW - pad, PH - pad - H / NA); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle = 'rgba(100,100,100,.6)'; ctx.font = '8px sans-serif';
+      ctx.fillText('随机猜 ' + (100 / NA).toFixed(0) + '%', pad + 2, PH - pad - H / NA - 2);
+      // FL/FH标线
+      [FL, FH].forEach((f, i) => {
+        const x = pad + f / 500 * W;
+        ctx.strokeStyle = i === 0 ? 'rgba(29,158,117,.5)' : 'rgba(216,90,48,.5)';
+        ctx.lineWidth = .8; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, PH - pad); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      // Y轴刻度
+      ctx.fillStyle = 'rgba(80,80,80,.7)'; ctx.font = '8px sans-serif';
+      [0, 25, 50, 75, 100].forEach(pct => {
+        const y = PH - pad - pct / 100 * H;
+        ctx.fillText(pct + '%', 1, y + 3);
+      });
+      ctx.fillText('BER', pad, pad - 4);
+      ctx.fillText('CW频率(Hz)', PW - 50, PH - 4);
+      [0, 100, 200, 300, 400, 500].forEach(f => {
+        ctx.fillText(f, pad + f / 500 * W - 8, PH - pad + 10);
+      });
+    }
+
+    // ═══ ⑦ 干扰分析 - 相关对比 ══════════════
+    function drawCmpCorr() {
+      if (!G.corrs || !G.tmpls) return;
+      const { ctx, PW, PH } = setupCV('cmpCanvas', 160);
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, PW, PH);
+
+      // 计算无干扰版本的相关
+      const si = G.sel, symLen = G.symLen, cpOn = G.cpOn, cpLen = G.cpLen;
+      const startIdx = si * symLen + (cpOn ? cpLen : 0);
+      const blkClean = G.rxClean ? G.rxClean.slice(startIdx, startIdx + M) : null;
+      const blkDirty = G.rx.slice(startIdx, startIdx + M);
+      const tm = G.tmpls[si];
+
+      const corrClean = blkClean ? tm.map(t => { let s = 0; for (let n = 0; n < M; n++)s += blkClean[n] * t[n]; return Math.abs(s); }) : null;
+      const corrDirty = tm.map(t => { let s = 0; for (let n = 0; n < M; n++)s += blkDirty[n] * t[n]; return Math.abs(s); });
+
+      let mx = Math.max(...corrDirty, .01);
+      if (corrClean) corrClean.forEach(v => { if (v > mx) mx = v; });
+
+      const bH = ~~((PH - 16) / NA) - 1, bW = (PW - 8) / 2 - 4;
+      for (let i = 0; i < NA; i++) {
+        const y = 4 + i * (bH + 1);
+        const isC = i === G.msg[si];
+        // 无干扰（蓝）
+        if (corrClean) {
+          const bw = corrClean[i] / mx * bW;
+          ctx.fillStyle = isC ? 'rgba(24,95,165,.7)' : 'rgba(24,95,165,.25)';
+          ctx.fillRect(4, y, bw, bH);
+        }
+        // 含干扰（橙）
+        const bw2 = corrDirty[i] / mx * bW;
+        ctx.fillStyle = isC ? 'rgba(216,90,48,.7)' : 'rgba(216,90,48,.25)';
+        ctx.fillRect(4 + bW + 8, y, bw2, bH);
+        // 标签
+        ctx.fillStyle = 'rgba(80,80,80,.7)'; ctx.font = '8px sans-serif';
+        ctx.fillText(i, (corrClean ? bW : 0) + bW + 8 + bw2 + 2, y + bH / 2 + 2);
+      }
+      ctx.fillStyle = 'rgba(24,95,165,.8)'; ctx.font = '9px sans-serif'; ctx.fillText('无干扰', 4, PH - 2);
+      ctx.fillStyle = 'rgba(216,90,48,.8)'; ctx.fillText('含干扰', 4 + bW + 8, PH - 2);
+    }
+
+    // ═══ ④ 相关条 ════════════════════════════
+    function drawCorr() {
+      if (!G.corrs) return;
+      const { ctx, PW, PH } = setupCV('cc', 185);
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, PW, PH);
+      const corrs = G.corrs[G.sel], correct = G.msg[G.sel], decoded = G.dec[G.sel];
+      const mx = Math.max(...corrs, .01), bH = ~~((PH - 26) / NA) - 2, bW = PW - 56;
+
+      // 无干扰参考相关值（蓝色竖线对比）
+      const si = G.sel, symLen = G.symLen, cpLen = G.cpLen, cpOn = G.cpOn;
+      const startIdx = si * symLen + (cpOn ? cpLen : 0);
+      const blkClean = G.rxClean ? G.rxClean.slice(startIdx, startIdx + M) : null;
+      const tm = G.tmpls ? G.tmpls[si] : null;
+      let corrClean = null;
+      if (blkClean && tm) {
+        corrClean = tm.map(t => { let s = 0; for (let n = 0; n < M; n++)s += blkClean[n] * t[n]; return Math.abs(s); });
+        const mxC = Math.max(...corrClean, .01);
+        const scale = mx / mxC;
+        corrClean = corrClean.map(v => v * scale);
+      }
+
+      for (let i = 0; i < NA; i++) {
+        const y = 3 + i * (bH + 2), bw = corrs[i] / mx * bW;
+        const isC = i === correct, isD = i === decoded;
+        ctx.fillStyle = 'rgba(128,128,128,.1)'; ctx.fillRect(52, y, bW, bH);
+        ctx.fillStyle = isC ? '#1D9E75' : isD ? '#D85A30' : '#185FA5';
+        ctx.globalAlpha = isC || isD ? .82 : .2; ctx.fillRect(52, y, Math.max(0, bw), bH); ctx.globalAlpha = 1;
+        // 无干扰蓝色竖线
+        if (corrClean) {
+          const bwC = corrClean[i] / mx * bW;
+          ctx.strokeStyle = 'rgba(26,143,227,0.85)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 2]);
+          ctx.beginPath(); ctx.moveTo(52 + Math.max(0, bwC), y + 1); ctx.lineTo(52 + Math.max(0, bwC), y + bH - 1); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.fillStyle = isC ? '#1D9E75' : isD && !isC ? '#D85A30' : 'var(--color-text-secondary,#888)';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText((G.identMode === 'wave' ? 'W' : 'Ph') + i + (isC ? ' ✓' : '') + (isD && !isC ? ' ✗' : ''), 2, y + bH / 2 + 3);
+        ctx.fillStyle = 'var(--color-text-primary,#333)'; ctx.font = '9px sans-serif';
+        ctx.fillText(corrs[i].toFixed(3), 52 + bw + 2, y + bH / 2 + 3);
+      }
+      if (corrClean) {
+        ctx.strokeStyle = 'rgba(26,143,227,0.8)'; ctx.lineWidth = 1; ctx.setLineDash([3, 2]);
+        ctx.beginPath(); ctx.moveTo(PW - 44, PH - 10); ctx.lineTo(PW - 34, PH - 10); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(26,143,227,0.75)'; ctx.font = '8px sans-serif'; ctx.fillText('无干扰', PW - 32, PH - 7);
+      }
+      const pg = ~~(10 * Math.log10(M));
+      ctx.fillStyle = 'rgba(90,90,90,.6)'; ctx.font = '8.5px sans-serif';
+      ctx.fillText('+' + pg + 'dB增益 SNR:' + (G.snr + pg) + 'dB', 3, PH - 4);
+    }
+
+    // ═══ ⑤ 判决网格 ══════════════════════════
+    function updateGrid() {
+      const sg = document.getElementById('sg'); sg.innerHTML = '';
+      for (let i = 0; i < NTX; i++) {
+        const ok = G.dec[i] === G.msg[i];
+        const d = document.createElement('div'); d.className = 'sc';
+        d.style.cssText = 'background:' + (ok ? 'rgba(29,158,117,.18)' : 'rgba(216,90,48,.18)') + ';border:1px solid ' + (ok ? 'rgba(29,158,117,.45)' : 'rgba(216,90,48,.45)');
+        d.innerHTML = '<b style="color:' + (ok ? '#1D9E75' : '#D85A30') + '">' + G.dec[i] + '</b><span style="opacity:.4;font-size:8.5px">' + G.msg[i] + '</span>';
+        d.onclick = (ii => () => { G.sel = ii; document.getElementById('ss').value = ii; drawCorr(); })(i);
+        sg.appendChild(d);
+      }
+    }
+
+    // ═══ ⑥ 互相关矩阵 ════════════════════════
+    function drawXCorr() {
+      if (!G.tmpls) return;
+      const { ctx, PW, PH } = setupCV('xc', 185);
+      const tmpls = G.tmpls[0], cW = (PW - 18) / NA, cH = (PH - 18) / NA;
+      for (let i = 0; i < NA; i++)for (let j = 0; j < NA; j++) {
+        let s = 0; for (let n = 0; n < M; n++)s += tmpls[i][n] * tmpls[j][n];
+        const v = Math.abs(s), x = 9 + j * cW, y = 9 + i * cH;
+        const [r, g, b] = cmapBR(Math.pow(v, .5));
+        ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fillRect(x, y, cW - 1, cH - 1);
+        if (cW > 20) {
+          ctx.fillStyle = 'rgba(255,255,255,.82)'; ctx.font = '8px sans-serif';
+          ctx.fillText(v.toFixed(2), x + 2, y + cH / 2 + 3);
+        }
+      }
+      ctx.fillStyle = 'rgba(255,255,255,.65)'; ctx.font = '8px sans-serif';
+      for (let i = 0; i < NA; i++) { ctx.fillText(i, 9 + i * cW + cW / 2 - 3, 8); ctx.fillText(i, 1, 9 + i * cH + cH / 2 + 3); }
+    }
+
+    // ═══ Badge ════════════════════════════════
+    function updateBadge() {
+      const type = document.getElementById('ct').value;
+      const { multiWave, cpOn, cpLen, dsssOn, chipRate, cwOn, cwFreq, cwJSR, impOn, impType, impAmp, impFreq, identMode } = G;
+      const sf = Math.log2(M) | 0, symLen = cpOn ? M + cpLen : M;
+      const rb = (Math.log2(NA) * FS / symLen).toFixed(1), toa = (NTX * symLen / FS * 1000).toFixed(0);
+      const pg = (10 * Math.log10(M)).toFixed(1);
+      const typeL = type === 'zc' ? 'ZC' : type === 'linear' ? '线性Chirp' : (multiWave ? 'Perlin多波形' : 'Perlin');
+      let h = `<span class="bp">SF<b>${sf}</b></span><span class="bp">M=<b>${M}pt</b></span>` +
+        `<span class="bp">BW<b>${FH - FL}Hz</b></span><span class="bp">码率<b>${rb}bit/s</b></span>` +
+        `<span class="bp">ToA<b>${toa}ms</b></span><span class="bp">增益<b>+${pg}dB</b></span>` +
+        `<span class="bp">调制<b>${typeL}</b></span><span class="bp">识别<b>${identMode === 'wave' ? '波形切换' : '相移'}</b></span>`;
+      if (cpOn) h += `<span class="bp">CP<b>${cpLen}pt</b></span>`;
+      if (dsssOn) h += `<span class="bp">DSSS<b>×${chipRate}</b></span>`;
+      if (cwOn) h += `<span class="bp" style="color:#EF9F27">CW<b>${cwFreq}Hz JSR${cwJSR > 0 ? '+' : ''}${cwJSR}dB</b></span>`;
+      if (impOn) h += `<span class="bp" style="color:#D85A30">脉冲<b>${impType === 'motor' ? '谐波' : '随机'} ×${impAmp}</b></span>`;
+      document.getElementById('badge').innerHTML = h;
+    }
+
+    // ═══ 音频 ════════════════════════════════
+    function playAudio(sig, scale, nSyms, symLen, durMult) {
+      if (audioNode) { try { audioNode.stop(); } catch (e) { } audioNode = null; }
+      const targetFS = 44100, playLen = Math.min(nSyms * symLen, sig.length);
+      // resFS = 频率缩放后的逻辑采样率；durMult 独立控制时长，不影响频率
+      const resFS = targetFS / scale;
+      const nOut = Math.round(playLen * resFS / FS * durMult);
+      const ac = new AudioContext({ sampleRate: targetFS });
+      const buf = ac.createBuffer(1, nOut, targetFS);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < nOut; i++) {
+        // src 索引除以 durMult → 时域拉伸，频率不变
+        const src = (i / durMult) * FS / resFS, si = ~~src, f = src - si;
+        data[i] = si + 1 < playLen ? sig[si] * (1 - f) + sig[si + 1] * f : (si < playLen ? sig[si] : 0);
+      }
+      const fade = Math.min(200, nOut / 4) | 0;
+      for (let i = 0; i < fade; i++) { data[i] *= i / fade; data[nOut - 1 - i] *= i / fade; }
+      const src2 = ac.createBufferSource(); src2.buffer = buf; src2.connect(ac.destination); src2.start();
+      audioNode = src2;
+      const durMs = (nOut / targetFS * 1000).toFixed(0);
+      document.getElementById('audioInfo').textContent = `${durMs}ms | 频率×${scale} 时长×${durMult} | ${FL * scale}–${FH * scale}Hz`;
+      src2.onended = () => { document.getElementById('audioInfo').textContent = '播放完毕'; audioNode = null; };
+    }
+
+    // ═══ 主渲染 ═══════════════════════════════
+    function render() {
+      const type = document.getElementById('ct').value;
+      const snr = +document.getElementById('snr').value;
+      const sf = +document.getElementById('sfSel').value; M = 1 << sf; updateSH();
+      const cSeed = +document.getElementById('cs').value;
+      const mSeed = +document.getElementById('ms').value;
+      const nSeed = +document.getElementById('ns').value;
+      const identMode = document.getElementById('modeSel').value;
+      G.identMode = identMode; G.snr = snr;
+
+      document.getElementById('snrv').textContent = snr >= 20 ? 'OFF' : snr + 'dB';
+      document.getElementById('csv').textContent = cSeed;
+      document.getElementById('msv').textContent = mSeed;
+      document.getElementById('nsv').textContent = nSeed;
+      // 脉冲标签更新
+      document.getElementById('impFreqLabel').textContent = G.impType === 'motor' ? '谐波Hz' : '脉冲/s';
+
+      const { multiWave, cpOn, cpLen, dsssOn, chipRate, pnSeed, cwOn, cwFreq, cwJSR, impOn, impType, impAmp, impFreq } = G;
+      const msg = genMsg(mSeed);
+      const { tmpls, tx, freqs, symLen } = buildAll({ type, cSeed, msg, multiWave, identMode, cpOn, cpLen, dsssOn, chipRate, pnSeed });
+
+      // 干净RX（只有噪声，用于对比）
+      const rxClean = awgn(tx, snr, nSeed);
+
+      // 含干扰RX
+      let rx = new Float32Array(rxClean);
+      rx = applyCW(rx, cwOn, cwFreq, cwJSR);
+      const { out: rxImp, positions } = applyImpulse(rx, impOn, impType, impAmp, impFreq);
+      rx = rxImp;
+
+      const { dec, corrs } = demod(rx, tmpls, { cpOn, cpLen, symLen });
+      Object.assign(G, { msg, tx, rx, rxClean, tmpls, dec, corrs, freqs, symLen, impPositions: positions });
+
+      let errs = 0; for (let i = 0; i < NTX; i++)if (dec[i] !== msg[i]) errs++;
+      document.getElementById('b1').textContent = (errs / NTX * 100).toFixed(1) + '% (' + errs + '/' + NTX + ')';
+
+      updateBadge();
+      drawWave(); drawSpec(); drawFFT();
+      updateGrid(); drawCorr(); drawXCorr();
+      if (window.refreshExplain) refreshExplain();
+    }
+
+    // ═══ BER×200 ══════════════════════════════
+    document.getElementById('berBtn').onclick = () => {
+      const btn = document.getElementById('berBtn'); btn.disabled = true; btn.textContent = '运算中...';
+      setTimeout(() => {
+        const type = document.getElementById('ct').value;
+        const snr = +document.getElementById('snr').value;
+        const sf = +document.getElementById('sfSel').value; M = 1 << sf; updateSH();
+        const cSeed = +document.getElementById('cs').value;
+        const { multiWave, cpOn, cpLen, dsssOn, chipRate, pnSeed, cwOn, cwFreq, cwJSR, impOn, impType, impAmp, impFreq, identMode } = G;
+        let totErr = 0;
+        for (let trial = 0; trial < 200; trial++) {
+          const msg = genMsg(trial);
+          const { tmpls, tx, symLen } = buildAll({ type, cSeed, msg, multiWave, identMode, cpOn, cpLen, dsssOn, chipRate, pnSeed });
+          let rx = awgn(tx, snr, trial * 17 + 3);
+          rx = applyCW(rx, cwOn, cwFreq, cwJSR);
+          const { out: rxI } = applyImpulse(rx, impOn, impType, impAmp, impFreq);
+          const { dec } = demod(rxI, tmpls, { cpOn, cpLen, symLen });
+          for (let i = 0; i < NTX; i++)if (dec[i] !== msg[i]) totErr++;
+        }
+        const avg = totErr / (200 * NTX);
+        document.getElementById('bN').innerHTML = '200次BER：<b>' + (avg * 100).toFixed(2) + '%</b> | 误码' + totErr + '/' + (200 * NTX) + ' | 随机猜' + (100 / NA).toFixed(1) + '%';
+        btn.disabled = false; btn.textContent = 'BER×200';
+      }, 15);
+    };
+
+    // ═══ 开关绑定 ════════════════════════════
+    function togBtn(id, key, label, cb) {
+      document.getElementById(id).onclick = function () {
+        G[key] = !G[key];
+        this.textContent = label + ' ' + (G[key] ? 'ON' : 'OFF');
+        this.className = 'tog ' + (G[key] ? 'on' : 'off');
+        if (cb) cb(G[key]); schedule();
+      };
+    }
+    togBtn('mwBtn', 'multiWave', '多波形', on => { if (on) document.getElementById('ct').value = 'perlin'; });
+    togBtn('cpBtn', 'cpOn', 'CP循环前缀');
+    togBtn('dsssBtn', 'dsssOn', 'DSSS');
+    togBtn('cwBtn', 'cwOn', 'CW窄带');
+    togBtn('impBtn', 'impOn', '脉冲干扰');
+
+    // 数值控件
+    [
+      ['cpLen', 'cpLen', 'cpLenV', v => v + 'pt', v => +v],
+      ['pnSeed', 'pnSeed', 'pnSeedV', v => v, v => +v],
+      ['cwFreq', 'cwFreq', 'cwFreqV', v => v + 'Hz', v => +v],
+      ['cwJSR', 'cwJSR', 'cwJSRV', v => (v >= 0 ? '+' : '') + v + 'dB', v => +v],
+      ['impAmp', 'impAmp', 'impAmpV', v => (+v).toFixed(1), v => +v],
+      ['impFreq', 'impFreq', 'impFreqV', v => v + 'Hz', v => +v],
+    ].forEach(([id, key, lid, fmt, xfm]) => {
+      document.getElementById(id).addEventListener('input', function () {
+        G[key] = xfm(this.value);
+        document.getElementById(lid).textContent = fmt(G[key]);
+        schedule();
+      });
+    });
+    document.getElementById('impType').onchange = function () { G.impType = this.value; schedule(); };
+    document.getElementById('chipRate').onchange = function () { G.chipRate = +this.value; schedule(); };
+
+    // 波形翻页
+    document.getElementById('wavPrev').onclick = () => { if (G.wavePage > 0) { G.wavePage--; drawWave(); } };
+    document.getElementById('wavNext').onclick = () => { if ((G.wavePage + 1) * 4 < NTX) { G.wavePage++; drawWave(); } };
+
+    // Symbol选择
+    const ss = document.getElementById('ss');
+    for (let i = 0; i < NTX; i++) { const o = document.createElement('option'); o.value = i; o.textContent = 'sym ' + i; ss.appendChild(o); }
+    ss.onchange = () => { G.sel = +ss.value; drawCorr(); };
+
+    // 主控件
+    ['ct', 'sfSel', 'modeSel'].forEach(id => document.getElementById(id).addEventListener('change', schedule));
+    ['snr', 'cs', 'ms', 'ns'].forEach(id => document.getElementById(id).addEventListener('input', schedule));
+
+    // 音频
+    document.getElementById('playTxBtn').onclick = () => {
+      if (!G.tx) return;
+      playAudio(G.tx, +document.getElementById('audioScale').value, +document.getElementById('audioSyms').value, G.symLen, +document.getElementById('durMult').value);
+    };
+    document.getElementById('playRxBtn').onclick = () => {
+      if (!G.rx) return;
+      playAudio(G.rx, +document.getElementById('audioScale').value, +document.getElementById('audioSyms').value, G.symLen, +document.getElementById('durMult').value);
+    };
+    document.getElementById('stopBtn').onclick = () => {
+      if (audioNode) { try { audioNode.stop(); } catch (e) { } audioNode = null; }
+      document.getElementById('audioInfo').textContent = '已停止';
+    };
+
+    // CW扫描
+    document.getElementById('scanBtn').onclick = runCWScan;
+
+    // ② 时频分割按钮
+    document.getElementById('splitBtn').onclick = function () {
+      G.stftSplit = !G.stftSplit;
+      this.classList.toggle('on', G.stftSplit);
+      this.classList.toggle('off', !G.stftSplit);
+      drawSpec();
+    };
+
+    window.addEventListener('resize', () => { clearTimeout(_t); _t = setTimeout(render, 200); });
+    let _t;
+    function schedule() { clearTimeout(_t); _t = setTimeout(render, 100); }
+
+    // ═══ 📐 匹配滤波分步动画 ══════════════════════════════
+    {
+      let animId = null, animStep = 0, animTmplIdx = 0, animSymIdx = 0;
+      const SPEED = 2; // samples per frame
+
+      function waveRow(ctx, data, nShow, x0, y0, w, h, color, label, alpha1, alpha2) {
+        // alpha1=filled part, alpha2=unfilled part
+        const n = data.length;
+        let mx = 0; for (let i = 0; i < n; i++)if (Math.abs(data[i]) > mx) mx = Math.abs(data[i]); mx = mx || 1;
+        const mid = y0 + h / 2;
+        // background
+        ctx.fillStyle = 'rgba(0,0,0,0.03)'; ctx.fillRect(x0, y0, w, h);
+        // grid mid
+        ctx.strokeStyle = 'rgba(180,180,180,0.4)'; ctx.lineWidth = 0.5; ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, mid); ctx.lineTo(x0 + w, mid); ctx.stroke(); ctx.setLineDash([]);
+        // draw waveform
+        for (let pass = 0; pass < 2; pass++) {
+          const isFilled = pass === 0;
+          ctx.strokeStyle = isFilled ? color + 'CC' : color + '22';
+          ctx.lineWidth = isFilled ? 1.3 : 0.8;
+          ctx.beginPath();
+          const limit = isFilled ? nShow : n;
+          const start = isFilled ? 0 : nShow;
+          if (start >= limit) { continue; }
+          for (let i = start; i < limit; i++) {
+            const px = x0 + i / n * w, py = mid - data[i] / mx * (h / 2 - 2);
+            if (i === start) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+        // label
+        ctx.fillStyle = 'rgba(40,40,40,0.7)'; ctx.font = 'bold 9px sans-serif';
+        ctx.fillText(label, x0 + 3, y0 + 10);
+      }
+
+      function corrBarsRow(ctx, corrects, decoded, allCorrs, x0, y0, w, h) {
+        ctx.fillStyle = 'rgba(0,0,0,0.03)'; ctx.fillRect(x0, y0, w, h);
+        const mx = Math.max(...allCorrs, .01), bH = ~~((h - 12) / NA) - 1, bW = w - 64;
+        for (let i = 0; i < NA; i++) {
+          const y = y0 + 2 + i * (bH + 1), bw = allCorrs[i] / mx * bW;
+          const isC = i === corrects, isD = i === decoded;
+          ctx.fillStyle = 'rgba(180,180,180,.12)'; ctx.fillRect(x0 + 62, y, bW, bH);
+          ctx.fillStyle = isC ? '#1D9E75' : isD ? '#D85A30' : '#185FA5';
+          ctx.globalAlpha = isC || isD ? .85 : .18;
+          ctx.fillRect(x0 + 62, y, Math.max(0, bw), bH); ctx.globalAlpha = 1;
+          ctx.fillStyle = isC ? '#1D9E75' : isD && !isC ? '#D85A30' : '#888';
+          ctx.font = 'bold 8.5px sans-serif';
+          ctx.fillText('模板' + i + (isC ? ' ✓' : '') + (isD && !isC ? ' ✗' : ''), x0 + 2, y + bH / 2 + 3);
+          ctx.fillStyle = '#444'; ctx.font = '8px sans-serif';
+          ctx.fillText(allCorrs[i].toFixed(1), x0 + 62 + bw + 2, y + bH / 2 + 3);
+        }
+        ctx.fillStyle = 'rgba(60,60,60,.5)'; ctx.font = 'bold 9px sans-serif';
+        ctx.fillText('⑤ 全部NA=' + NA + '模板相关', x0 + 3, y0 + 8);
+      }
+
+      function drawExplainer(nStep) {
+        if (!G.corrs || !G.tmpls) return;
+        const cv = document.getElementById('explainCV');
+        const PW = cv.offsetWidth || 900, PH = 460;
+        const dpr = devicePixelRatio || 1;
+        cv.width = PW * dpr; cv.height = PH * dpr; cv.style.height = PH + 'px';
+        const ctx = cv.getContext('2d');
+        ctx.scale(dpr, dpr);
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-background-secondary') || '#f5f5f3';
+        ctx.fillRect(0, 0, PW, PH);
+
+        const si = animSymIdx, ti = animTmplIdx;
+        const symLen = G.symLen, cpLen = G.cpLen, cpOn = G.cpOn;
+        const start = si * symLen + (cpOn ? cpLen : 0);
+        const rxSeg = G.rx.slice(start, start + M);
+        const correct = G.msg[si], decoded = G.dec[si];
+        const tmplCorrect = G.tmpls[si][correct];
+        const tmplChosen = G.tmpls[si][ti];
+
+        // Compute products
+        const prodCorrect = Float32Array.from({ length: M }, (_, n) => rxSeg[n] * tmplCorrect[n]);
+        const prodChosen = ti === correct ? prodCorrect : Float32Array.from({ length: M }, (_, n) => rxSeg[n] * tmplChosen[n]);
+        // Running sums
+        const runCorrect = new Float32Array(M), runChosen = new Float32Array(M);
+        let sc = 0, sn = 0;
+        for (let n = 0; n < M; n++) { sc += prodCorrect[n]; runCorrect[n] = sc; sn += prodChosen[n]; runChosen[n] = sn; }
+
+        const nShow = Math.min(M, nStep);
+        const MARGIN_L = 6, COL_W = (PW - MARGIN_L * 3) / 2, PAD = 4;
+        const ROW_H = 78, TOP = 4;
+
+        // Left column: correct template
+        const Lx = MARGIN_L;
+        waveRow(ctx, tmplCorrect, M, Lx, TOP, COL_W, ROW_H, '#1D9E75', '① 模板 T_correct[n] (相位=' + correct + ')', 1, 0);
+        waveRow(ctx, rxSeg, M, Lx, TOP + ROW_H + PAD, COL_W, ROW_H, '#E8321A', '② 接收 rx[n] (sym=' + si + ', 含噪)', 1, 0);
+        waveRow(ctx, prodCorrect, nShow, Lx, TOP + (ROW_H + PAD) * 2, COL_W, ROW_H, '#F5A623', '③ 乘积 T_correct×rx (' + nShow + '/' + M + '样本)');
+        waveRow(ctx, runCorrect, nShow, Lx, TOP + (ROW_H + PAD) * 3, COL_W, ROW_H, '#1A8FE3', '④ 累积和 → corr=' + (nShow > 0 ? runCorrect[nShow - 1].toFixed(1) : '…'));
+
+        // Right column: compared template (may be different from correct)
+        const isWrong = ti !== correct;
+        const Rx = MARGIN_L + COL_W + MARGIN_L;
+        waveRow(ctx, tmplChosen, M, Rx, TOP, COL_W, ROW_H, isWrong ? '#D85A30' : '#1D9E75', '① 模板 T_' + ti + '[n] (相位=' + ti + (isWrong ? ' ✗' : ' = 正确') + ')', 1, 0);
+        waveRow(ctx, rxSeg, M, Rx, TOP + ROW_H + PAD, COL_W, ROW_H, '#E8321A', '② 接收 rx[n]（同上）', 1, 0);
+        waveRow(ctx, prodChosen, nShow, Rx, TOP + (ROW_H + PAD) * 2, COL_W, ROW_H, isWrong ? 'rgba(216,90,48,.9)' : '#F5A623', '③ 乘积 T_' + ti + '×rx（' + (isWrong ? '异相→±随机抵消' : '与左同') + '）');
+        waveRow(ctx, runChosen, nShow, Rx, TOP + (ROW_H + PAD) * 3, COL_W, ROW_H, isWrong ? '#D85A30' : '#1A8FE3', '④ 累积和 → corr=' + (nShow > 0 ? runChosen[nShow - 1].toFixed(1) : '…'));
+
+        // Bottom: all NA bars spanning full width
+        corrBarsRow(ctx, correct, decoded, G.corrs[si], MARGIN_L, TOP + (ROW_H + PAD) * 4 + 4, PW - MARGIN_L * 2, ROW_H);
+
+        // Progress indicator
+        const pct = nShow / M;
+        ctx.fillStyle = 'rgba(26,143,227,.25)';
+        ctx.fillRect(MARGIN_L, PH - 6, Math.round((PW - MARGIN_L * 2) * pct), 4);
+        ctx.fillStyle = 'rgba(26,143,227,.8)'; ctx.font = '9px sans-serif';
+        const finalL = runCorrect[M - 1].toFixed(1), finalR = runChosen[M - 1].toFixed(1);
+        if (nShow === M) {
+          document.getElementById('explainInfo').textContent =
+            '正确模板最终=' + finalL + ' | 对比模板' + ti + '最终=' + finalR +
+            (isWrong ? ' → ' + parseFloat(finalL) > parseFloat(finalR) ? '正确✓' : '误判✗' : '');
+        }
+      }
+
+      function startAnim() {
+        if (animId) return;
+        animId = requestAnimationFrame(function step() {
+          animStep = Math.min(animStep + SPEED, M);
+          drawExplainer(animStep);
+          if (animStep < M) { animId = requestAnimationFrame(step); }
+          else { animId = null; document.getElementById('explainPlayBtn').textContent = '▶ 动画'; }
+        });
+        document.getElementById('explainPlayBtn').textContent = '⏸ 播放中';
+      }
+
+      function resetExplain() {
+        if (animId) { cancelAnimationFrame(animId); animId = null; }
+        animStep = 0;
+        document.getElementById('explainPlayBtn').textContent = '▶ 动画';
+        drawExplainer(M); // show full static
+      }
+
+      function initExplainSelects() {
+        const sym = document.getElementById('explainSym');
+        const tmpl = document.getElementById('explainTmpl');
+        sym.innerHTML = ''; tmpl.innerHTML = '';
+        for (let i = 0; i < NTX; i++) { const o = document.createElement('option'); o.value = i; o.textContent = 'sym ' + i; sym.appendChild(o); }
+        for (let i = 0; i < NA; i++) { const o = document.createElement('option'); o.value = i; o.textContent = '模板 ' + i; tmpl.appendChild(o); }
+        sym.value = animSymIdx; tmpl.value = animTmplIdx;
+        sym.onchange = () => { animSymIdx = +sym.value; resetExplain(); };
+        tmpl.onchange = () => { animTmplIdx = +tmpl.value; resetExplain(); };
+      }
+
+      // 公开 refresh 让 render() 触发更新
+      window.refreshExplain = () => {
+        if (!G.corrs) return;
+        // sync symIdx to G.sel
+        animSymIdx = G.sel;
+        const el = document.getElementById('explainSym'); if (el) el.value = animSymIdx;
+        // auto-choose wrong template for contrast
+        const correct = G.msg[animSymIdx];
+        if (animTmplIdx === correct) animTmplIdx = (correct + 1) % NA;
+        const el2 = document.getElementById('explainTmpl'); if (el2) el2.value = animTmplIdx;
+        drawExplainer(M);
+      };
+
+      document.getElementById('explainPlayBtn').onclick = () => {
+        if (animId) { cancelAnimationFrame(animId); animId = null; document.getElementById('explainPlayBtn').textContent = '▶ 动画'; }
+        else { animStep = 0; startAnim(); }
+      };
+      document.getElementById('explainResetBtn').onclick = resetExplain;
+
+      // init selects after page load
+      setTimeout(() => { initExplainSelects(); }, 200);
+    }
+    // ══ end explainer ══
+    setTimeout(render, 130);
+  </script>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- 📝 系统设计讨论备忘录 · Perlin-CSS 战术链路工程决策全记录          -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div class="panel" style="margin:0 4px 8px 4px;border-left:4px solid var(--me-blue)">
+    <div class="ptitle">📝 系统设计讨论备忘录 · Perlin-CSS 战术链路工程决策全记录</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(500px,1fr));gap:16px;margin-top:8px">
+
+      <!-- ① 命名层次 -->
+      <div class="info-box">
+        <b>① 命名层次与方案定位</b>
+        <br>Chirp ⊃ CSS（Chirp Spread Spectrum）⊃ LoRa（Semtech 线性CSS专利）
+        <br>本方案推荐名称：<b>Perlin-CSS</b> 或 <b>非线性CSS</b>
+        <br>不可说"LoRa"（无法 dechirp+FFT 解调，与 Semtech 专利不兼容）
+        <br><br>定位最接近 APART (Adaptive Phonon-Activated Radio Transceivers)  风格：<b>高LPI优先，种子即密钥，无种子无法复现波形</b>。
+        标准LoRa线性chirp任何SDR均可识别，本方案不行。
+      </div>
+
+      <!-- ② 导频 vs 前导码 -->
+      <div class="info-box">
+        <b>② 不需要导频，前导码包办同步</b>
+        <br>WiFi (OFDM) 需要导频子载波——多子载波系统每个子载波需独立信道估计。
+        <br>CSS 单载波扩频，前导码（几个重复chirp）承担全部同步功能：
+        <ul style="margin:4px 0;padding-left:18px;font-size:10px">
+          <li>AGC 稳定（接收增益锁定）</li>
+          <li>定时同步（前导码自相关峰 → symbol 边界）</li>
+          <li>AFC 频率校正（估计晶振偏差并补偿）</li>
+        </ul>
+        数据符号里<b>不需要插入额外导频</b>。
+        <br><br><b>Perlin 前导码方案（推荐）：</b>双方约定 preamble_seed=0，发 N 个重复 Perlin chirp。
+        AFC 需对候选 Δf 扫描找最大相关峰（有 TCXO 则范围仅 ±500Hz，代价很小）。
+        优势：全程无线性 chirp 特征，前导码也不可识别——彻底 LPI。
+        <br><small style="color:var(--color-text-tertiary)">频率偏移主因：晶振精度（普通 ±20ppm → ±18kHz @ 915MHz）远大于多普勒（无人机 20m/s → 61Hz，可忽略）。</small>
+      </div>
+
+      <!-- ③ 双工与随机发射 -->
+      <div class="info-box">
+        <b>③ 双工设计 vs 随机发射时机</b>
+        <br>随机发射时机有双工问题：若两端都随机，无法保证双向通讯。可选方案：
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">方案</td>
+            <td>适用场景</td>
+            <td>LPI程度</td>
+            <td>复杂度</td>
+          </tr>
+          <tr>
+            <td><b>2对单工设备</b>（上行+下行各一套）</td>
+            <td>硬件资源宽裕</td>
+            <td>高</td>
+            <td>低</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>呼叫-应答触发</b>（无人机发"yy"信标，遥控器回"听到"进入接收）</td>
+            <td>非对称数据量（遥控多，回传少）</td>
+            <td>中（信标有规律）</td>
+            <td>中</td>
+          </tr>
+          <tr>
+            <td><b>伪随机帧间隔 TDD</b>（双方按协商伪随机序列轮流收发）</td>
+            <td>对称双向，高LPI要求</td>
+            <td>高（间隔不规律）</td>
+            <td>中</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.04)">
+            <td><b>GPS PPS 硬同步 TDD</b>（整秒对齐，约定帧结构）</td>
+            <td>无人机（有GPS）主战场景</td>
+            <td>最高（可省前导码）</td>
+            <td>低（GPS已有）</td>
+          </tr>
+        </table>
+        <b>GPS PPS 方案详解：</b>双方约定"每整秒第N毫秒开始第K帧"，无需发前导码即可同步。
+        敌方连"有前导码"的能量特征都看不到——<b>最彻底的 LPI</b>。
+        <br><b>无GPS备用：</b>TCXO + 初始握手（上电一次对时）+ 晶振漂移补偿（1ppm TCXO，1小时漂移 3.6ms，需定期重同步）。
+        <br><small style="color:var(--color-text-tertiary)">帧长/间隔/顺序应根据实际业务设计（无人机回传 vs 机械狗双向 vs 其他）；不存在普适最优方案。</small>
+      </div>
+
+      <!-- ④ DSSS与Perlin的关系 -->
+      <div class="info-box">
+        <b>④ DSSS 存在时是否还需要 Perlin chirp？</b>
+        <br>有 DSSS 时，PN 码已提供：
+        <ul style="margin:4px 0;padding-left:18px;font-size:10px">
+          <li>频谱扩散（类噪声 PSD）</li>
+          <li>抗多径（chip 时间分辨率高）</li>
+          <li>多址复用（不同 PN 码正交）</li>
+        </ul>
+        <b>Perlin chirp 的额外价值：</b>频率轨迹不可解析复现（seed 即密钥），即使知道是 CSS 也无法 dechirp。
+        DSSS 的 PN 码结构若被破解仍可解扩。
+        <br><br><b>结论：</b>纯 DSSS 实现难度高（chip 级同步），若资源受限，<b>Perlin-CSS 单独已够用</b>；
+        DSSS+Perlin 叠加是最强 LPI，但硬件成本翻倍，<b>标注为 Phase-2 增强选项</b>。
+        <br><small style="color:var(--me-red)">DSSS 硬件难点：chip 级时钟同步（比 symbol 级难一个数量级）、chip rate 与 ADC 时钟需整数比、双层处理链延迟增加。</small>
+      </div>
+
+      <!-- ⑤ FEC vs 长M -->
+      <div class="info-box">
+        <b>⑤ FEC 还是更长的 M？</b>
+        <br>CSS 已自带时间分集积分，M 已等效软判决纠错。FEC 在 chirp 里性价比差：
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">方法</td>
+            <td>增益</td>
+            <td>代价</td>
+          </tr>
+          <tr>
+            <td>M 翻倍（256→512）</td>
+            <td style="color:var(--me-green)">+3dB</td>
+            <td>数据率÷2，ADC更快或时长×2</td>
+          </tr>
+          <tr style="background:rgba(232,50,26,.04)">
+            <td>FEC 码率 1/2</td>
+            <td>≈3-6dB（编码增益）</td>
+            <td>数据率÷2，编解码计算量↑↑？</td>
+          </tr>
+        </table>
+        <b>结论：FEC好像也行，在链路余量不足且无法增大M时考虑。</b>
+        <br>若要 FEC，推荐轻量的 Hamming(7,4) 或 Reed-Solomon，
+        不推荐 Turbo/LDPC（嵌入式算力开销不值得）。
+      </div>
+
+      <!-- ⑥ FHSS方案 -->
+      <div class="info-box">
+        <b>⑥ 帧间 FHSS 方案</b>
+        <br>符号内不可大幅跳变（chirp 连续性），只有帧间跳频。IQ下变频后频率中心已归一化，仿真里可省略，但硬件必须实现。
+        <br><br><b>最随机 ≠ LPI 最优：</b>纯随机跳频仍会在统计上暴露工作频段（宽带扫描找有能量的频点）。
+        <br><b>LPI 最优跳频应：</b>
+        <ul style="margin:4px 0;padding-left:18px;font-size:10px">
+          <li>均匀覆盖全部可用频点（不暴露偏好频率）</li>
+          <li>伪随机序列（seed 保密 = 跳频密钥）</li>
+          <li>驻留时间短（每帧能量极低，单帧难被检测）</li>
+          <li>跳频速率 > 敌方扫频速率</li>
+        </ul>
+        <b>Costas 阵列跳频（军用理论基础）：</b>数学上保证任意两时隙任意两频点最多相遇1次，既均匀又正交。
+        <br><b>多设备共存：</b>不同设备用不同 seed 的 FHSS 序列，少量碰撞靠 CRC 丢帧处理，比协调开销更简单。
+        <br><b>推荐频段：</b>902-928MHz ISM（26MHz 内跳），BW=500kHz，约 52 个独立频道。
+      </div>
+
+      <!-- ⑦ OCDM -->
+      <div class="info-box">
+        <b>⑦ OCDM（Orthogonal Chirp Division Multiplexing）</b>
+        <br>类比 OFDM 但子载波全换成 chirp——不同起始偏移的 chirp 互相正交，多个数据流同时在同一频带传输。
+        <br><br><b>理论优势：</b>chirp 的时频对偶性使其对多径和时频偏移天然鲁棒，
+        比 OFDM 更抗频率选择性衰落。苏黎世联邦理工（ETH Zurich）等有学术研究。
+        <br><b>实际代价：</b>接收端需对每个子载波独立匹配滤波，复杂度 = NA × 子载波数，
+        嵌入式难以实现。
+        <br><b>结论：</b>对无人机战术链路意义不大（过于复杂），作为 chirp 系族终极形态存档。
+        若未来 FPGA 加速成熟，可作为高吞吐量方向研究。
+      </div>
+
+      <!-- ⑧ 其他LPI建议 -->
+      <div class="info-box">
+        <b>⑧ 其他 LPI 增强建议</b>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin:5px 0">
+          <tr style="color:var(--color-text-tertiary)">
+            <td style="text-align:left">技术</td>
+            <td>原理</td>
+            <td>难度</td>
+          </tr>
+          <tr>
+            <td><b>非固定帧长</b></td>
+            <td>无固定帧边界能量特征，敌方统计分析失效</td>
+            <td>低</td>
+          </tr>
+          <tr style="background:rgba(26,143,227,.04)">
+            <td><b>最小功率控制</b></td>
+            <td>发最弱的能完成链路的功率，截获距离↓</td>
+            <td>中（需链路预算估计）</td>
+          </tr>
+          <tr>
+            <td><b>Perlin seed 轮换</b></td>
+            <td>每帧/每N帧换 chirp 生成 seed，积累模板失效</td>
+            <td>中（双方同步seed序列）</td>
+          </tr>
+          <tr style="background:rgba(46,204,113,.04)">
+            <td><b>AES-128-GCM 加密</b></td>
+            <td>帧层加密，防欺骗注入虚假指令</td>
+            <td>低（库调用）</td>
+          </tr>
+          <tr>
+            <td><b>CRC 帧校验</b></td>
+            <td>错误帧丢弃，防误解码触发错误指令</td>
+            <td>极低</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- ⑨ 接收流水线完整版 -->
+      <div class="info-box" style="border-left:3px solid var(--me-blue)">
+        <b>⑨ 完整接收流水线（硬件级）</b>
+        <br>
+        <code style="font-size:10px;line-height:1.8">
+          天线 → LNA → IQ混频器（抑制镜像）→ IQ ADC（≈8×BW，I[n]+jQ[n]）<br>
+          → AFC 频率校正（前导码自相关扫描 Δf）<br>
+          → 定时同步（前导码复数模板滑窗相关，找峰值 → symbol 边界）<br>
+          → 截取 M=128 点 symbol 块<br>
+          → 匹配滤波：对 NA 个复数模板做 |Σ(I_r+jQ_r)·(I_t−jQ_t)|<br>
+          → 取最大 → 解码符号索引<br>
+          → FEC 解码（可选）→ CRC 校验 → AES 解密 → 应用层
+        </code>
+        <br><b>相位偏移：</b>复数点积取模后自动消除，无需对齐。
+        <br><b>频率偏移：</b>AFC 在前导码阶段估计并补偿（晶振为主因，多普勒可忽略）。
+        <br><b>本页仿真简化：</b>直接基带实数点积，隐含"IQ下变频完成、相位对齐、AFC已校正"。
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 💡 发散性思考 -->
+  <div class="panel" style="margin:0 4px 8px 4px;border-left:4px solid var(--me-green)">
+    <div class="ptitle">💡 发散性思考与可操作后续步骤</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:10px;margin-top:6px">
+      <div class="info-box" style="font-size:10.5px;line-height:1.6"><b>① 仿真与现实之间的差距</b><br>本仿真使用<b>实数基带点积</b>，隐含假设：IQ下变频已完成、相位已对齐、AFC已校正。真实硬件会增加：<b>(a)</b> IQ不平衡（I/Q通道的增益/相位失配 → 镜像抑制不完美），<b>(b)</b> ADC量化噪声（12-bit ENOB → ~11有效位），<b>(c)</b> 功放非线性（为效率而推到近饱和时产生AM-AM/AM-PM失真），<b>(d)</b> LNA噪声系数（典型的2-4dB直接从链路预算中扣减）。<br><b>行动：</b>首次HackRF测试应测量带真实IQ不平衡的EVM，对照仿真基线校准这些差距。</div>
+      <div class="info-box" style="font-size:10.5px;line-height:1.6"><b>② Perlin噪声参数调优</b><br>目前M=128使用10个octave的Perlin噪声。<b>更少octave → 更平滑的chirp → 正交性降低但同步更容易。</b>更多octave → 更锐利的轨迹 → 正交性更好但对定时抖动更敏感。<br><b>行动：</b>在仿真器中添加"octaves"滑块（目前硬编码为10）。扫描2-20个octave，测量互相关矩阵非对角泄漏 vs. 定时误差容忍度。</div>
+      <div class="info-box" style="font-size:10.5px;line-height:1.6"><b>③ 模板预计算与存储策略</b><br>NA=8 M=128时模板需要8×128=1024个浮点数(4KB)。但如果每帧轮换seed，模板必须实时重新生成。<b>方案A：</b>双缓冲——在当前帧期间为下一个seed预计算所有模板。<b>方案B：</b>在MCU上用定点数实现快速Perlin生成器（STM32H7 DSP约2个周期/lerp）。<br><b>行动：</b>在目标MCU上对Perlin生成速度 vs. 内存读取速度进行基准测试。</div>
+      <div class="info-box" style="font-size:10.5px;line-height:1.6"><b>④ Perlin之外的替代非线性函数</b><br>Perlin噪声不是唯一选择。<b>Logistic映射：</b>x[n+1]=r·x[n]·(1-x[n]), r≈3.99达到混沌——计算更简单。<b>Lorenz吸引子：</b>3个耦合ODE，动力学更丰富。<b>稀疏跳频chirp：</b>将M分段，段内跳频。<b>行动：</b>添加"chirp函数"下拉菜单，将logistic映射作为快速测试案例。比较LPI指标（PSD平坦度、循环平稳特征）。</div>
+      <div class="info-box" style="font-size:10.5px;line-height:1.6"><b>⑤ 敌方实际会怎么做？</b><br>拥有SDR的对手会尝试：<b>(1) 循环平稳分析：</b>CSS在符号速率=BW/M处存在固有的循环平稳性——即使非线性chirp也能检测到。<b>(2) 长积分能量检测：</b>如果发射功率超过噪底+处理增益，长时间平均会暴露存在（但不暴露内容）。<b>(3) 基于ML的chirp分类：</b>在已知chirp类型的频谱图上训练CNN → 即使没有seed也可能指纹识别Perlin-CSS。<b>缓解措施：</b>在不同seed家族间跳变、发送假传输、使用最小功率控制。</div>
+      <div class="info-box" style="font-size:10.5px;line-height:1.6"><b>⑥ 硬件测试路线图（按顺序）</b><br><b>阶段1（桌面）：</b>STM32H7 + AT86RF215评估板。测试：基带IQ环回，测量EVM vs. SNR。确认实时模板匹配时序。<b>阶段2（有线）：</b>两块板，中间接衰减器（无天线）。扫描SNR -20到+20dB，测量BER vs. 理论值。<b>阶段3（OTA，开阔地）：</b>加天线，100m-1km距离。测量多径免疫性、距离 vs. BER。<b>阶段4（干扰）：</b>用HackRF作为干扰源引入CW/脉冲干扰，测试韧性。</div>
+      <div class="info-box" style="font-size:10.5px;line-height:1.6"><b>⑦ 与现有SDR框架的集成</b><br>GNURadio：编写Python "Perlin CSS调制器"模块（输出IQ流）+ "Perlin CSS解调器"模块（模板匹配）。可直接复用HackRF osmocom source/sink。<b>行动：</b>先原型化调制器模块——只需调用本仿真器中的<code>ifPerlin(seed)</code>和<code>ifToWave()</code>，封装为GNURadio同步模块。</div>
+      <div class="info-box" style="font-size:10.5px;line-height:1.6"><b>⑧ 品质因数：LPI评分</b><br>需要一个量化比较LPI的方法。建议：<b>LPI评分 = PSD平坦度 × seed空间大小 × 循环平稳峰值抑制。</b>PSD平坦度 = std(PSD)/mean(PSD)（越低越好）。Seed空间大小 = 2^(seed比特数)（32-bit seed = 40亿种可能）。循环平稳抑制 = 符号速率处相关峰 / 噪底。<b>行动：</b>在仿真中添加自动计算的LPI评分指示器。</div>
+      <div class="info-box" style="font-size:10.5px;line-height:1.6"><b>⑨ 基于Seed正交性的多用户接入</b><br>Perlin-CSS可以像CDMA一样工作：为每架无人机分配不同的seed族。不同seed的chirp之间互相关保持较低（<b>但不保证为零</b>——不像Walsh码那样严格正交）。优势：没有固定码本可被破解。<b>核心问题：</b>多少个用户可以同时共享频段？快速估算：对M=128的随机信号，互相关≈1/√M≈0.088=−21dB（低于自相关峰值）。支持约4-8个同时用户，超出后性能下降。<b>行动：</b>添加多用户仿真模式——运行4个并行相关器，绘制BER vs. 用户数。</div>
+      <div class="info-box" style="font-size:10.5px;line-height:1.6"><b>⑩ 前导码是LPI最薄弱的环节</b><br>前导码（同步序列）在每帧数据前明文发送——是最容易被利用的模式。标准LoRa使用重复上啁啾，极易检测。即使使用Perlin啁啾，如果前导码结构固定，对手依然可以指纹识别。<b>方案A：</b>用seed派生的伪随机相位偏移加密前导码——接收方知道seed可以反向解密。<b>方案B：</b>无专用前导码；用已知明文的载荷头部作为隐式同步。<b>方案C：</b>噪声骑行——仅在信道存在环境噪声突发时发送。<b>行动：</b>先实现方案A——几乎零额外复杂度，却完全打破前导码可检测性。</div>
+    </div>
+  </div>
+
+  </div><!-- /max-width wrapper -->
+</body>
+
+</html>
