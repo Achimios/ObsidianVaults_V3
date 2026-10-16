@@ -89,7 +89,7 @@ body {
 .theme-dark .HyperMD-header-1,
 .theme-dark .markdown-source-view h1,
 .theme-dark .markdown-preview-view h1 {
-  color: #c96666 !important;
+  /*color: #c96666 !important;*/
   font-weight: 600 !important;
 }
 
@@ -98,14 +98,14 @@ body {
 .theme-light .HyperMD-header-2,
 .theme-light .markdown-source-view h2,
 .theme-light .markdown-preview-view h2 {
-  color: #4c6885 !important;
+  /*color: #4c6885 !important;*/
   font-weight: 550 !important;
 }
 .theme-dark .cm-header-2,
 .theme-dark .HyperMD-header-2,
 .theme-dark .markdown-source-view h2,
 .theme-dark .markdown-preview-view h2 {
-  color: #9cbfe0 !important;
+  /*color: #9cbfe0 !important;*/
   font-weight: 550 !important;
 }
 
@@ -114,14 +114,14 @@ body {
 .theme-light .HyperMD-header-3,
 .theme-light .markdown-source-view h3,
 .theme-light .markdown-preview-view h3 {
-  color: #5a7a9e !important; 
+  /*color: #5a7a9e !important; */
   font-weight: 550 !important;
 }
 .theme-dark .cm-header-3,
 .theme-dark .HyperMD-header-3,
 .theme-dark .markdown-source-view h3,
 .theme-dark .markdown-preview-view h3 {
-  color: #8ab4d8 !important; 
+  /*color: #8ab4d8 !important; */
   font-weight: 550 !important;
 }
 
@@ -132,14 +132,14 @@ body {
 /* 源码+阅读模式 */
 .theme-light strong,
 .theme-light b {
-  color: #2B445E !important; /* 饱和度+20%，亮度+8% */
+  /*color: #2B445E !important; /* 饱和度+20%，亮度+8% */*/
   font-weight: 600 !important;
 }
 .theme-dark .cm-strong,
 .theme-dark .HyperMD-strong,
 .theme-dark strong,
 .theme-dark b {
-  color: #D4E6F1 !important; /* 深色模式对应提亮 */
+  /*color: #D4E6F1 !important; /* 深色模式对应提亮 */*/
   font-weight: 600 !important;
 }
 
@@ -167,28 +167,28 @@ em, i {
 mjx-container[jax="CHTML"][display="false"],
 .katex,
 .katex-display .katex {
-  color: #f5d060 !important;
+  /*color: #f5d060 !important;*/
 }
 
 /* --- 块级公式 --- */
 /* 亮色模式 - 深蓝灰（原色保留，可自行调整） */
 .theme-light mjx-container[jax="CHTML"][display="true"],
 .theme-light .katex-display {
-  color: #4c6885 !important;
+  /*color: #4c6885 !important;*/
   margin: 1em 0 !important;
 }
 
 /* 暗色模式 - 亮低饱和蓝 */
 .theme-dark mjx-container[jax="CHTML"][display="true"],
 .theme-dark .katex-display {
-  color: #8facc9 !important;  /* 亮度适中，低饱和，不刺眼 */
+  /*color: #8facc9 !important;  /* 亮度适中，低饱和，不刺眼 */*/
   margin: 1em 0 !important;
 }
 
 /* 深色模式微调对比度 */
 .theme-dark mjx-container,
 .theme-dark .katex {
-  color: #f5d060 !important; /* 深色模式更亮一点 */
+  /*color: #f5d060 !important; /* 深色模式更亮一点 */*/
 }
 
 

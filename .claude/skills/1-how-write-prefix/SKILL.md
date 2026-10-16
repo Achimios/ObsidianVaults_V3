@@ -1,5 +1,5 @@
 ---
-name: -how-write-prefix
+name: 1-how-write-prefix
 description: >
   V3 vault naming prefix conventions. Use when naming files or folders,
   前缀, 命名规范, 文件命名. Covers: - _ __ @ z_ *.0_ *.1_ *-0_ *-1_ 0_ 1_ prefixes.

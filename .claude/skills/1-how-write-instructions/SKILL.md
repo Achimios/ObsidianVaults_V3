@@ -1,5 +1,5 @@
 ---
-name: -how-write-instructions
+name: 1-how-write-instructions
 description: >
   Use when writing or reviewing *.instructions.md, AGENTS.md, agent or skill
   files. Covers: conciseness philosophy, dedup rules, official VS Code tips.

@@ -4,5 +4,6 @@
   "autoPairMarkdown": false,
   "attachmentFolderPath": "./__attach",
   "showLineNumber": false,
-  "showInlineTitle": true
+  "showInlineTitle": true,
+  "showUnsupportedFiles": true
 }

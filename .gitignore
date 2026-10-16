@@ -4,6 +4,7 @@
 
 # ===== 档案室（绝密，整体忽略）=====
 -Vault自身进化/-档案室/
+-人类思维笔记/S_个人收藏/
 
 # ===临时文件（截图之类的）===
 _TEMP/
@@ -15,7 +16,12 @@ __pycache__/
 .ruff_cache/
 
 # ===== 独立 git repo（不属于 V3 追踪范围）=====
--Vault空间/@Code_Project/Python/PID和滤波分析/
+-Vault空间/@Code_Project/控制论/PID和滤波分析/
+-Vault空间/@Code_Project/无人机/✈️_软件/MagCal_Tool/
+-Vault空间/@Code_Project/无线电/波干涉和模拟信号处理/
+
+# ===== 系统垃圾 =====
+Thumbs.db
 
 # =====AI 框架跨链接（硬链接/Junction，避免双重追踪）=====
 # CLAUDE.md 是 AGENTS.md 的硬链接，内容相同，只追踪 AGENTS.md

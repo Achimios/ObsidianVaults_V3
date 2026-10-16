@@ -1,5 +1,5 @@
 ---
-name: -yiti-tts
+name: 1-yiti-tts
 description: >
   CyberDomain V3 TTS voice system. Use when: calling TTS/speech/发声/语音/speak,
   playing audio output, Victor needs to speak, 老维发声, typing TTS commands,

@@ -1,0 +1,194 @@
+{
+  "package": "Synapsis_Thought_Notes_Batch01",
+  "date": "2026-10-08",
+  "source_count": 6,
+  "scope": "Six user-uploaded Markdown notes plus current user statement; no local project writes or source-code execution.",
+  "sources": [
+    {
+      "source_name": "0.0_压缩与有限.md",
+      "snapshot": "原文快照/0.0_压缩与有限.md",
+      "sha256": "0352f303ea99d1e6e6051b7d12bdeeb9072d19254444c6ad133b06124e07f70c",
+      "bytes": 460,
+      "treatment": "draft_reorganization",
+      "output": "整理稿/0.0_压缩与有限.md"
+    },
+    {
+      "source_name": "0.0_解方程的意义是什么.md",
+      "snapshot": "原文快照/0.0_解方程的意义是什么.md",
+      "sha256": "b21387bb60073207da48b52fa157026bc50547363194968678313c24dc1c33dc",
+      "bytes": 50740,
+      "treatment": "draft_reorganization",
+      "output": "整理稿/0.0_解方程的意义是什么.md"
+    },
+    {
+      "source_name": "0.0_物理世界的计算.md",
+      "snapshot": "原文快照/0.0_物理世界的计算.md",
+      "sha256": "82c8c74a0874139c3d878e156643c32417335cb00303d3cb3d8d3a47de727965",
+      "bytes": 19989,
+      "treatment": "draft_reorganization",
+      "output": "整理稿/0.0_物理世界的计算.md"
+    },
+    {
+      "source_name": "0.0_关于理解和推理的本质，反馈回路.md",
+      "snapshot": "原文快照/0.0_关于理解和推理的本质，反馈回路.md",
+      "sha256": "161b8330b198b87d1a4542b3e107c871a85a5290df5c4af4853ffac85db5175b",
+      "bytes": 53242,
+      "treatment": "draft_reorganization",
+      "output": "整理稿/0.0_关于理解和推理的本质，反馈回路.md"
+    },
+    {
+      "source_name": "1.0_AI架构_数学直觉_工程方法.md",
+      "snapshot": "原文快照/1.0_AI架构_数学直觉_工程方法.md",
+      "sha256": "8aad9630b59434f8d7c8326cb4aac4144bae053d4656e7ffd3f6832d87c004e0",
+      "bytes": 25945,
+      "treatment": "append_only",
+      "output": "增补副本/1.0_AI架构_数学直觉_工程方法.md",
+      "original_is_exact_byte_prefix": true
+    },
+    {
+      "source_name": "沙龙纪要_从梦境到神经算子.md",
+      "snapshot": "原文快照/沙龙纪要_从梦境到神经算子.md",
+      "sha256": "de85c824b6213ef40302351c383c92c088805d35ab72ff13c919d611658533c1",
+      "bytes": 14206,
+      "treatment": "append_only",
+      "output": "增补副本/沙龙纪要_从梦境到神经算子.md",
+      "original_is_exact_byte_prefix": true
+    }
+  ],
+  "checks": {
+    "six_source_snapshots_byte_identical": true,
+    "two_append_only_prefixes_byte_identical": true,
+    "author_blocks_verified": 18,
+    "new_relative_links_exist": true,
+    "patch_removed_lines": 0,
+    "patch_applied_on_snapshot_matches_copies": true,
+    "elementary_symbolic_examples_checked": [
+      "normalized_derivative",
+      "row_operation_same_solution",
+      "cyclic_group_descent",
+      "finite_sample_ambiguity"
+    ]
+  },
+  "files": [
+    {
+      "path": "00_README_Claude.md",
+      "bytes": 4846,
+      "sha256": "16088798c35603307a679177ad2703199e608e0cca69bae80ac47a3f599d912e"
+    },
+    {
+      "path": "原文快照/0.0_关于理解和推理的本质，反馈回路.md",
+      "bytes": 53242,
+      "sha256": "161b8330b198b87d1a4542b3e107c871a85a5290df5c4af4853ffac85db5175b"
+    },
+    {
+      "path": "原文快照/0.0_压缩与有限.md",
+      "bytes": 460,
+      "sha256": "0352f303ea99d1e6e6051b7d12bdeeb9072d19254444c6ad133b06124e07f70c"
+    },
+    {
+      "path": "原文快照/0.0_物理世界的计算.md",
+      "bytes": 19989,
+      "sha256": "82c8c74a0874139c3d878e156643c32417335cb00303d3cb3d8d3a47de727965"
+    },
+    {
+      "path": "原文快照/0.0_解方程的意义是什么.md",
+      "bytes": 50740,
+      "sha256": "b21387bb60073207da48b52fa157026bc50547363194968678313c24dc1c33dc"
+    },
+    {
+      "path": "原文快照/1.0_AI架构_数学直觉_工程方法.md",
+      "bytes": 25945,
+      "sha256": "8aad9630b59434f8d7c8326cb4aac4144bae053d4656e7ffd3f6832d87c004e0"
+    },
+    {
+      "path": "原文快照/沙龙纪要_从梦境到神经算子.md",
+      "bytes": 14206,
+      "sha256": "de85c824b6213ef40302351c383c92c088805d35ab72ff13c919d611658533c1"
+    },
+    {
+      "path": "变更/已整理笔记_仅追加.patch",
+      "bytes": 6103,
+      "sha256": "e0c78daa31fe227f99a67c06404cd10b040be205672e6a481331ffdb1aec0607"
+    },
+    {
+      "path": "变更/文件处理对照.md",
+      "bytes": 2157,
+      "sha256": "a7e88f79ccfbcd8c65f0a4bb66703b2ca30b60204dc64d7df41b769f104cbf8c"
+    },
+    {
+      "path": "变更/检查报告.md",
+      "bytes": 1128,
+      "sha256": "03e9c1ca7b12e3d23d8ef3bf8ae9508c3d9f9329ea330543affa6699962f2156"
+    },
+    {
+      "path": "增补副本/1.0_AI架构_数学直觉_工程方法.md",
+      "bytes": 29132,
+      "sha256": "a250ebbc4dc23a1f3d96805eb08a8c4a4d9525c237c8739988a6eeb320bc40e4"
+    },
+    {
+      "path": "增补副本/沙龙纪要_从梦境到神经算子.md",
+      "bytes": 16306,
+      "sha256": "44de8cab7cf57586fdf7b239be77310dcef6d41a9bc4c5eff40c268f4643968d"
+    },
+    {
+      "path": "整理稿/0.0_关于理解和推理的本质，反馈回路.md",
+      "bytes": 5462,
+      "sha256": "89eaf2b70e21f17a79d56ea13bf286ee5d5b7bf8726963c7ffd563bb81646711"
+    },
+    {
+      "path": "整理稿/0.0_压缩与有限.md",
+      "bytes": 2146,
+      "sha256": "de76d7888b761f237da5af64e9112c4332f2315baf989597b774bbf32fb7eae3"
+    },
+    {
+      "path": "整理稿/0.0_物理世界的计算.md",
+      "bytes": 3983,
+      "sha256": "dafc5e40bfe959f7eec486abe16f079f28f32279671f7dbdfe231ffc0d77b27f"
+    },
+    {
+      "path": "整理稿/0.0_解方程的意义是什么.md",
+      "bytes": 5164,
+      "sha256": "62b44376881b8e054569590b515804662683825a965e5cf5af34a0995604ef03"
+    },
+    {
+      "path": "来源/作者原话定位.json",
+      "bytes": 23014,
+      "sha256": "74e560224e8592f5ff9739d2ca5c64287d479ff62e68f7fe00936cda68c167b4"
+    },
+    {
+      "path": "来源/作者原话索引.md",
+      "bytes": 22877,
+      "sha256": "84920f5d694260df31055dd00f1c3451246f6b86fa66666bc240d6426370be8b"
+    },
+    {
+      "path": "来源/本轮用户发言.md",
+      "bytes": 1136,
+      "sha256": "7ea78e3168234aadfb99ccddd803580856ef775a8a27e87ef4dff0909b4e8d8e"
+    },
+    {
+      "path": "研究新增/00_阅读地图.md",
+      "bytes": 3233,
+      "sha256": "4666cea221c7594c0263853657a5a9939d31a274e83c4bf7c17411e932d3ed10"
+    },
+    {
+      "path": "研究新增/01_直觉_表征_快慢闭环.md",
+      "bytes": 9806,
+      "sha256": "e1d42484ab47e9d912c3f0ef619e3758ae30d2f32896281117ebe1763ebff140"
+    },
+    {
+      "path": "研究新增/02_核验与反例.md",
+      "bytes": 13878,
+      "sha256": "abd93dbab2bc6875cf7f0452192155ffbdb1e630fa7bbc4b366178ade0119bdb"
+    },
+    {
+      "path": "研究新增/03_Synapsis_Philosophy_候选增补.md",
+      "bytes": 3224,
+      "sha256": "459618d848e317274fc5f25bb9c150d2330563d324b4eb693566705f348887fa"
+    },
+    {
+      "path": "研究新增/04_本轮外部来源.md",
+      "bytes": 5670,
+      "sha256": "13e51ece269d3008fbbf486b13e091ac96489602b071a191c465d943ba4ff54d"
+    }
+  ]
+}

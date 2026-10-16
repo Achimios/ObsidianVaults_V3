@@ -13,13 +13,13 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "-人类思维笔记/z_AkiWorld_异世界引擎/IMAGINE_0.md",
+                "file": "-人类思维笔记/B_一些思考/ASTRA的思考/整理稿/0.0_物理世界的计算.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": false
               },
               "icon": "lucide-file",
-              "title": "IMAGINE_0"
+              "title": "0.0_物理世界的计算"
             }
           }
         ]
@@ -42,7 +42,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": true
+                "autoReveal": true,
+                "showSearch": true,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "文件列表"
@@ -54,10 +56,10 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "混合专家模型作",
+                "query": "",
                 "matchingCase": false,
                 "explainSearch": false,
-                "collapseAll": false,
+                "collapseAll": true,
                 "extraContext": false,
                 "sortOrder": "alphabetical"
               },
@@ -157,13 +159,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "-人类思维笔记/z_AkiWorld_异世界引擎/IMAGINE_0.md",
+                "file": "-人类思维笔记/Y_AI陪你打游戏/1.0_泊松热场.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "IMAGINE_0 的大纲"
+              "title": "1.0_泊松热场 的大纲"
             }
           }
         ],
@@ -171,7 +173,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 268.5
+    "width": 268.5,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -188,52 +191,52 @@
   },
   "active": "64dd16120001c977",
   "lastOpenFiles": [
-    "-Vault空间/@Code_Project/控制论/拉普拉斯变换与传递函数/spring_oscillator_v6_双质量块.html",
-    "-人类思维笔记/B_生成式AI工作方法/1_艺术创作.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT_2_other.md",
-    "-人类思维笔记/B_生成式AI工作方法",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/-CONTEXT_3_手动FINAL.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/一些数学和工程思想讨论/02_核心思想与工程方法.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/一些数学和工程思想讨论/__unDistilled/1.0_豆包_热传导仿真.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/一些数学和工程思想讨论/__unDistilled/01_Copilot对豆包讨论的看法.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/一些数学和工程思想讨论/__unDistilled/01 Copilot想法.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/一些数学和工程思想讨论/__unDistilled/0.0_with豆包的完整问答.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/一些数学和工程思想讨论/__unDistilled/0.0_Akimos问.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/drone_gyro_stft_cqt_morlet_v3.html",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/1_给人类解释.md",
-    "-人类思维笔记/z_AkiWorld_异世界引擎/IMAGINE_0.md",
-    "-人类思维笔记/B_文明/1_1_超人域与文明裂变——AI时代的阶级演化论.md",
-    "-人类思维笔记/B_文明/1_0_技术与阶级平等的演变.md",
-    "-人类思维笔记/A_with_GPT_1_未整理/Dimension中的故事.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/整理稿/0.0_关于理解和推理的本质，反馈回路.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/整理稿/0.0_压缩与有限.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/整理稿/0.0_物理世界的计算.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/整理稿/0.0_解方程的意义是什么.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/研究新增/00_阅读地图.md",
+    "-人类思维笔记/B_一些思考/智能/沙龙纪要_从梦境到神经算子.md",
+    "-人类思维笔记/B_一些思考/智能/1.0_AI架构_数学直觉_工程方法.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/研究新增/04_本轮外部来源.md",
     "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_压缩与有限.md",
-    "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_物理世界的计算.md",
-    "-人类思维笔记/B_一些思考/关于宇宙和数学本质/0.0_解方程的意义是什么.md",
-    "-人类思维笔记/B_智能/2.0_AI陪你打游戏.md",
-    "-人类思维笔记/B_智能/0.0_关于理解和推理的本质，反馈回路.md",
-    "-人类思维笔记/B_智能/1.0_AI架构_数学直觉_工程方法.md",
-    "z_临时提问位置_方便打字.md",
-    "-Vault空间/@Code_Project/控制论/拉普拉斯变换与传递函数/-CONTEXT.md",
-    "-Vault空间/@Code_Project/控制论/拉普拉斯变换与传递函数/lyapunov_spring_oscillator_v5_指数激励.html",
-    "-Vault空间/@Code_Project/控制论/拉普拉斯变换与传递函数/lyapunov_spring_oscillator_v4_极点图.html",
-    "-Vault空间/@Code_Project/控制论/拉普拉斯变换与传递函数/lyapunov_spring_oscillator_v3_更直观.html",
-    "-Vault空间/@Code_Project/控制论/拉普拉斯变换与传递函数",
-    "-Vault空间/@Code_Project/控制论/lyapunov_spring_oscillator_v5_指数激励.html",
-    "-Vault空间/@Code_Project/控制论/lyapunov_spring_oscillator_v4_极点图.html",
-    "-Vault空间/@Code_Project/控制论/lyapunov_spring_oscillator_v3_更直观.html",
-    "z_临时AI回复位置_方便阅读.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/一些数学和工程思想讨论/lyapunov_spring_oscillator_v5_指数激励.html",
-    "-人类思维笔记/L_AkiDynamic/3-0_软件运动学.md",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/__attach/Pasted image 20260503221209.png",
-    "-Vault空间/@Code_Project/Python/PID和滤波分析/01_滤波交互式分析仪/__attach/-CONTEXT-1778871237498.webp",
-    "__attach/z_临时AI回复位置_方便阅读-1778352628571.webp",
-    "-Vault空间/@Code_Project/Embeded/🚁_DroneTools/无线透传-5模-3芯片/__attach/WEB_0.png",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/来源/作者原话索引.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/来源/本轮用户发言.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/变更/文件处理对照.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/变更/检查报告.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/增补副本/沙龙纪要_从梦境到神经算子.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/增补副本/1.0_AI架构_数学直觉_工程方法.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/研究新增/01_直觉_表征_快慢闭环.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/原文快照/沙龙纪要_从梦境到神经算子.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/原文快照/1.0_AI架构_数学直觉_工程方法.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/原文快照/0.0_解方程的意义是什么.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/原文快照/0.0_物理世界的计算.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/原文快照/0.0_压缩与有限.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/原文快照/0.0_关于理解和推理的本质，反馈回路.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/原文快照",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/00_README_Claude.md",
+    "-人类思维笔记/B_一些思考/智能/0.0_关于理解和推理的本质，反馈回路.md",
+    "-Vault空间/@Code_Project/控制论/PID和滤波分析/01_滤波交互式分析仪/oldNote_终极飞行性能_动态PID与智能滤波实战.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/研究新增/03_Synapsis_Philosophy_候选增补.md",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/来源/作者原话定位.json",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/变更/已整理笔记_仅追加.patch",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/研究新增",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/来源",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/整理稿",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/变更",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/增补副本",
+    "-人类思维笔记/B_一些思考/ASTRA的思考/MANIFEST.json",
+    "-人类思维笔记/B_一些思考/ASTRA的思考",
+    "__attatch/z_临时AI回复位置_方便阅读-1778352628571.webp",
+    "_TEMP/_ScreenShots/abb647d9-9bf3-4052-bf47-22771a448cde.png",
+    "_TEMP/_ScreenShots/ScreenShot_2026-04-04_224725_088.png",
+    "-人类思维笔记/B_Drone War/__attach/0.0_光流法AHRS-1779394453677.webp",
+    "-Vault空间/@Code_Project/控制论/PID和滤波分析/01_滤波交互式分析仪/__attach/Pasted image 20260503221209.png",
+    "-Vault空间/@Code_Project/控制论/PID和滤波分析/01_滤波交互式分析仪/__attach/-CONTEXT-1778871237498.webp",
+    "-Vault空间/@Code_Project/无人机/🚁_固件/无线透传-5模-3芯片/__attach/WEB_0.png",
     "-Vault空间/@Code_Project/Embeded/🚁_DroneTools/无线透传-5模-3芯片/__attach/README-1778064283802.webp",
     "-Vault空间/@Code_Project/Embeded/🚁_DroneTools/无线透传-5模-3芯片/__attach/README-1778064258974.webp",
     "-Vault空间/@Code_Project/Embeded/🚁_DroneTools/无线透传-5模-3芯片/__attach/README-1778064231412.webp",
-    "-人类思维笔记/z_AkiWorld_异世界引擎/__attatch/Pasted image 20260426175237.png",
-    "-Vault空间/@Code_Project/Embeded/🚁_DroneTools/无线透传-5模-3芯片/__attach/ESP32_C3_1.png",
-    "-Vault空间/@Code_Project/Embeded/🚁_DroneTools/无线透传-5模-3芯片/__attach/ESP32_2.png",
     "-人类思维笔记/L_AkiDynamic/未命名.canvas"
   ]
 }
